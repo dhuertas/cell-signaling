@@ -8,9 +8,11 @@ Cell::~Cell() {
 
 }
 
+/*
+ *
+ */
 void Cell::initialize(int stage) {
 
-	cPar *managerName;
 	std::stringstream buffer;
 
 	if (stage == 0) {
@@ -33,15 +35,8 @@ void Cell::initialize(int stage) {
 		lastCollisionTime = 0;
 
 		// Subscribe to manager		
-		managerName = & simulation.getSystemModule()->par("managerName");
-		manager = (Manager *)simulation.getSystemModule()
-				->getSubmodule(managerName->stringValue());
-		
-		if (manager != NULL) {
-			manager->subscribe(this);
-		} else {
-			// TODO stop simulation
-		}
+		setManager("managerName");
+		getManager()->subscribe(this);
 	
 		// update Cell position in the tk environment
 		tkEnvUpdatePosition();
@@ -56,35 +51,29 @@ void Cell::initialize(int stage) {
 
 }
 
+/*
+ *
+ */
 int Cell::numInitStages() const {
 	return 2;
 }
 
+/*
+ * Handles every message that the cell receives.
+ *
+ * @param msg pointer to a cMessage object
+ */
 void Cell::handleMessage(cMessage *msg) {
-
-	if (msg->getKind() == 1 && emitEvery > 0) {  // kind 1: emit molecule
-
-		emitCount++;
-
-		if (emitCount == emitEvery) {
-			emitCount = 0;
-
-			EV << "Molecule emitted";
-		}
-
-		delete msg;
-
-		cMessage * internalMsg = new cMessage("emit", 1);
-
-		scheduleAt(simTime()+10, internalMsg);
-	}
 
 }
 
+/*
+ * Clean and close everything.
+ */
 void Cell::finish() {
 
 	// Unsubscribe from the manager
-	manager->unsubscribe(this);
+	getManager()->unsubscribe(this);
 
 	// All events related to this cell should be discarded
 }

@@ -1,11 +1,15 @@
-
-
 #include "Particle.h"
 
 using namespace std;
 
+/*
+ *
+ */
 Particle::Particle() {}
 
+/*
+ *
+ */
 Particle::Particle(
 	double x,
 	double y,

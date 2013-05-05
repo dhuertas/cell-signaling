@@ -16,16 +16,11 @@ class Cell : public Sphere {
 		double emitEvery;   // Dumb var to test simulation
 		int emitCount;
 
-		Manager *manager;
-
 	protected:
 
 	public:
 
 		~Cell();
-
-		int getIdentifier(void) { return identifier; };
-		void setIdentifer(int id) { identifier = id; };
 
 		// cSimpleModule inheritance
 		virtual void initialize(int);
@@ -33,6 +28,10 @@ class Cell : public Sphere {
 		virtual void handleMessage(cMessage *);
 		virtual void finish();
 
+		// gets and sets
+		int getIdentifier(void) { return identifier; };
+		void setIdentifer(int id) { identifier = id; };
+		
 };
 
 #endif

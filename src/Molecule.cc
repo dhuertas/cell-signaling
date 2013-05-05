@@ -6,9 +6,11 @@ Define_Module(Molecule);
 
 Molecule::~Molecule() {}
 
+/*
+ *
+ */
 void Molecule::initialize(int stage) {
 
-	cPar *managerName;
 	std::stringstream buffer;
 
 	if (stage == 0) {
@@ -31,15 +33,8 @@ void Molecule::initialize(int stage) {
 		lastCollisionTime = 0;
 
 		// Subscribe to manager
-		managerName = & simulation.getSystemModule()->par("managerName");
-		manager = (Manager *)simulation.getSystemModule()
-			->getSubmodule(managerName->stringValue());
-
-		if (manager != NULL) {
-			manager->subscribe(this);
-		} else {
-			// TODO stop simulation
-		}
+		setManager("managerName");
+		getManager()->subscribe(this);
 
 		// update Molecule position in the tk environment
 		tkEnvUpdatePosition();
@@ -52,19 +47,42 @@ void Molecule::initialize(int stage) {
 
 }
 
+/*
+ *
+ */
 int Molecule::numInitStages() const {
 
 	return 2;
 
 }
 
+/*
+ * Handles every message that the molecule receives.
+ *
+ * @param msg pointer to a cMessage object
+ */
 void Molecule::handleMessage(cMessage *msg) {
 
+	int kind = msg->getKind();
+
+	if (kind == EV_CHECK) {
+
+	} else if (kind == EV_WALLCOLLISION) {
+		// Update the molecule data
+		updateStateAfterWallCollision(msg);
+		delete msg;
+
+	}
+
+	nextEventTime();
 }
 
+/*
+ * Clean and close everything.
+ */
 void Molecule::finish() {
 	
 	// Unsubscribe from the manager
-	manager->unsubscribe(this);
+	getManager()->unsubscribe(this);
 
 }

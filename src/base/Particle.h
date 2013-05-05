@@ -51,6 +51,8 @@ class Particle {
 		virtual void tkEnvDrawShape(void) = 0;
 		virtual void tkEnvUpdatePosition(void) = 0;
 		virtual void tkEnvUpdatePosition(double) = 0;
+		virtual void nextEventTime() = 0;
+
 };
 
 #endif
