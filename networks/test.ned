@@ -24,7 +24,7 @@ network test
 	@display("bgb=400,300");
 	string managerName = default("manager");
 	double spaceSizeX = default(1000);
-	double spaceSizeY = default(500);
+	double spaceSizeY = default(1000);
 	double spaceSizeZ = default(1000);
 
 	double refreshRate = default(10);

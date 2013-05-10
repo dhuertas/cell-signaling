@@ -69,12 +69,21 @@ void Molecule::handleMessage(cMessage *msg) {
 
 	} else if (kind == EV_WALLCOLLISION) {
 		// Update the molecule data
-		updateStateAfterWallCollision(msg);
+		updateStateAfterWallCollision((MobilityMessage *)msg);
 		delete msg;
 
+	} else if (kind == EV_TRANSFER) {
+		// Update the molecule space cell
+		updateStateAfterTransfer((MobilityMessage *)msg);
+		delete msg;
+
+	} else if (kind == EV_CHECK) {
+		// TODO our collision time has turned invalid. We must check again for
+		// the next event.
 	}
 
 	nextEventTime();
+
 }
 
 /*

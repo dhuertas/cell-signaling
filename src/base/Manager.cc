@@ -18,7 +18,7 @@ void Manager::subscribe(Particle * p) {
 
 	// Also add the particle to its corresponding space cell
 	if (spaceCellSize > 0) {
-		attachParticleToSpaceCell(p);
+		attachParticleToSpaceCell(p, -1);
 	}
 
 }
@@ -29,7 +29,7 @@ void Manager::subscribe(Particle * p) {
 void Manager::unsubscribe(Particle * p) {
 
 	// Remove the particle pointer from the space cell structure
-	detachParticleFromSpaceCell(p);
+	detachParticleFromSpaceCell(p, -1);
 
 	// Remove the particle pointer from the particles vector
 	particles.remove(p);
@@ -105,7 +105,7 @@ void Manager::initialize(int stage) {
 		spaceCells.resize(N);
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
-			attachParticleToSpaceCell(*p);
+			attachParticleToSpaceCell(*p, -1);
 		}
 
 		// Self message to refresh the tk environment
@@ -131,47 +131,72 @@ int Manager::numInitStages() const {
 }
 
 /*
+ * Attach a particle to a space cell. If the value of the second argument is 
+ * negative means that the particle has been just subscribed and its space cell
+ * must be calculated. 
  *
+ * @param {Particle *} p
+ * @param {integer} to
  */
-void Manager::attachParticleToSpaceCell(Particle *p) {
+void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 
 	int n, i, j, k;
 
-	// The cell position for a given particle is a function of the form
-	// n = f(x, y, z, spaceCellSize)
-	i = floor(p->getX()/spaceCellSize);
-	j = floor(p->getY()/spaceCellSize);
-	k = floor(p->getZ()/spaceCellSize);
+	if (to == -1) {
 
-	n = i*(Nz*Ny) + j*(Nz) + k;
+		i = floor(p->getX()/spaceCellSize);
+		j = floor(p->getY()/spaceCellSize);
+		k = floor(p->getZ()/spaceCellSize);
 
-	p->setSpaceCell(n);
-	spaceCells.at(n).push_back(p);
+		n = i*Ny*Nz + j*Nz + k;
 
-}
+		p->setSpaceCell(n);
+		spaceCells.at(n).push_back(p);
 
-/*
- *
- */
-void Manager::detachParticleFromSpaceCell(Particle *p) {
+	} else {
 
-	spaceCells.at(p->getSpaceCell()).remove(p);
-	p->setSpaceCell(-1);
+		spaceCells.at(to).push_back(p);
+
+	}
 
 }
 
 /*
+ * Detach a particle from a space cell.
  *
+ * @param {Particle *} p
+ * @param {integer} from
  */
-void Manager::transferParticle(Particle *p) {
+void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
+
+	if (from == -1) {
+
+		spaceCells.at(p->getSpaceCell()).remove(p);
+
+	} else {
+
+		spaceCells.at(from).remove(p);
+
+	}
+
+}
+
+/*
+ * Transfer a particle from one space cell to another.
+ *
+ * @param {Particle *} p
+ * @param {integer} from
+ * @param {integer} to
+ */
+void Manager::transferParticle(Particle *p, int from, int to) {
 
 	// Detach particle from its space cell
-	detachParticleFromSpaceCell(p);
+	detachParticleFromSpaceCell(p, from);
 
 	// Obtain the particle position after the transfer event occured
 
 	// Attach the particle to its new space cell
-	attachParticleToSpaceCell(p);
+	attachParticleToSpaceCell(p, to);
 
 }
 

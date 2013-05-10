@@ -56,11 +56,11 @@ class Manager : public cSimpleModule {
 		// area, etc.
 		void unsubscribe(Particle *);
 
-		void attachParticleToSpaceCell(Particle *);
-		void detachParticleFromSpaceCell(Particle *);
+		void attachParticleToSpaceCell(Particle *, int);
+		void detachParticleFromSpaceCell(Particle *, int);
 
 		// Move one particle from one space cell to another.
-		void transferParticle(Particle *);
+		void transferParticle(Particle *, int, int);
 
 		// cSimpleModule inheritance
 		virtual void initialize(int stage);

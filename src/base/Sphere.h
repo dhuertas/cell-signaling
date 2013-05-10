@@ -8,6 +8,7 @@
 
 #include "Manager.h"
 #include "Circle.h"
+#include "../messages/Mobility_m.h"
 
 class Sphere : public Circle, public cSimpleModule {
 
@@ -25,13 +26,14 @@ class Sphere : public Circle, public cSimpleModule {
 		// Find the next event time for a given particle
 		void nextEventTime();
 
-		cMessage * computeTransferTime(void);
-		cMessage * computeCollisionTime(void);
-		cMessage * computeWallCollisionTime(void);
+		MobilityMessage * computeTransferTime(void);
+		MobilityMessage * computeCollisionTime(void);
+		MobilityMessage * computeWallCollisionTime(void);
 		double solveCollisionTime(Particle *);
 
-		void updateStateAfterCollision(cMessage *);
-		void updateStateAfterWallCollision(cMessage *);
+		void updateStateAfterTransfer(MobilityMessage *);
+		void updateStateAfterCollision(MobilityMessage *);
+		void updateStateAfterWallCollision(MobilityMessage *);
 
 		// tk Environment related methods
 		void tkEnvDrawShape(void);
