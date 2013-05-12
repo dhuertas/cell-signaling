@@ -9,7 +9,9 @@ Define_Module(Manager);
 Manager::~Manager() {}
 
 /*
+ * Subscribe particle to the simulation space
  *
+ * @param {Particle *} p 
  */
 void Manager::subscribe(Particle * p) {
 
@@ -24,7 +26,9 @@ void Manager::subscribe(Particle * p) {
 }
 
 /*
+ * Unsubscribe particle from the simulation space
  *
+ * @param {Particle *} p
  */
 void Manager::unsubscribe(Particle * p) {
 
@@ -37,7 +41,9 @@ void Manager::unsubscribe(Particle * p) {
 }
 
 /*
+ * Initialize the simulation space and its modules.
  *
+ * @param {Integer} stage
  */
 void Manager::initialize(int stage) {
 
@@ -109,12 +115,13 @@ void Manager::initialize(int stage) {
 		}
 
 		// Self message to refresh the tk environment
-		scheduleAt(simTime()+tkEnvRefreshRate, new cMessage("refresh", EV_TKENVUPDATE));
+		scheduleAt(simTime() + tkEnvRefreshRate, 
+			new cMessage("refresh", EV_TKENVUPDATE));
 
 		// Make that every subscribed particle compute its next event time
 		for (p = particles.begin(); p != particles.end(); ++p) {
 
-			(*p)->nextEventTime(); // TODO change this ?
+			(*p)->firstEventTime();
 
 		}
 	}
@@ -122,7 +129,9 @@ void Manager::initialize(int stage) {
 }
 
 /*
+ * The manager must be initialized and act during the first and third stages.
  *
+ * @return {const integer}
  */
 int Manager::numInitStages() const {
 
@@ -204,7 +213,7 @@ void Manager::transferParticle(Particle *p, int from, int to) {
  * Return a list containing the pointers to the particles in a given
  * space cell.
  *
- * @param n space cell index
+ * @param {Integer} n space cell index
  * @return list of particle pointers
  */
 std::list<Particle *> Manager::getSpaceCellParticles(int n) {
@@ -216,7 +225,7 @@ std::list<Particle *> Manager::getSpaceCellParticles(int n) {
 /*
  * Handles every message that the manager module receives.
  *
- * @param msg pointer to a cMessage object
+ * @param {cMessage *} msg
  */
 void Manager::handleMessage(cMessage *msg) {
 
@@ -227,7 +236,7 @@ void Manager::handleMessage(cMessage *msg) {
 		tkEnvUpdateNetwork();
 
 		// Self-message
-		scheduleAt(simTime().dbl()+tkEnvRefreshRate, msg);
+		scheduleAt(simTime().dbl() + tkEnvRefreshRate, msg);
 
 	}
 

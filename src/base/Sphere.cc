@@ -45,7 +45,7 @@ void Sphere::setManager(string param) {
 			->getSubmodule(managerName->stringValue());
 
 	} catch (cException *e) {
-		// TODO stop simulation
+// TODO stop simulation
 	}
 
 }
@@ -57,8 +57,8 @@ void Sphere::tkEnvDrawShape() {
 
 	std::stringstream buffer;
 
-	// We will use the shape drawing tool to draw a circle around the particle
-	// center instead of using
+// We will use the shape drawing tool to draw a circle around the particle
+// center instead of using
 	buffer << 2*getRadius();
 	getDisplayString().setTagArg("b", 0, buffer.str().c_str());
 	getDisplayString().setTagArg("b", 1, buffer.str().c_str());
@@ -77,7 +77,7 @@ void Sphere::tkEnvUpdatePosition() {
 
 	std::stringstream buffer;
 
-	// Set position string for tkenv
+// Set position string for tkenv
 	buffer << getY();
 
 	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
@@ -98,7 +98,7 @@ void Sphere::tkEnvUpdatePosition(double t) {
 
 	std::stringstream buffer;
 
-	// Set position string for tkenv
+// Set position string for tkenv
 	buffer << getY() + getVy()*(t-getLastCollisionTime());
 
 	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
@@ -112,57 +112,133 @@ void Sphere::tkEnvUpdatePosition(double t) {
 }
 
 /*
- * Generates a cMessage object for the next event. That event can be a transfer
- * event, a particle-particle collision event or a wall bounce event.
+ * Initialize the event queue by computing the first event for the particle.
+ * This function is called by the manager in order to initialize the event
+ * queue.
  */
-void Sphere::nextEventTime() {  // TODO rethink this function
+void Sphere::firstEventTime() {
 
-    Enter_Method_Silent(); // Methods called from other modules must have this macro
+// Methods called from other modules must have this macro
+	Enter_Method_Silent();
 
-    double transferTime, 
-    	wallCollisionTime;
+	transferMsg = new MobilityMessage("transfer", EV_TRANSFER);
+	collisionMsg = new MobilityMessage("collision", EV_COLLISION);
+	wallCollisionMsg =  new MobilityMessage("collision", EV_WALLCOLLISION);
 
-    MobilityMessage *transferMsg,
-		*collisionMsg, 
-		*wallCollisionMsg;
+// Compute the first collision and the first transfer
+	computeTransferTime();
+	
+	if (transferMsg->getEventTime() > 0) {
+		scheduleAt(transferMsg->getEventTime(), transferMsg);
+	}
 
-	// Step 1. Get the next space cell transfer time
-	transferMsg = computeTransferTime();
-	transferTime = transferMsg->getEventTime();
+// Schedule only the first event 
+	computeWallCollisionTime();
+	computeCollisionTime();
 
-	// Step 2. Get the next collision time with the surrounding particles or 
-	// walls. We only consider collisions with the particles in the 
-	// neighbouring space cells (9+9+(8+1) cells)
-	// collisionMsg = computeCollisionTime();
+	if (0 < collisionMsg->getEventTime() && 
+		collisionMsg->getEventTime() < wallCollisionMsg->getEventTime()) {
 
-	// Step 3. Get the next wall collision time
-	wallCollisionMsg = computeWallCollisionTime();
-	wallCollisionTime = wallCollisionMsg->getEventTime();
+		scheduleAt(collisionMsg->getEventTime(), collisionMsg);
 
-	if (0 <= transferTime && transferTime < wallCollisionTime) {
+	} else if (0 < wallCollisionMsg->getEventTime() &&
+		wallCollisionMsg->getEventTime() < collisionMsg->getEventTime()) {
 
-		scheduleAt(transferTime, transferMsg);
-		delete wallCollisionMsg;
+		scheduleAt(wallCollisionMsg->getEventTime(), wallCollisionMsg);
 
-	} else if (0 <= wallCollisionTime && wallCollisionTime <= transferTime) {
-
-		scheduleAt(wallCollisionTime, wallCollisionMsg);
-		delete transferMsg;
-
+	} else {
+// TODO Something that I didn't think of just happened
 	}
 
 }
 
 /*
+ * Generates a cMessage object for the next event. That event can be a transfer
+ * event, a particle-particle collision event or a wall bounce event.
+ *
+ * @param {Integer} kind
+ */
+void Sphere::nextEventTime() {
+
+// Methods called from other modules must have this macro
+	Enter_Method_Silent();
+
+// Steps 3, 4 and 5.
+	double transferTime,
+		collisionTime,
+		wallCollisionTime,
+		partnerCollisionTime;
+
+// Step 3. Get the next space cell transfer time
+	if (transferMsg->isScheduled()) cancelEvent(transferMsg);
+	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
+	if (wallCollisionMsg->isScheduled()) cancelEvent(wallCollisionMsg);
+
+	computeTransferTime();
+	transferTime = transferMsg->getEventTime();
+
+	computeCollisionTime();
+	collisionTime = collisionMsg->getEventTime();
+
+	computeWallCollisionTime();
+	wallCollisionTime = wallCollisionMsg->getEventTime();
+
+// Step 4. Get the next collision time with the surrounding particles or
+// walls. We only consider collisions with the particles in the neighbouring 
+// space cells (9+9+(8+1) cells).
+
+	if (collisionTime > 0) {
+
+		if (collisionTime < wallCollisionTime || wallCollisionTime < 0) {
+// Step 5. Adjust the position of the event and its new partner's event
+			partnerCollisionTime = collisionMsg->getPartner()
+				->scheduledCollisionTime();
+
+			if (0 < partnerCollisionTime &&
+				partnerCollisionTime < collisionTime) {
+// We have an EV_CHECK
+				collisionMsg->setKind(EV_CHECK);
+				scheduleAt(collisionTime, collisionMsg);
+
+			} else if (0 < partnerCollisionTime &&
+				partnerCollisionTime == collisionTime) {
+// The same collision time has been calculated by both particles. Our partner
+// will update our status for us.
+				collisionMsg->setKind(EV_CHECK);
+				scheduleAt(collisionTime, collisionMsg);
+
+			} else {
+// Tell the partner to update its event
+				scheduleAt(collisionTime, collisionMsg);
+				collisionMsg->getPartner()->nextEventTime();
+
+			}
+
+		}
+
+	} else {
+
+		if (wallCollisionTime > 0) {
+			scheduleAt(wallCollisionTime, wallCollisionMsg);
+		}
+
+	}
+
+	if (transferTime > 0) {
+		scheduleAt(transferTime, transferMsg);
+	}
+
+// Back to step 1 (handleMessage function).
+}
+
+/*
  * Computes the transfer time of the particle with the sides of its space cell
  * and returns the smallest one.
- * 
- * @return {double}: transfer time
  */
-MobilityMessage * Sphere::computeTransferTime() {
+void Sphere::computeTransferTime() {
 
-	int i, j, k, n, r;			// Indexes to access the current space cell
-	int Nx, Ny, Nz;				// Number of space cells (or divisions) in each axis
+	int i, j, k, n;			// Indexes to access the current space cell
+	int Nx, Ny, Nz;			// Number of space cells (or divisions) in each axis
 
 	int counter;
 
@@ -180,6 +256,7 @@ MobilityMessage * Sphere::computeTransferTime() {
 	};
 
 	double x, y, z, vx, vy, vz;	// Particle position and velocity
+
 	double spaceCellSize,
 		transferTime,
 		sTime,
@@ -191,8 +268,6 @@ MobilityMessage * Sphere::computeTransferTime() {
 
 	vector<int> sides, hits;
 	vector<int>::const_iterator side, hit;
-
-	MobilityMessage * msg = new MobilityMessage("TransferMessage", EV_TRANSFER);
 
 	transferTime = -1;
 	sTime = simTime().dbl();
@@ -206,47 +281,33 @@ MobilityMessage * Sphere::computeTransferTime() {
 
 	n = getSpaceCell();
 
-	x = getX();
-	y = getY();
-	z = getZ();
-	vx = getVx();
-	vy = getVy();
-	vz = getVz();
+	x = getX(); y = getY(); z = getZ();
+	vx = getVx(); vy = getVy(); vz = getVz();
 
 	x += vx*(sTime - collisionTime);
 	y += vy*(sTime - collisionTime);
 	z += vz*(sTime - collisionTime);
 
-	// i, j and k are the indexes of the space cell for each axis
+// i, j and k are the indexes of the space cell for each axis
 	i = n / (Nz*Ny);
-	r = n % (Nz*Ny);
-	j = r / Nz;
-	k = r % Nz;
+	j = (n % (Nz*Ny)) / Nz;
+	k = (n % (Nz*Ny)) % Nz;
 
-	// In a space cell we have 6 possible sides but since we know the direction
-	// of the particle we need to check only 3 (at most).
-	if (vx > 0) {
-		sides.push_back(1);
-	} else if (vx < 0) {
-		sides.push_back(4);
-	}
+// In a space cell we have 6 possible sides but since we know the direction of
+// the particle we need to check only 3 (at most).
+	if (vx > 0) sides.push_back(1);
+	else if (vx < 0) sides.push_back(4);
 
-	if (vy > 0) {
-		sides.push_back(3);
-	} else if (vy < 0) {
-		sides.push_back(2);
-	}
+	if (vy > 0) sides.push_back(3);
+	else if (vy < 0) sides.push_back(2);
 
-	if (vz > 0) {
-		sides.push_back(0);
-	} else if (vz < 0) {
-		sides.push_back(5);
-	}
+	if (vz > 0) sides.push_back(0);
+	else if (vz < 0) sides.push_back(5);
 
 	counter = 0;
 
 	for (side = sides.begin(); side != sides.end(); ++side) {
-		// Select 3 points for each side following the previous rules
+// Select 3 points for each side following the previous rules (sp[])
 		P.x = (i + sp[0*6 + *side])*spaceCellSize;
 		P.y = (j + sp[1*6 + *side])*spaceCellSize;
 		P.z = (k + sp[2*6 + *side])*spaceCellSize;
@@ -267,20 +328,18 @@ MobilityMessage * Sphere::computeTransferTime() {
 		N.y = V.z * W.x - V.x * W.z;
 		N.z = V.x * W.y - V.y * W.x;
 
-		// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
-		// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and find
-		// for t.
+// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
+// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and solve for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 		
-		if (temp != 0) {
+		if (temp*temp > 0) {
 
 			temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
 
-			// We found a solution :)
-			// 
-			// "t" is the amount of time the particle takes to go from its
-			// last collision point to the space cell side where it is bounded 
-			// now.
+// We found a solution :)
+// 
+// "temp" is the amount of time the particle takes to go from its last
+// collision point to the space cell side where it is bounded now.
 			if (counter == 0) {
 
 				transferTime = temp;
@@ -291,37 +350,41 @@ MobilityMessage * Sphere::computeTransferTime() {
 			} else {
 
 				if (temp == 0) {
-					// The particle is on a space cell side and needs to update its
-					// space cell value and recalculate the transfer time
+// The particle is on a space cell side and needs to update its space cell
+// value and recalculate the transfer time.
 					transferTime = temp;
 					hits.push_back(*side);
 					break;
 
-				} else if (temp > 0 && temp < transferTime) {
+				} else if (0 < temp && temp < transferTime) {
 
 					transferTime = temp;
 
 					hits.clear();
 					hits.push_back(*side);
 
-				} else if (temp > 0 && temp == transferTime) {
-					// The particle hit two or more sides at the same time
+				} else if (0 < temp && temp == transferTime) {
+// The particle hit two or more sides at the same time
 					hits.push_back(*side);
 
 				}
 
 			}
 
-		} else {
-			// Line and plane doesn't intersect
-		}
+			counter++;
 
-		counter++;
+		} else {
+// Line and plane doesn't intersect
+		}
 
 	}
 
-	msg->setEventTime(sTime + transferTime);
-	msg->setPrevSpaceCell(getSpaceCell());
+	if (transferTime > 0) {
+		transferTime += sTime;
+	}
+
+	transferMsg->setEventTime(transferTime);
+	transferMsg->setPrevSpaceCell(getSpaceCell());
 
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
@@ -334,33 +397,32 @@ MobilityMessage * Sphere::computeTransferTime() {
 
 	}
 
-	msg->setNextSpaceCell(i*Nz*Ny + j*Nz + k);
-
-	return msg;
+	transferMsg->setNextSpaceCell(i*Nz*Ny + j*Nz + k);
 
 }
 
 /*
  * Computes the collision time with the neighbouring particles and returns the
  * smallest one.
- * 
- * @return {double}: collision time
  */
-MobilityMessage * Sphere::computeCollisionTime() {
+void Sphere::computeCollisionTime() {
 
-	int a, b, c;				// Nested "for" loops
+	int a, b, c;			// Nested "for" loops
 
-	int i, j, k, N, n, r;		// Indexes to access the current space cell
-	int Nx, Ny, Nz;				// Number of space cells (or divisions) in each axis
+	int counter;
 
-	double collisionTime, t;
+	int i, j, k, N, n;		// Indexes to access the current space cell
+	int Nx, Ny, Nz;			// Number of space cells (or divisions) in each axis
+
+	double collisionTime, sTime, temp;
 
 	list<Particle *> particles;
 	list<Particle *>::const_iterator p;
 
-	MobilityMessage * msg;
+	Particle * partner; // The collision partner
 
 	collisionTime = -1;
+	sTime = simTime().dbl();
 
 	Nx = manager->getNumberOfSpaceCellsX();
 	Ny = manager->getNumberOfSpaceCellsY();
@@ -368,17 +430,18 @@ MobilityMessage * Sphere::computeCollisionTime() {
 
 	n = getSpaceCell();
 
-	// i, j and k are the indexes of the space cell for each axis
+// i, j and k are the indexes of the space cell for each axis
 	i = n / (Nz*Ny);
-	r = n % (Nz*Ny);
-	j = r / Nz;
-	k = r % Nz;
+	j = (n % (Nz*Ny)) / Nz;
+	k = (n % (Nz*Ny)) % Nz;
+
+	counter = 0;
 
 	for (a = -1; a <= 1; a++) {
 		for (b = -1; b <= 1; b++) {
 			for (c = -1; c <= 1; c++) {
 
-				// The neighbour cell must be contained in the simulation space
+// The neighbour cell must be contained in the simulation space
 				if (0 <= i+a && i+a < Nx && 
 					0 <= j+b && j+b < Ny && 
 					0 <= k+c && k+c < Nz) {
@@ -387,13 +450,34 @@ MobilityMessage * Sphere::computeCollisionTime() {
 					particles = manager->getSpaceCellParticles(N);
 
 					for (p = particles.begin(); p != particles.end(); ++p) {
-						// Solve particle to particle problem
-						t = solveCollisionTime(*p);
 
-						if (collisionTime > t) {
-							collisionTime = t;
-							// candidate = (*p);
+						if (*p == this) {
+							break;
 						}
+
+// Solve particle to particle collision
+						temp = solveCollisionTime(*p);
+
+						if (counter == 0) {
+
+							if (sTime <= temp) {
+								collisionTime = temp;
+								partner = (*p);
+							}
+
+							counter++;
+
+						} else {
+
+							if (sTime <= temp  && temp < collisionTime) {
+								collisionTime = temp;
+								partner = (*p);
+							}
+
+							counter++;
+
+						}
+						
 					}
 				}
 
@@ -401,14 +485,16 @@ MobilityMessage * Sphere::computeCollisionTime() {
 		}
 	}
 
-	return msg;
+	collisionMsg->setKind(EV_COLLISION);
+	collisionMsg->setEventTime(collisionTime);
+	collisionMsg->setPartner(partner);
 
 }
 
 /*
  *
  */
-MobilityMessage * Sphere::computeWallCollisionTime() {
+void Sphere::computeWallCollisionTime() {
 
 	int counter;
 
@@ -426,18 +512,16 @@ MobilityMessage * Sphere::computeWallCollisionTime() {
 	};
 
 	double Sx, Sy, Sz;
-	double x, y, z, vx, vy, vz;	// Particle position and velocity
+	double rad, x, y, z, vx, vy, vz, vm; // Particle radius, position and velocity
 	double wallCollisionTime,
-	    lastCollisionTime,
-	    temp;
+		lastCollisionTime,
+		temp;
 
 	point_t P, Q, R;
 	vect_t V, W, N;
 
 	vector<int> sides, hits;
 	vector<int>::const_iterator side, hit;
-
-	MobilityMessage * msg = new MobilityMessage("WallCollision", EV_WALLCOLLISION);
 
 	wallCollisionTime = -1;
 	lastCollisionTime = getLastCollisionTime();
@@ -446,37 +530,28 @@ MobilityMessage * Sphere::computeWallCollisionTime() {
 	Sy = manager->getSpaceSizeY();
 	Sz = manager->getSpaceSizeZ();
 
-	x = getX();
-	y = getY();
-	z = getZ();
-	vx = getVx();
-	vy = getVy();
-	vz = getVz();
+	rad = getRadius();
 
-	// In the simulation space we have 6 possible sides but since we know the 
-	// direction of the particle we need to check only 3 (at most).
-	if (vx > 0) {
-		sides.push_back(1);
-	} else if (vx < 0) {
-		sides.push_back(4);
-	}
+	x = getX(); y = getY(); z = getZ();
+	vx = getVx(); vy = getVy(); vz = getVz();
 
-	if (vy > 0) {
-		sides.push_back(3);
-	} else if (vy < 0) {
-		sides.push_back(2);
-	}
+	vm = sqrt(vx*vx + vy*vy + vz*vz);
 
-	if (vz > 0) {
-		sides.push_back(0);
-	} else if (vz < 0) {
-		sides.push_back(5);
-	}
+// In the simulation space we have 6 possible sides but since we know the 
+// direction of the particle we need to check only 3 (at most).
+	if (vx > 0) sides.push_back(1);
+	else if (vx < 0) sides.push_back(4);
+
+	if (vy > 0) sides.push_back(3);
+	else if (vy < 0) sides.push_back(2);
+
+	if (vz > 0) sides.push_back(0);
+	else if (vz < 0) sides.push_back(5);
 
 	counter = 0;
 
 	for (side = sides.begin(); side != sides.end(); ++side) {
-		// Select 3 points for each side following the previous rules
+// Select 3 points for each side following the previous rules
 		P.x = sp[0*6 + *side]*Sx;
 		P.y = sp[1*6 + *side]*Sy;
 		P.z = sp[2*6 + *side]*Sz;
@@ -492,25 +567,25 @@ MobilityMessage * Sphere::computeWallCollisionTime() {
 		V.x = Q.x - P.x; V.y = Q.y - P.y; V.z = Q.z - P.z;
 		W.x = R.x - P.x; W.y = R.y - P.y; W.z = R.z - P.z;
 
-		// Cross product
+// Cross product
 		N.x = V.y * W.z - V.z * W.y;
 		N.y = V.z * W.x - V.x * W.z;
 		N.z = V.x * W.y - V.y * W.x;
 
-		// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
-		// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and find
-		// for t.
+// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
+// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and find for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 
-		if (temp != 0) {
+		if (temp*temp > 0) {
 
-			temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
+			temp = (N.x*(P.x - x - rad*vx/vm) +
+				N.y*(P.y - y - rad*vy/vm) +
+				N.z*(P.z - z - rad*vz/vm))/temp;
 
-			// We found a solution :)
-			// 
-			// "t" is the amount of time the particle takes to go from its
-			// last collision point to the space cell side where it is bounded 
-			// now.
+// We found a solution :)
+// 
+// "temp" is the amount of time the particle takes to go from its last 
+// collision point to the space cell side where it is bounded now.
 			if (counter == 0) {
 				// First
 				wallCollisionTime = temp;
@@ -526,7 +601,7 @@ MobilityMessage * Sphere::computeWallCollisionTime() {
 					hits.push_back(*side);
 
 				} else if (temp > 0 && temp == wallCollisionTime) {
-					// The particle hit two or more sides at the same time
+// The particle hit two or more sides at the same time
 					hits.push_back(*side);
 
 				}
@@ -534,29 +609,31 @@ MobilityMessage * Sphere::computeWallCollisionTime() {
 			}
 
 		} else {
-			// Line and plane doesn't intersect
+// Line and plane doesn't intersect
 		}
 
 		counter++;
 
 	}
 
-	// Compute the future values
-	msg->setEventTime(wallCollisionTime + lastCollisionTime);
+	wallCollisionMsg->setKind(EV_WALLCOLLISION);
 
-	// Update particle position
-	msg->setX(x + vx*wallCollisionTime);
-	msg->setY(y + vy*wallCollisionTime);
-	msg->setZ(z + vz*wallCollisionTime);
+// Compute the future values
+	wallCollisionMsg->setEventTime(wallCollisionTime + lastCollisionTime);
 
-	// Update velocity vector
+// Update particle position
+	wallCollisionMsg->setX(x + vx*wallCollisionTime);
+	wallCollisionMsg->setY(y + vy*wallCollisionTime);
+	wallCollisionMsg->setZ(z + vz*wallCollisionTime);
+
+// Update velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
-		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
-    	msg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
-    	msg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
-	}
 
-	return msg;
+		wallCollisionMsg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
+		wallCollisionMsg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
+		wallCollisionMsg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
+
+	}
 
 }
 
@@ -614,6 +691,21 @@ double Sphere::solveCollisionTime(Particle *p) {
 }
 
 /*
+ * Returns the eventTime from the scheduled collision event.
+ *
+ * @return {double} the event time 
+ */
+double Sphere::scheduledCollisionTime() {
+
+	if (collisionMsg->isScheduled()) {
+		return collisionMsg->getEventTime();
+	} else {
+		return -1;
+	}
+
+}
+
+/*
  * Tells the manager to update the space cell position for the particle.
  *
  * @param {MobilityMessage} *msg
@@ -635,6 +727,157 @@ void Sphere::updateStateAfterTransfer(MobilityMessage *msg) {
  *
  */
 void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
+
+	double tc;
+	double v1m, v2m;
+	double e1m, e2m;
+	double m1, m2;
+	double th, temp;
+
+	point_t C1, C2, P, Q;
+
+	vect_t v1, v2;      // Velocity vectors for particle 1 and 2
+	vect_t e1, e2, e3;  // Orthonormal basis
+	vect_t v1e, v2e;    // Velocity of particles 1 and 2 for the basis found
+
+	Particle * p;
+
+	tc = msg->getEventTime();
+	p = msg->getPartner();
+
+	m1 = getMass();
+	m2 = p->getMass();
+
+	v1.x = getVx();
+	v1.y = getVy();
+	v1.z = getVz();
+
+	v1m = sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z);
+
+	v2.x = p->getVx();
+	v2.y = p->getVy();
+	v2.z = p->getVz();
+
+	v2m = sqrt(v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+
+// Compute the particle center at the collision time.
+	C1.x = getX() + v1.x*(tc-getLastCollisionTime());
+	C1.y = getY() + v1.y*(tc-getLastCollisionTime());
+	C1.z = getZ() + v1.z*(tc-getLastCollisionTime());
+
+// Compute the partner center at the collision time.
+	C2.x = p->getX() + v2.x*(tc - p->getLastCollisionTime());
+	C2.y = p->getY() + v2.y*(tc - p->getLastCollisionTime());
+	C2.z = p->getZ() + v2.z*(tc - p->getLastCollisionTime());
+
+// Find an orthonormal basis
+	e1.x = C2.x - C1.x;
+	e1.y = C2.y - C1.y;
+	e1.z = C2.z - C1.z;
+
+	e1m = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
+	e1.x /= e1m;
+	e1.y /= e1m;
+	e1.z /= e1m;
+
+// Find the collision point
+	P.x = C1.x + getRadius()*e1.x;
+	P.y = C1.y + getRadius()*e1.y;
+	P.z = C1.z + getRadius()*e1.z;
+
+// Now that we have the collision plane: A(x-x0) + B(y-y0) + C(z-z0) = 0
+// e1.x*(x-P.x) + e1.y*(y-P.y) + e1.z*(z-P.z) = 0, we can find one point
+// contained in that plane and form an orthonormal basis.
+
+	if (e1.x != 0 && (e1.y != 0 || e1.z != 0)) {
+		Q.x = (e1.y*P.y + e1.z*P.z)/e1.x + P.x;
+		Q.y = 0;
+		Q.z = 0;
+	} else if (e1.y != 0 && (e1.x != 0 || e1.z != 0)) {
+		Q.x = 0;
+		Q.y = (e1.x*P.x + e1.z*P.z)/e1.y + P.y;
+		Q.z = 0;
+	} else if (e1.z != 0 && (e1.x != 0 || e1.y != 0)) {
+		Q.x = 0;
+		Q.y = 0;
+		Q.z = (e1.x*P.x + e1.y*P.y)/e1.z + P.z;
+	} else {
+// TODO something went wrong ... particles are at the same point
+	}
+
+// Find the PQ vector
+	e2.x = Q.x - P.x;
+	e2.y = Q.y - P.y;
+	e2.z = Q.z - P.z;
+
+	e2m = sqrt(e2.x*e2.x + e2.y*e2.y + e2.z*e2.z);
+
+	e2.x /= e2m;
+	e2.y /= e2m;
+	e2.z /= e2m;
+
+	e3.x = e1.y*e2.z - e1.z*e2.y;
+	e3.y = e1.z*e2.x - e1.x*e2.z;
+	e3.z = e1.x*e2.y - e1.y*e2.x;
+
+// Find the velocity vectors in the new basis
+	if (v1m > 0) {
+		th = acos((v1.x*e1.x + v1.y*e1.y + v1.z*e1.z)/v1m);
+		v1e.x = v1m*cos(th);
+
+		th = acos((v1.x*e2.x + v1.y*e2.y + v1.z*e2.z)/v1m);
+		v1e.y = v1m*cos(th);
+
+		th = acos((v1.x*e3.x + v1.y*e3.y + v1.z*e3.z)/v1m);
+		v1e.z = v1m*cos(th);
+	} else {
+		v1e.x = 0;
+		v1e.y = 0;
+		v1e.z = 0;
+	}
+
+	if (v2m > 0) {
+		th = acos((v2.x*e1.x + v2.y*e1.y + v2.z*e1.z)/v2m);
+		v2e.x = v2m*cos(th);
+
+		th = acos((v2.x*e2.x + v2.y*e2.y + v2.z*e2.z)/v2m);
+		v2e.y = v2m*cos(th);
+
+		th = acos((v2.x*e3.x + v2.y*e3.y + v2.z*e3.z)/v2m);
+		v2e.z = v2m*cos(th);
+	} else {
+		v2e.x = 0;
+		v2e.y = 0;
+		v2e.z = 0;
+	}
+
+// Solve the exchange of momentum between particles. Note that only the normal
+// velocity component changes its value.
+	temp = ((m1-m2)*v1e.x + 2*m2*v2e.x)/(m1 + m2);
+	v2e.x = ((m2-m1)*v2e.x + 2*m1*v1e.x)/(m1 + m2);
+	v1e.x = temp;
+
+// Revert the velocity vectors and set the new velocity
+	setVx(v1e.x*e1.x + v1e.y*e2.x + v1e.z*e3.x);
+	setVy(v1e.x*e1.y + v1e.y*e2.y + v1e.z*e3.y);
+	setVz(v1e.x*e1.z + v1e.y*e2.z + v1e.z*e3.z);
+
+	p->setVx(v2e.x*e1.x + v2e.y*e2.x + v2e.z*e3.x);
+	p->setVy(v2e.x*e1.y + v2e.y*e2.y + v2e.z*e3.y);
+	p->setVz(v2e.x*e1.z + v2e.y*e2.z + v2e.z*e3.z);
+
+// Update the particles position
+	setX(C1.x);
+	setY(C1.y);
+	setZ(C1.z);
+
+	p->setX(C2.x);
+	p->setY(C2.y);
+	p->setZ(C2.z);
+
+// Update the last collision times
+	setLastCollisionTime(tc);
+	p->setLastCollisionTime(tc);
 
 }
 

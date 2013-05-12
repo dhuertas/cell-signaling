@@ -29,6 +29,8 @@ simple Cell {
 
 		double radius;		// Radius of the cell
 
+		double mass;
+
 	gates:
 		input in;
 		output out;
@@ -47,6 +49,8 @@ simple Molecule {
 		double vx;			// x coordinate initial velocity
 		double vy;			// y coordinate initial velocity
 		double vz;			// z coordinate initial Velocity
+
+		double mass;
 
 	gates:
 		input in;

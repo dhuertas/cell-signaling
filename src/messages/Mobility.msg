@@ -7,7 +7,7 @@ class noncobject ParticlePtr;
 
 message MobilityMessage {
 
-	int eventType;
+	int eventType;			// Not in use
 	int prevSpaceCell;
 	int nextSpaceCell;
 

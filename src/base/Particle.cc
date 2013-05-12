@@ -3,12 +3,12 @@
 using namespace std;
 
 /*
- *
+ * Constructor.
  */
 Particle::Particle() {}
 
 /*
- *
+ * Constructor overload.
  */
 Particle::Particle(
 	double x,

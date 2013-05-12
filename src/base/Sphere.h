@@ -16,6 +16,10 @@ class Sphere : public Circle, public cSimpleModule {
 
 		Manager *manager;
 
+		MobilityMessage *transferMsg;
+		MobilityMessage *collisionMsg;
+		MobilityMessage *wallCollisionMsg;
+	
 	protected:
 
 	public:
@@ -23,13 +27,17 @@ class Sphere : public Circle, public cSimpleModule {
 		Sphere() : Circle() {};
 		Sphere(double, double, double, double , double, double, double, double);
 
+		// Initialize the event queue
+		void firstEventTime(void);
 		// Find the next event time for a given particle
 		void nextEventTime();
 
-		MobilityMessage * computeTransferTime(void);
-		MobilityMessage * computeCollisionTime(void);
-		MobilityMessage * computeWallCollisionTime(void);
+		void computeTransferTime(void);
+		void computeCollisionTime(void);
+		void computeWallCollisionTime(void);
+
 		double solveCollisionTime(Particle *);
+		double scheduledCollisionTime(void);
 
 		void updateStateAfterTransfer(MobilityMessage *);
 		void updateStateAfterCollision(MobilityMessage *);

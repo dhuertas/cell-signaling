@@ -31,6 +31,7 @@ void Cell::initialize(int stage) {
 
 		// Cell radius
 		setRadius(par("radius").doubleValue());
+		setMass(par("radius").doubleValue());
 
 		lastCollisionTime = 0;
 
@@ -64,6 +65,43 @@ int Cell::numInitStages() const {
  * @param msg pointer to a cMessage object
  */
 void Cell::handleMessage(cMessage *msg) {
+
+    int kind = msg->getKind();
+
+// Step 2. Handle the event
+    if (kind == EV_TRANSFER) {
+        // Update the molecule space cell
+        updateStateAfterTransfer((MobilityMessage *)msg);
+        nextEventTime();
+
+    } else if (kind == EV_WALLCOLLISION) {
+        // Update the molecule data
+        updateStateAfterWallCollision((MobilityMessage *)msg);
+        nextEventTime();
+
+    } else if (kind == EV_COLLISION) {
+
+        updateStateAfterCollision((MobilityMessage *)msg);
+        nextEventTime();
+
+    } else if (kind == EV_CHECK) {
+// TODO our collision time has turned invalid. We must check again for the next
+// event.
+
+// Two cases are possible:
+// 1. We obtained an expected collision time, but the partner has a smaller
+// collision time. Therefore we can calculate next collision at the expected
+// collision time.
+//
+// 2. Someone else has forced us to recompute our collision time since it
+// expects a collision. If we have a scheduled collision event, we must cancel
+// it telling the partner to check again for its next collision time (thus
+// going to case 1).
+        nextEventTime();
+
+    } else {
+
+    }
 
 }
 

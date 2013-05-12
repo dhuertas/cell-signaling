@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgc 4.2 from Mobility.msg.
+// Generated file, do not edit! Created by opp_msgc 4.2 from src/messages/Mobility.msg.
 //
 
 #ifndef _MOBILITY_M_H_
@@ -21,11 +21,11 @@
 
 
 /**
- * Class generated from <tt>Mobility.msg</tt> by opp_msgc.
+ * Class generated from <tt>src/messages/Mobility.msg</tt> by opp_msgc.
  * <pre>
  * message MobilityMessage {
  * 
- * 	int eventType;
+ * 	int eventType;			
  * 	int prevSpaceCell;
  * 	int nextSpaceCell;
  * 
