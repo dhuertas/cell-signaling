@@ -186,7 +186,6 @@ void Sphere::nextEventTime() {
 // Step 4. Get the next collision time with the surrounding particles or
 // walls. We only consider collisions with the particles in the neighbouring 
 // space cells (9+9+(8+1) cells).
-
 	if (collisionTime > 0) {
 
 		if (collisionTime < wallCollisionTime || wallCollisionTime < 0) {
@@ -323,7 +322,7 @@ void Sphere::computeTransferTime() {
 		V.x = Q.x - P.x; V.y = Q.y - P.y; V.z = Q.z - P.z;
 		W.x = R.x - P.x; W.y = R.y - P.y; W.z = R.z - P.z;
 
-		// Cross product
+// Cross product to find the Normal vector
 		N.x = V.y * W.z - V.z * W.y;
 		N.y = V.z * W.x - V.x * W.z;
 		N.z = V.x * W.y - V.y * W.x;
@@ -331,7 +330,8 @@ void Sphere::computeTransferTime() {
 // This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
 // Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and solve for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
-		
+
+// Check that temp really is greater than 0 ...
 		if (temp*temp > 0) {
 
 			temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
@@ -339,7 +339,7 @@ void Sphere::computeTransferTime() {
 // We found a solution :)
 // 
 // "temp" is the amount of time the particle takes to go from its last
-// collision point to the space cell side where it is bounded now.
+// event point to the space cell side where it is bounded now.
 			if (counter == 0) {
 
 				transferTime = temp;
@@ -402,7 +402,7 @@ void Sphere::computeTransferTime() {
 }
 
 /*
- * Computes the collision time with the neighbouring particles and returns the
+ * Computes the collision time with the neighboring particles and returns the
  * smallest one.
  */
 void Sphere::computeCollisionTime() {
@@ -441,7 +441,7 @@ void Sphere::computeCollisionTime() {
 		for (b = -1; b <= 1; b++) {
 			for (c = -1; c <= 1; c++) {
 
-// The neighbour cell must be contained in the simulation space
+// The neighbor cell must be contained in the simulation space
 				if (0 <= i+a && i+a < Nx && 
 					0 <= j+b && j+b < Ny && 
 					0 <= k+c && k+c < Nz) {
@@ -465,8 +465,6 @@ void Sphere::computeCollisionTime() {
 								partner = (*p);
 							}
 
-							counter++;
-
 						} else {
 
 							if (sTime <= temp  && temp < collisionTime) {
@@ -474,10 +472,10 @@ void Sphere::computeCollisionTime() {
 								partner = (*p);
 							}
 
-							counter++;
-
 						}
 						
+						counter++;
+
 					}
 				}
 
@@ -567,15 +565,20 @@ void Sphere::computeWallCollisionTime() {
 		V.x = Q.x - P.x; V.y = Q.y - P.y; V.z = Q.z - P.z;
 		W.x = R.x - P.x; W.y = R.y - P.y; W.z = R.z - P.z;
 
-// Cross product
+// Cross product to find the Normal vector
 		N.x = V.y * W.z - V.z * W.y;
 		N.y = V.z * W.x - V.x * W.z;
 		N.z = V.x * W.y - V.y * W.x;
 
 // This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
-// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and find for t.
+// Substitute for:
+//     x = xi + vx*t + R*vnx, vnx = vx/sqrt(vx2+vy2+vz2), R = radius
+//     y = yi + vy*t + R*vny, vny = vy/sqrt(vx2+vy2+vz2), "
+//     z = zi + vz*t + R*vnz, vnz = vz/sqrt(vx2+vy2+vz2), "
+// and find for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 
+// Check that temp really is greater than 0 ...
 		if (temp*temp > 0) {
 
 			temp = (N.x*(P.x - x - rad*vx/vm) +
@@ -585,7 +588,7 @@ void Sphere::computeWallCollisionTime() {
 // We found a solution :)
 // 
 // "temp" is the amount of time the particle takes to go from its last 
-// collision point to the space cell side where it is bounded now.
+// event point to the space cell side where it is bounded now.
 			if (counter == 0) {
 				// First
 				wallCollisionTime = temp;
@@ -621,12 +624,12 @@ void Sphere::computeWallCollisionTime() {
 // Compute the future values
 	wallCollisionMsg->setEventTime(wallCollisionTime + lastCollisionTime);
 
-// Update particle position
+// The future particle position
 	wallCollisionMsg->setX(x + vx*wallCollisionTime);
 	wallCollisionMsg->setY(y + vy*wallCollisionTime);
 	wallCollisionMsg->setZ(z + vz*wallCollisionTime);
 
-// Update velocity vector
+// The future velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
 		wallCollisionMsg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
@@ -646,16 +649,16 @@ void Sphere::computeWallCollisionTime() {
  */
 double Sphere::solveCollisionTime(Particle *p) {
 
-	// Distance between centers A and B when t = tc (time of collision):
-	//                 ______________________________________________
-	//           \    / ( Ax + Avx*(tc-ta) - (Bx + Bvx*(tc-tb) )² + |
-	//  D(A, B) = \  /  ( Ay + Avy*(tc-ta) - (By + Bvy*(tc-tb) )² +   = Ra + Rb
-	//             \/   ( Az + Avz*(tc-ta) - (Bz + Bvz*(tc-tb) )²
-	//
-	// ta: when the previous collision take place for particle A
-	// tb: same for particle B
+// Distance between centers A and B when t = tc (time of collision):
+//                 ______________________________________________
+//           \    / ( Ax + Avx*(tc-ta) - (Bx + Bvx*(tc-tb) )² + |
+//  D(A, B) = \  /  ( Ay + Avy*(tc-ta) - (By + Bvy*(tc-tb) )² +   = Ra + Rb
+//             \/   ( Az + Avz*(tc-ta) - (Bz + Bvz*(tc-tb) )²
+//
+// ta: when the previous collision take place for particle A
+// tb: same for particle B
 
-	// (dxi + dvx*tc)² + (dyi + dvy*tc)² + (dyi + dvy*tc)²= (A.r + B.r)²
+// (dxi + dvx*tc)² + (dyi + dvy*tc)² + (dyi + dvy*tc)²= (A.r + B.r)²
 
 	double ta = getLastCollisionTime();
 	double tb = p->getLastCollisionTime();
@@ -698,9 +701,17 @@ double Sphere::solveCollisionTime(Particle *p) {
 double Sphere::scheduledCollisionTime() {
 
 	if (collisionMsg->isScheduled()) {
+
 		return collisionMsg->getEventTime();
+
+	} else if (wallCollisionMsg->isScheduled()) {
+
+	    return wallCollisionMsg->getEventTime();
+
 	} else {
-		return -1;
+
+	    return -1;
+
 	}
 
 }
@@ -708,7 +719,7 @@ double Sphere::scheduledCollisionTime() {
 /*
  * Tells the manager to update the space cell position for the particle.
  *
- * @param {MobilityMessage} *msg
+ * @param {MobilityMessage *} msg
  */
 void Sphere::updateStateAfterTransfer(MobilityMessage *msg) {
 
@@ -724,7 +735,10 @@ void Sphere::updateStateAfterTransfer(MobilityMessage *msg) {
 }
 
 /*
+ * Updates the particle position, velocity and the last collision time values
+ * and does the same for the partner particle.
  *
+ * @param {MobilityMessage *} msg
  */
 void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
@@ -790,17 +804,23 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 // contained in that plane and form an orthonormal basis.
 
 	if (e1.x != 0 && (e1.y != 0 || e1.z != 0)) {
+
 		Q.x = (e1.y*P.y + e1.z*P.z)/e1.x + P.x;
 		Q.y = 0;
 		Q.z = 0;
+
 	} else if (e1.y != 0 && (e1.x != 0 || e1.z != 0)) {
+
 		Q.x = 0;
 		Q.y = (e1.x*P.x + e1.z*P.z)/e1.y + P.y;
 		Q.z = 0;
+
 	} else if (e1.z != 0 && (e1.x != 0 || e1.y != 0)) {
+
 		Q.x = 0;
 		Q.y = 0;
 		Q.z = (e1.x*P.x + e1.y*P.y)/e1.z + P.z;
+
 	} else {
 // TODO something went wrong ... particles are at the same point
 	}
@@ -822,6 +842,7 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
 // Find the velocity vectors in the new basis
 	if (v1m > 0) {
+
 		th = acos((v1.x*e1.x + v1.y*e1.y + v1.z*e1.z)/v1m);
 		v1e.x = v1m*cos(th);
 
@@ -830,13 +851,17 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
 		th = acos((v1.x*e3.x + v1.y*e3.y + v1.z*e3.z)/v1m);
 		v1e.z = v1m*cos(th);
+
 	} else {
+
 		v1e.x = 0;
 		v1e.y = 0;
 		v1e.z = 0;
+
 	}
 
 	if (v2m > 0) {
+
 		th = acos((v2.x*e1.x + v2.y*e1.y + v2.z*e1.z)/v2m);
 		v2e.x = v2m*cos(th);
 
@@ -845,10 +870,13 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
 		th = acos((v2.x*e3.x + v2.y*e3.y + v2.z*e3.z)/v2m);
 		v2e.z = v2m*cos(th);
+
 	} else {
+
 		v2e.x = 0;
 		v2e.y = 0;
 		v2e.z = 0;
+
 	}
 
 // Solve the exchange of momentum between particles. Note that only the normal
@@ -882,7 +910,10 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 }
 
 /*
+ * Updates the position, velocity and the last collision time when the particle
+ * collides with a wall.
  *
+ * @param {MobilityMessage *} msg
  */
 void Sphere::updateStateAfterWallCollision(MobilityMessage *msg) {
 
