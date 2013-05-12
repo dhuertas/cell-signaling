@@ -27,7 +27,7 @@ network test
 	double spaceSizeY = default(1000);
 	double spaceSizeZ = default(1000);
 
-	double refreshRate = default(10);
+	double refreshRate = default(1);
 
 	int numberOfInitialMolecules = default(0);
 
