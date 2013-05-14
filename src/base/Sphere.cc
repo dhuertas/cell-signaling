@@ -88,6 +88,8 @@ void Sphere::tkEnvUpdatePosition() {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
+    EV << "x: " << getX() << ", y: " << getY() << ", z: " << getZ() << "\n";
+
 }
 
 /*
@@ -110,6 +112,8 @@ void Sphere::tkEnvUpdatePosition(double t) {
 
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
+
+    EV << "x: " << getX() << ", y: " << getY() << ", z: " << getZ() << "\n";
 
 }
 
@@ -771,7 +775,7 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 	double v1m, v2m;
 	double e1m, e2m;
 	double m1, m2;
-	double th, temp;
+	double temp;
 
 	point_t C1, C2, P, Q;
 
@@ -868,14 +872,9 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 // Find the velocity vectors in the new basis
 	if (v1m > 0) {
 
-		th = acos((v1.x*e1.x + v1.y*e1.y + v1.z*e1.z)/v1m);
-		v1e.x = v1m*cos(th);
-
-		th = acos((v1.x*e2.x + v1.y*e2.y + v1.z*e2.z)/v1m);
-		v1e.y = v1m*cos(th);
-
-		th = acos((v1.x*e3.x + v1.y*e3.y + v1.z*e3.z)/v1m);
-		v1e.z = v1m*cos(th);
+		v1e.x = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
+		v1e.y = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
+		v1e.z = v1.x*e3.x + v1.y*e3.y + v1.z*e3.z;
 
 	} else {
 
@@ -887,14 +886,9 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
 	if (v2m > 0) {
 
-		th = acos((v2.x*e1.x + v2.y*e1.y + v2.z*e1.z)/v2m);
-		v2e.x = v2m*cos(th);
-
-		th = acos((v2.x*e2.x + v2.y*e2.y + v2.z*e2.z)/v2m);
-		v2e.y = v2m*cos(th);
-
-		th = acos((v2.x*e3.x + v2.y*e3.y + v2.z*e3.z)/v2m);
-		v2e.z = v2m*cos(th);
+	    v2e.x = v2.x*e1.x + v2.y*e1.y + v2.z*e1.z;
+	    v2e.y = v2.x*e2.x + v2.y*e2.y + v2.z*e2.z;
+	    v2e.z = v2.x*e3.x + v2.y*e3.y + v2.z*e3.z;
 
 	} else {
 
@@ -906,8 +900,8 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
 // Solve the exchange of momentum between particles. Note that only the normal
 // velocity component changes its value.
-	temp = ((m1-m2)*v1e.x + 2*m2*v2e.x)/(m1 + m2);
-	v2e.x = ((m2-m1)*v2e.x + 2*m1*v1e.x)/(m1 + m2);
+	temp = ((m1 - m2)*v1e.x + 2*m2*v2e.x)/(m1 + m2);
+	v2e.x = ((m2 - m1)*v2e.x + 2*m1*v1e.x)/(m1 + m2);
 	v1e.x = temp;
 
 // Revert the velocity vectors and set the new velocity
