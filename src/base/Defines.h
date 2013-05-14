@@ -1,9 +1,11 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#define NO_TIME             -1
+
 #define EV_COLLISION    	1
-#define EV_TRANSFER     	2
-#define EV_CHECK        	3
+#define EV_CHECK        	2
+#define EV_TRANSFER         3
 #define EV_WALLCOLLISION	4
 #define EV_TKENVUPDATE		5
 
