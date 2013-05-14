@@ -122,7 +122,6 @@ void Manager::initialize(int stage) {
 		for (p = particles.begin(); p != particles.end(); ++p) {
 
 			(*p)->firstEventTime();
-
 		}
 	}
 

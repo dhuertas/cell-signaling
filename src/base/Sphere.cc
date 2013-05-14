@@ -93,6 +93,8 @@ void Sphere::tkEnvUpdatePosition() {
 /*
  * Update the module position in the tk environment. This method is used 
  * during the simulation.
+ *
+ * @param {Double} t
  */
 void Sphere::tkEnvUpdatePosition(double t) {
 
@@ -127,16 +129,16 @@ void Sphere::firstEventTime() {
 
 // Compute the first collision and the first transfer
 	computeTransferTime();
-	
+
 	if (transferMsg->getEventTime() > 0) {
 		scheduleAt(transferMsg->getEventTime(), transferMsg);
 	}
 
-// Schedule only the first event 
+// Schedule only the first event
 	computeWallCollisionTime();
 	computeCollisionTime();
 
-	if (0 < collisionMsg->getEventTime() && 
+	if (0 < collisionMsg->getEventTime() &&
 		collisionMsg->getEventTime() < wallCollisionMsg->getEventTime()) {
 
 		scheduleAt(collisionMsg->getEventTime(), collisionMsg);
@@ -155,79 +157,101 @@ void Sphere::firstEventTime() {
 /*
  * Generates a cMessage object for the next event. That event can be a transfer
  * event, a particle-particle collision event or a wall bounce event.
- *
- * @param {Integer} kind
  */
 void Sphere::nextEventTime() {
-
 // Methods called from other modules must have this macro
-	Enter_Method_Silent();
+    Enter_Method_Silent();
 
 // Steps 3, 4 and 5.
-	double transferTime,
-		collisionTime,
-		wallCollisionTime,
-		partnerCollisionTime;
+    double transferTime,
+        collisionTime,
+        wallCollisionTime,
+        partnerCollisionTime;
 
 // Step 3. Get the next space cell transfer time
-	if (transferMsg->isScheduled()) cancelEvent(transferMsg);
-	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
-	if (wallCollisionMsg->isScheduled()) cancelEvent(wallCollisionMsg);
+    if (transferMsg->isScheduled()) cancelEvent(transferMsg);
+    if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
+    if (wallCollisionMsg->isScheduled()) cancelEvent(wallCollisionMsg);
 
-	computeTransferTime();
-	transferTime = transferMsg->getEventTime();
+    computeTransferTime();
+    transferTime = transferMsg->getEventTime();
 
-	computeCollisionTime();
-	collisionTime = collisionMsg->getEventTime();
+    computeCollisionTime();
+    collisionTime = collisionMsg->getEventTime();
 
-	computeWallCollisionTime();
-	wallCollisionTime = wallCollisionMsg->getEventTime();
+    computeWallCollisionTime();
+    wallCollisionTime = wallCollisionMsg->getEventTime();
 
-// Step 4. Get the next collision time with the surrounding particles or
-// walls. We only consider collisions with the particles in the neighbouring 
-// space cells (9+9+(8+1) cells).
-	if (collisionTime > 0) {
+    if (transferTime == NO_TIME) {
+// Particle is not moving ... but we may have detected a collision
+        if (collisionTime == NO_TIME) {
+// Nope
+        } else {
+// Some other particle expects to collide with us
+            collisionMsg->setKind(EV_CHECK);
+            scheduleAt(collisionTime, collisionMsg);
 
-		if (collisionTime < wallCollisionTime || wallCollisionTime < 0) {
-// Step 5. Adjust the position of the event and its new partner's event
-			partnerCollisionTime = collisionMsg->getPartner()
-				->scheduledCollisionTime();
+        }
 
-			if (0 < partnerCollisionTime &&
-				partnerCollisionTime < collisionTime) {
-// We have an EV_CHECK
-				collisionMsg->setKind(EV_CHECK);
-				scheduleAt(collisionTime, collisionMsg);
+    } else {
 
-			} else if (0 < partnerCollisionTime &&
-				partnerCollisionTime == collisionTime) {
-// The same collision time has been calculated by both particles. Our partner
-// will update our status for us.
-				collisionMsg->setKind(EV_CHECK);
-				scheduleAt(collisionTime, collisionMsg);
+        if (collisionTime == NO_TIME) {
+// No collision time with other particle has been found
+            if (wallCollisionTime <= transferTime) {
 
-			} else {
-// Tell the partner to update its event
-				scheduleAt(collisionTime, collisionMsg);
-				collisionMsg->getPartner()->nextEventTime();
+                scheduleAt(wallCollisionTime, wallCollisionMsg);
 
-			}
+            } else {
 
-		}
+                scheduleAt(transferTime, transferMsg);
 
-	} else {
+            }
 
-		if (wallCollisionTime > 0) {
-			scheduleAt(wallCollisionTime, wallCollisionMsg);
-		}
+        } else {
 
-	}
+            if (collisionTime <= transferTime &&
+                collisionTime <= wallCollisionTime) {
 
-	if (transferTime > 0) {
-		scheduleAt(transferTime, transferMsg);
-	}
+                partnerCollisionTime = collisionMsg->getPartner()
+                    ->scheduledCollisionTime();
 
-// Back to step 1 (handleMessage function).
+                if (partnerCollisionTime == NO_TIME) {
+// Partner particle does not have any scheduled collision event
+                    scheduleAt(collisionTime, collisionMsg);
+                    collisionMsg->getPartner()->nextEventTime();
+
+                } else {
+
+                    if (collisionTime < partnerCollisionTime) {
+
+                        scheduleAt(collisionTime, collisionMsg);
+                        collisionMsg->getPartner()->nextEventTime();
+
+                    } else {
+
+                        collisionMsg->setKind(EV_CHECK);
+                        scheduleAt(collisionTime, collisionMsg);
+
+                    }
+
+                }
+
+
+            } else if (wallCollisionTime < collisionTime &&
+                wallCollisionTime <= transferTime) {
+
+                scheduleAt(wallCollisionTime, wallCollisionMsg);
+
+            } else {
+
+                scheduleAt(transferTime, transferMsg);
+
+            }
+
+        }
+
+    }
+
 }
 
 /*
@@ -268,7 +292,8 @@ void Sphere::computeTransferTime() {
 	vector<int> sides, hits;
 	vector<int>::const_iterator side, hit;
 
-	transferTime = -1;
+	transferTime = NO_TIME;
+
 	sTime = simTime().dbl();
 	collisionTime = getLastCollisionTime();
 
@@ -421,7 +446,7 @@ void Sphere::computeCollisionTime() {
 
 	Particle * partner; // The collision partner
 
-	collisionTime = -1;
+	collisionTime = NO_TIME;
 	sTime = simTime().dbl();
 
 	Nx = manager->getNumberOfSpaceCellsX();
@@ -452,7 +477,7 @@ void Sphere::computeCollisionTime() {
 					for (p = particles.begin(); p != particles.end(); ++p) {
 
 						if (*p == this) {
-							break;
+							continue;
 						}
 
 // Solve particle to particle collision
@@ -521,7 +546,7 @@ void Sphere::computeWallCollisionTime() {
 	vector<int> sides, hits;
 	vector<int>::const_iterator side, hit;
 
-	wallCollisionTime = -1;
+	wallCollisionTime = NO_TIME;
 	lastCollisionTime = getLastCollisionTime();
 
 	Sx = manager->getSpaceSizeX();
@@ -710,7 +735,7 @@ double Sphere::scheduledCollisionTime() {
 
 	} else {
 
-	    return -1;
+	    return NO_TIME;
 
 	}
 
