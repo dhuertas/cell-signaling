@@ -771,160 +771,119 @@ void Sphere::updateStateAfterTransfer(MobilityMessage *msg) {
  */
 void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
-	double tc;
-	double v1m, v2m;
-	double e1m, e2m;
-	double m1, m2;
-	double temp;
+    double tc, m1, m2, tmp;
+    double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
 
-	point_t C1, C2, P, Q;
+    point_t c1, c2;
+    vect_t v1, n, e1, e2;
 
-	vect_t v1, v2;      // Velocity vectors for particle 1 and 2
-	vect_t e1, e2, e3;  // Orthonormal basis
-	vect_t v1e, v2e;    // Velocity of particles 1 and 2 for the basis found
+    Particle *p;
 
-	Particle * p;
+    tc = msg->getEventTime();
+    p = msg->getPartner();
 
-	tc = msg->getEventTime();
-	p = msg->getPartner();
+// Find the center position of the spheres
+    c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
+    c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
+    c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
 
-	m1 = getMass();
-	m2 = p->getMass();
+    c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
+    c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
+    c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
 
-	v1.x = getVx();
-	v1.y = getVy();
-	v1.z = getVz();
+    m1 = this->getMass();
+    m2 = p->getMass();
 
-	v1m = sqrt(v1.x*v1.x + v1.y*v1.y + v1.z*v1.z);
+// Change frame of reference of the system to one of the spheres
+    v1.x = this->getVx() - p->getVx();
+    v1.y = this->getVy() - p->getVy();
+    v1.z = this->getVz() - p->getVz();
 
-	v2.x = p->getVx();
-	v2.y = p->getVy();
-	v2.z = p->getVz();
+// Find the normal vector of the plane of collision
+    n.x = c2.x - c1.x;
+    n.y = c2.y - c1.y;
+    n.z = c2.z - c1.z;
 
-	v2m = sqrt(v2.x*v2.x + v2.y*v2.y + v2.z*v2.z);
+    tmp = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
 
-// Compute the particle center at the collision time.
-	C1.x = getX() + v1.x*(tc-getLastCollisionTime());
-	C1.y = getY() + v1.y*(tc-getLastCollisionTime());
-	C1.z = getZ() + v1.z*(tc-getLastCollisionTime());
+    n.x /= tmp;
+    n.y /= tmp;
+    n.z /= tmp;
 
-// Compute the partner center at the collision time.
-	C2.x = p->getX() + v2.x*(tc - p->getLastCollisionTime());
-	C2.y = p->getY() + v2.y*(tc - p->getLastCollisionTime());
-	C2.z = p->getZ() + v2.z*(tc - p->getLastCollisionTime());
+// Find e1 as the perpendicular vector to both n and v, and then e2 as the one
+// perpendicular to n and e1
+    e1.x = n.y*v1.z - n.z*v1.y;
+    e1.y = n.z*v1.x - n.x*v1.z;
+    e1.z = n.x*v1.y - n.y*v1.x;
 
-// Find an orthonormal basis
-	e1.x = C2.x - C1.x;
-	e1.y = C2.y - C1.y;
-	e1.z = C2.z - C1.z;
+// Normalize the vector found, e1
+    tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
 
-	e1m = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
-	e1.x /= e1m;
-	e1.y /= e1m;
-	e1.z /= e1m;
+    e1.x /= tmp;
+    e1.y /= tmp;
+    e1.z /= tmp;
 
-// Find the collision point
-	P.x = C1.x + getRadius()*e1.x;
-	P.y = C1.y + getRadius()*e1.y;
-	P.z = C1.z + getRadius()*e1.z;
+// Find the velocity vectors in the new basis and if ...
+    v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
 
-// Now that we have the collision plane: A(x-x0) + B(y-y0) + C(z-z0) = 0
-// e1.x*(x-P.x) + e1.y*(y-P.y) + e1.z*(z-P.z) = 0, we can find one point
-// contained in that plane and form an orthonormal basis.
+    if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
+// n and v are parallel, we can solve directly
+        tmp = (m1 - m2)*v1n/(m1 + m2);
+        v2n = 2*m1*v1n/(m1 + m2);
+        v1n = tmp;
 
-	if (e1.x != 0 && (e1.y != 0 || e1.z != 0)) {
+// Revert the frame of reference, the velocity vectors and set the new velocity
+        setVx(v1n*n.x + p->getVx());
+        setVy(v1n*n.y + p->getVy());
+        setVz(v1n*n.z + p->getVz());
 
-		Q.x = (e1.y*P.y + e1.z*P.z)/e1.x + P.x;
-		Q.y = 0;
-		Q.z = 0;
+        p->setVx(v2n*n.x + p->getVx());
+        p->setVy(v2n*n.y + p->getVy());
+        p->setVz(v2n*n.z + p->getVz());
 
-	} else if (e1.y != 0 && (e1.x != 0 || e1.z != 0)) {
+    } else {
 
-		Q.x = 0;
-		Q.y = (e1.x*P.x + e1.z*P.z)/e1.y + P.y;
-		Q.z = 0;
+        e2.x = e1.y*n.z - e1.z*n.y;
+        e2.y = e1.z*n.x - e1.x*n.z;
+        e2.z = e1.x*n.y - e1.y*n.x;
 
-	} else if (e1.z != 0 && (e1.x != 0 || e1.y != 0)) {
+// Find the rest of the components
+        v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
+        v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
 
-		Q.x = 0;
-		Q.y = 0;
-		Q.z = (e1.x*P.x + e1.y*P.y)/e1.z + P.z;
+        v2n  = 0.0;
+        v2e1 = 0.0;
+        v2e2 = 0.0;
 
-	} else {
-// TODO something went wrong ... particles are at the same point
-	}
+// Find the new velocity in the normal component (remember that v2n initially
+// is 0.0)
+        tmp = (m1 - m2)*v1n/(m1 + m2);
+        v2n = 2*m1*v1n/(m1 + m2);
+        v1n = tmp;
 
-// Find the PQ vector
-	e2.x = Q.x - P.x;
-	e2.y = Q.y - P.y;
-	e2.z = Q.z - P.z;
+// Revert the frame of reference, the velocity vectors and set the new velocity
+        setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
+        setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
+        setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
 
-	e2m = sqrt(e2.x*e2.x + e2.y*e2.y + e2.z*e2.z);
+        p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
+        p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
+        p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
 
-	e2.x /= e2m;
-	e2.y /= e2m;
-	e2.z /= e2m;
-
-	e3.x = e1.y*e2.z - e1.z*e2.y;
-	e3.y = e1.z*e2.x - e1.x*e2.z;
-	e3.z = e1.x*e2.y - e1.y*e2.x;
-
-// Find the velocity vectors in the new basis
-	if (v1m > 0) {
-
-		v1e.x = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
-		v1e.y = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
-		v1e.z = v1.x*e3.x + v1.y*e3.y + v1.z*e3.z;
-
-	} else {
-
-		v1e.x = 0;
-		v1e.y = 0;
-		v1e.z = 0;
-
-	}
-
-	if (v2m > 0) {
-
-	    v2e.x = v2.x*e1.x + v2.y*e1.y + v2.z*e1.z;
-	    v2e.y = v2.x*e2.x + v2.y*e2.y + v2.z*e2.z;
-	    v2e.z = v2.x*e3.x + v2.y*e3.y + v2.z*e3.z;
-
-	} else {
-
-		v2e.x = 0;
-		v2e.y = 0;
-		v2e.z = 0;
-
-	}
-
-// Solve the exchange of momentum between particles. Note that only the normal
-// velocity component changes its value.
-	temp = ((m1 - m2)*v1e.x + 2*m2*v2e.x)/(m1 + m2);
-	v2e.x = ((m2 - m1)*v2e.x + 2*m1*v1e.x)/(m1 + m2);
-	v1e.x = temp;
-
-// Revert the velocity vectors and set the new velocity
-	setVx(v1e.x*e1.x + v1e.y*e2.x + v1e.z*e3.x);
-	setVy(v1e.x*e1.y + v1e.y*e2.y + v1e.z*e3.y);
-	setVz(v1e.x*e1.z + v1e.y*e2.z + v1e.z*e3.z);
-
-	p->setVx(v2e.x*e1.x + v2e.y*e2.x + v2e.z*e3.x);
-	p->setVy(v2e.x*e1.y + v2e.y*e2.y + v2e.z*e3.y);
-	p->setVz(v2e.x*e1.z + v2e.y*e2.z + v2e.z*e3.z);
+    }
 
 // Update the particles position
-	setX(C1.x);
-	setY(C1.y);
-	setZ(C1.z);
+    setX(c1.x);
+    setY(c1.y);
+    setZ(c1.z);
 
-	p->setX(C2.x);
-	p->setY(C2.y);
-	p->setZ(C2.z);
+    p->setX(c2.x);
+    p->setY(c2.y);
+    p->setZ(c2.z);
 
 // Update the last collision times
-	setLastCollisionTime(tc);
-	p->setLastCollisionTime(tc);
+    setLastCollisionTime(tc);
+    p->setLastCollisionTime(tc);
 
 }
 
