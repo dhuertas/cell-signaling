@@ -39,6 +39,8 @@ class Sphere : public Circle, public cSimpleModule {
 		double solveCollisionTime(Particle *);
 		double scheduledCollisionTime(void);
 
+		void handleMobilityMessage(MobilityMessage *);
+
 		void updateStateAfterTransfer(MobilityMessage *);
 		void updateStateAfterCollision(MobilityMessage *);
 		void updateStateAfterWallCollision(MobilityMessage *);
