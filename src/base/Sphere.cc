@@ -88,7 +88,7 @@ void Sphere::tkEnvUpdatePosition() {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-    EV << "x: " << getX() << ", y: " << getY() << ", z: " << getZ() << "\n";
+    EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
 
 }
 
@@ -102,6 +102,8 @@ void Sphere::tkEnvUpdatePosition(double t) {
 
 	std::stringstream buffer;
 
+	double lc = getLastCollisionTime();
+
 // Set position string for tkenv
 	buffer << getY() + getVy()*(t-getLastCollisionTime());
 
@@ -113,7 +115,9 @@ void Sphere::tkEnvUpdatePosition(double t) {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-    EV << "x: " << getX() << ", y: " << getY() << ", z: " << getZ() << "\n";
+	EV << "x: " << getX() + getVx()*(t - lc) <<
+        ", y: " << getY() + getVy()*(t - lc) <<
+        ", z: " << getZ() + getVz()*(t - lc) << "\n";
 
 }
 
@@ -127,30 +131,35 @@ void Sphere::firstEventTime() {
 // Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
+	double transferTime, collisionTime, wallCollisionTime;
+
 	transferMsg = new MobilityMessage("mobility", EV_TRANSFER);
 	collisionMsg = new MobilityMessage("mobility", EV_COLLISION);
 	wallCollisionMsg =  new MobilityMessage("mobility", EV_WALLCOLLISION);
 
 // Compute the first collision and the first transfer
 	computeTransferTime();
+    computeWallCollisionTime();
+    computeCollisionTime();
 
-	if (transferMsg->getEventTime() > 0) {
-		scheduleAt(transferMsg->getEventTime(), transferMsg);
+    transferTime = transferMsg->getEventTime();
+    collisionTime = collisionMsg->getEventTime();
+    wallCollisionTime = wallCollisionMsg->getEventTime();
+
+	if (transferTime > 0) {
+		scheduleAt(transferTime, transferMsg);
 	}
 
 // Schedule only the first event
-	computeWallCollisionTime();
-	computeCollisionTime();
 
-	if (0 < collisionMsg->getEventTime() &&
-		collisionMsg->getEventTime() < wallCollisionMsg->getEventTime()) {
+	if (0 < collisionTime && collisionTime < wallCollisionTime) {
 
-		scheduleAt(collisionMsg->getEventTime(), collisionMsg);
+		scheduleAt(collisionTime, collisionMsg);
 
-	} else if (0 < wallCollisionMsg->getEventTime() &&
-		wallCollisionMsg->getEventTime() < collisionMsg->getEventTime()) {
+	} else if (0 < wallCollisionTime &&
+	        (wallCollisionTime < collisionTime || collisionTime == NO_TIME)) {
 
-		scheduleAt(wallCollisionMsg->getEventTime(), wallCollisionMsg);
+		scheduleAt(wallCollisionTime, wallCollisionMsg);
 
 	} else {
 // TODO Something that I didn't think of just happened
@@ -232,7 +241,9 @@ void Sphere::nextEventTime() {
                         collisionMsg->getPartner()->nextEventTime();
 
                     } else {
-
+// Must check that the partner is solving the collision (its next event is not
+// of type EV_CHECK)
+                        //collisionMsg->getPartner()->
                         collisionMsg->setKind(EV_CHECK);
                         scheduleAt(collisionTime, collisionMsg);
 
@@ -438,7 +449,7 @@ void Sphere::computeCollisionTime() {
 
 	int a, b, c;			// Nested "for" loops
 
-	int counter;
+	int collisionCounter;
 
 	int i, j, k, N, n;		// Indexes to access the current space cell
 	int Nx, Ny, Nz;			// Number of space cells (or divisions) in each axis
@@ -464,7 +475,7 @@ void Sphere::computeCollisionTime() {
 	j = (n % (Nz*Ny)) / Nz;
 	k = (n % (Nz*Ny)) % Nz;
 
-	counter = 0;
+	collisionCounter = 0;
 
 	for (a = -1; a <= 1; a++) {
 		for (b = -1; b <= 1; b++) {
@@ -487,11 +498,12 @@ void Sphere::computeCollisionTime() {
 // Solve particle to particle collision
 						temp = solveCollisionTime(*p);
 
-						if (counter == 0) {
+						if (collisionCounter == 0) {
 
 							if (sTime <= temp) {
 								collisionTime = temp;
 								partner = (*p);
+								collisionCounter++;
 							}
 
 						} else {
@@ -499,11 +511,10 @@ void Sphere::computeCollisionTime() {
 							if (sTime <= temp  && temp < collisionTime) {
 								collisionTime = temp;
 								partner = (*p);
+								collisionCounter++;
 							}
 
 						}
-						
-						counter++;
 
 					}
 				}
@@ -523,7 +534,7 @@ void Sphere::computeCollisionTime() {
  */
 void Sphere::computeWallCollisionTime() {
 
-	int counter;
+	int collisionCounter;
 
 	int sp[] = { // side points
 	//  0, 1, 2, 3, 4, 5 <- dice side
@@ -539,7 +550,7 @@ void Sphere::computeWallCollisionTime() {
 	};
 
 	double Sx, Sy, Sz;
-	double rad, x, y, z, vx, vy, vz, vm; // Particle radius, position and velocity
+	double rad, x, y, z, vx, vy, vz; // Particle radius, position and velocity
 	double wallCollisionTime,
 		lastCollisionTime,
 		temp;
@@ -562,7 +573,7 @@ void Sphere::computeWallCollisionTime() {
 	x = getX(); y = getY(); z = getZ();
 	vx = getVx(); vy = getVy(); vz = getVz();
 
-	vm = sqrt(vx*vx + vy*vy + vz*vz);
+	// vm = sqrt(vx*vx + vy*vy + vz*vz);
 
 // In the simulation space we have 6 possible sides but since we know the 
 // direction of the particle we need to check only 3 (at most).
@@ -575,7 +586,7 @@ void Sphere::computeWallCollisionTime() {
 	if (vz > 0) sides.push_back(0);
 	else if (vz < 0) sides.push_back(5);
 
-	counter = 0;
+	collisionCounter = 0;
 
 	for (side = sides.begin(); side != sides.end(); ++side) {
 // Select 3 points for each side following the previous rules
@@ -607,21 +618,31 @@ void Sphere::computeWallCollisionTime() {
 // and find for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 
-// Check that temp really is greater than 0 ...
-		if (temp*temp > 0) {
+		if (temp != 0) {
 
-			temp = (N.x*(P.x - x - rad*vx/vm) +
-				N.y*(P.y - y - rad*vy/vm) +
-				N.z*(P.z - z - rad*vz/vm))/temp;
+		    if (*side == 0)
+		        temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z + rad)))/temp;
+		    else if (*side == 1)
+		        temp = (N.x*(P.x - (x + rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+		    else if (*side == 2)
+		        temp = (N.x*(P.x - x) + N.y*(P.y - (y - rad)) + N.z*(P.z - z))/temp;
+		    else if (*side == 3)
+		        temp = (N.x*(P.x - x) + N.y*(P.y - (y + rad)) + N.z*(P.z - z))/temp;
+		    else if (*side == 4)
+		        temp = (N.x*(P.x - (x - rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+		    else
+		        temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
+
 
 // We found a solution :)
 // 
 // "temp" is the amount of time the particle takes to go from its last 
-// event point to the space cell side where it is bounded now.
-			if (counter == 0) {
+// event point to the simulation space side.
+			if (collisionCounter == 0) {
 				// First
 				wallCollisionTime = temp;
 				hits.push_back(*side);
+				collisionCounter++;
 
 			} else {
 
@@ -631,10 +652,12 @@ void Sphere::computeWallCollisionTime() {
 
 					hits.clear();
 					hits.push_back(*side);
+					collisionCounter = 1;
 
 				} else if (temp > 0 && temp == wallCollisionTime) {
 // The particle hit two or more sides at the same time
 					hits.push_back(*side);
+					collisionCounter++;
 
 				}
 
@@ -643,8 +666,6 @@ void Sphere::computeWallCollisionTime() {
 		} else {
 // Line and plane doesn't intersect
 		}
-
-		counter++;
 
 	}
 

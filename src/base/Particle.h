@@ -2,6 +2,7 @@
 #define PARTICLE_H
 
 #include "Defines.h"
+#include <list>
 
 class Particle {
 
@@ -12,7 +13,14 @@ class Particle {
 		point_t position;
 		vect_t velocity;
 
+		// Cell List attributes
 		int spaceCell;
+
+		// Verlet List attributes
+		std::list<Particle*> neighbourParticles;
+		double cutOffRadius;
+		double listRadius; // listRadius > cutOffRadius
+
 		double mass;
 		double lastCollisionTime;
 
@@ -21,6 +29,12 @@ class Particle {
 		Particle();
 		Particle(double, double, double, double, double);
 
+		// Verlet methods
+		void createVerletList(std::list<Particle*> *);
+		void updateVerletList(std::list<Particle*> *);
+		void addParticleToVerletList(Particle *);
+
+		// Gets and sets
 		double getX(void) { return position.x; };
 		double getY(void) { return position.y; };
 		double getZ(void) { return position.z; };
@@ -47,7 +61,7 @@ class Particle {
 		virtual void setRadius(double) = 0;
 		void setLastCollisionTime(double tc) { lastCollisionTime = tc; };
 
-		// tk Environment related methods
+		// tk Environment methods
 		virtual void tkEnvDrawShape(void) = 0;
 		virtual void tkEnvUpdatePosition(void) = 0;
 		virtual void tkEnvUpdatePosition(double) = 0;
