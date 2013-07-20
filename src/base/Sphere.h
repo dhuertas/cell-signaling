@@ -52,8 +52,9 @@ class Sphere : public Circle, public cSimpleModule {
 
 		// Gets and sets
 		Manager *getManager(void) { return manager; }
-		void setManager(std::string);
+		MobilityMessage *getScheduledMobilityMessage(void);
 
+		void setManager(std::string);
 };
 
 #endif

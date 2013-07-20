@@ -181,6 +181,8 @@ void Sphere::nextEventTime() {
         wallCollisionTime,
         partnerCollisionTime;
 
+    MobilityMessage *msg;
+
 // Step 3. Get the next space cell transfer time
     if (transferMsg->isScheduled()) cancelEvent(transferMsg);
     if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
@@ -243,14 +245,23 @@ void Sphere::nextEventTime() {
                     } else {
 // Must check that the partner is solving the collision (its next event is not
 // of type EV_CHECK)
-                        //collisionMsg->getPartner()->
-                        collisionMsg->setKind(EV_CHECK);
-                        scheduleAt(collisionTime, collisionMsg);
+                        msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
+
+                        if (msg->getKind() == EV_CHECK) {
+                        	// Partner expects that we are solving the collision
+                        	collisionMsg->setKind(EV_COLLISION);
+                        	scheduleAt(collisionTime, collisionMsg);
+
+                        } else {
+                        	// Partner is solving the collision event
+                        	collisionMsg->setKind(EV_CHECK);
+                        	scheduleAt(collisionTime, collisionMsg);
+
+                        }
 
                     }
 
                 }
-
 
             } else if (wallCollisionTime < collisionTime &&
                 wallCollisionTime <= transferTime) {
@@ -372,7 +383,7 @@ void Sphere::computeTransferTime() {
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 
 // Check that temp really is greater than 0 ...
-		if (temp*temp > 0) {
+		if (temp != 0) {
 
 			temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
 
@@ -972,4 +983,26 @@ void Sphere::updateStateAfterWallCollision(MobilityMessage *msg) {
 
 	setLastCollisionTime(msg->getEventTime());
 
+}
+
+/*
+ * Returns the scheduled mobility message
+ * 
+ * @return {MobilityMessage *}
+ */
+MobilityMessage *Sphere::getScheduledMobilityMessage() {
+
+	if (this->collisionMsg->isScheduled()) {
+
+		return this->collisionMsg;
+
+	} else if (this->wallCollisionMsg->isScheduled()) {
+
+		return this->wallCollisionMsg;
+
+	} else {
+
+		return this->transferMsg;
+
+	}
 }

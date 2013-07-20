@@ -15,10 +15,10 @@ Manager::~Manager() {}
  */
 void Manager::subscribe(Particle * p) {
 
-	// Add the particle pointer to the particles vector
+// Add the particle pointer to the particles vector
 	particles.push_back(p);
 
-	// Also add the particle to its corresponding space cell
+// Also add the particle to its corresponding space cell
 	if (spaceCellSize > 0) {
 		attachParticleToSpaceCell(p, -1);
 	}
@@ -32,10 +32,10 @@ void Manager::subscribe(Particle * p) {
  */
 void Manager::unsubscribe(Particle * p) {
 
-	// Remove the particle pointer from the space cell structure
+// Remove the particle pointer from the space cell structure
 	detachParticleFromSpaceCell(p, -1);
 
-	// Remove the particle pointer from the particles vector
+// Remove the particle pointer from the particles vector
 	particles.remove(p);
 
 }
@@ -55,23 +55,23 @@ void Manager::initialize(int stage) {
 	std::list<Particle *>::const_iterator p;
 	std::stringstream buffer;
 
-	// The manager node should be the first module to be initialized
+// The manager node should be the first module to be initialized
 	if (stage == 0) {
 
 		managerName = & simulation.getSystemModule()->par("managerName");
 		
-		// Set the name of the manager so we can have later access from
-		// the other nodes.
+// Set the name of the manager so we can have later access from
+// the other nodes.
 		this->setName(managerName->stringValue());
 
-		// Get the simulation space size
+// Get the simulation space size
 		spaceSizeX = simulation.getSystemModule()->par("spaceSizeX");
 		spaceSizeY = simulation.getSystemModule()->par("spaceSizeY");
 		spaceSizeZ = simulation.getSystemModule()->par("spaceSizeZ");
 
 		tkEnvRefreshRate = simulation.getSystemModule()->par("refreshRate");
 
-		// Set network size for tkenv
+// Set network size for tkenv
 		buffer << spaceSizeY;
 
 		module = simulation.getSystemModule();
@@ -82,16 +82,16 @@ void Manager::initialize(int stage) {
 		module->getDisplayString().setTagArg("bgb", 1, buffer.str().c_str());
 		buffer.str(std::string()); // clear buffer
 
-		// We must wait to determine the space cell size till all the initial 
-		// particles have been subscribed
+// We must wait to determine the space cell size till all the initial 
+// particles have been subscribed
 		spaceCellSize = 0;
 
 	} else if (stage == 1) {
-		// the rest of the modules are being initialized ...
+// the rest of the modules are being initialized ...
 	} else if (stage == 2) {
 
-		// All the particles are in the simulation space now. We can determine
-		// the spaceCellSize
+// All the particles are in the simulation space now. We can determine
+// the spaceCellSize
 		for (p = particles.begin(); p != particles.end(); ++p) {
 			diameter = 2*(*p)->getRadius();
 
@@ -101,7 +101,7 @@ void Manager::initialize(int stage) {
 
 		}
 
-		// Put every subscribed particle in its corresponding space cell
+// Put every subscribed particle in its corresponding space cell
 		setNumberOfSpaceCellsX(ceil(spaceSizeX/spaceCellSize));
 		setNumberOfSpaceCellsY(ceil(spaceSizeY/spaceCellSize));
 		setNumberOfSpaceCellsZ(ceil(spaceSizeZ/spaceCellSize));
@@ -114,11 +114,11 @@ void Manager::initialize(int stage) {
 			attachParticleToSpaceCell(*p, -1);
 		}
 
-		// Self message to refresh the tk environment
+// Self message to refresh the tk environment
 		scheduleAt(simTime() + tkEnvRefreshRate, 
 			new cMessage("refresh", EV_TKENVUPDATE));
 
-		// Make that every subscribed particle compute its next event time
+// Make that every subscribed particle compute its next event time
 		for (p = particles.begin(); p != particles.end(); ++p) {
 
 			(*p)->firstEventTime();
@@ -198,12 +198,12 @@ void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
  */
 void Manager::transferParticle(Particle *p, int from, int to) {
 
-	// Detach particle from its space cell
+// Detach particle from its space cell
 	detachParticleFromSpaceCell(p, from);
 
-	// Obtain the particle position after the transfer event occured
+// Obtain the particle position after the transfer event occured
 
-	// Attach the particle to its new space cell
+// Attach the particle to its new space cell
 	attachParticleToSpaceCell(p, to);
 
 }
@@ -234,7 +234,7 @@ void Manager::handleMessage(cMessage *msg) {
 
 		tkEnvUpdateNetwork();
 
-		// Self-message
+// Self-message
 		scheduleAt(simTime().dbl() + tkEnvRefreshRate, msg);
 
 	}
@@ -256,7 +256,7 @@ void Manager::tkEnvUpdateNetwork() {
 
 	std::list<Particle *>::const_iterator p;
 
-	// Update particle positions
+// Update particle positions
 	for (p = particles.begin(); p != particles.end(); ++p) {
 
 		(*p)->tkEnvUpdatePosition(simTime().dbl());
