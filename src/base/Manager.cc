@@ -50,7 +50,7 @@ void Manager::initialize(int stage) {
 	int N;
 	double diameter;
 
-	cPar *managerName;
+	// cPar *managerName;
 	cModule *module;
 	std::list<Particle *>::const_iterator p;
 	std::stringstream buffer;
@@ -58,11 +58,12 @@ void Manager::initialize(int stage) {
 // The manager node should be the first module to be initialized
 	if (stage == 0) {
 
-		managerName = & simulation.getSystemModule()->par("managerName");
-		
+// Set the mode of operation for the molecule dynamics 
+		mode = par("mode");
+
 // Set the name of the manager so we can have later access from
 // the other nodes.
-		this->setName(managerName->stringValue());
+		this->setName(par("name").stringValue());
 
 // Get the simulation space size
 		spaceSizeX = simulation.getSystemModule()->par("spaceSizeX");

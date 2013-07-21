@@ -15,9 +15,15 @@ class Manager : public cSimpleModule {
 
 	private:
 
+		// Name
+		std::string name;
+
 		// A list of particles contained in the simulation space. Every new
 		// particle must be subscribed to (and unsubscribed from).
 		std::list<Particle*> particles;
+
+		// Molecule Dynamics Mode of operation
+		int mode;
 
 		// Space is divided into cells, each of which contains a list of
 		// particles belonging to it.
@@ -79,6 +85,7 @@ class Manager : public cSimpleModule {
 		int getNumberOfSpaceCellsX(void) { return Nx; };
 		int getNumberOfSpaceCellsY(void) { return Ny; };
 		int getNumberOfSpaceCellsZ(void) { return Nz; };
+		int getMode(void) { return mode; };
 
 		std::list<Particle *> getSpaceCellParticles(int);
 
@@ -89,7 +96,7 @@ class Manager : public cSimpleModule {
 		void setNumberOfSpaceCellsX(int n) { Nx = n; };
 		void setNumberOfSpaceCellsY(int n) { Ny = n; };
 		void setNumberOfSpaceCellsZ(int n) { Nz = n; };
-
+		void setMode(int m) { mode = m; };
 };
 
 #endif

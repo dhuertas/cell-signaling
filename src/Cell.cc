@@ -9,7 +9,7 @@ Cell::~Cell() {
 }
 
 /*
- *
+ * Cell initialization
  */
 void Cell::initialize(int stage) {
 
@@ -33,9 +33,12 @@ void Cell::initialize(int stage) {
 		setRadius(par("radius").doubleValue());
 		setMass(par("radius").doubleValue());
 
+		// Near-Neighbor List radius
+		setListRadius(par("listRadius").doubleValue());
+
 		lastCollisionTime = 0;
 
-		// Subscribe to manager		
+		// Subscribe to manager
 		setManager("managerName");
 		getManager()->subscribe(this);
 	

@@ -2,6 +2,21 @@
 
 using namespace std;
 
+// Space cell side points that allows to obtain the side equation and compute 
+// the transfer time. Defined in src/base/Defines.h file
+char sp[10*6] = { 
+	//  0, 1, 2, 3, 4, 5 <- dice side
+		1, 1, 0, 0, 0, 0, // Px
+		0, 0, 0, 1, 0, 0, // Py
+		1, 0, 0, 0, 0, 0, // Pz
+		1, 1, 1, 1, 0, 1, // Qx
+		1, 1, 0, 1, 0, 0, // Qy
+		1, 0, 0, 0, 1, 0, // Qz
+		0, 1, 0, 0, 0, 0, // Rx
+		0, 0, 0, 1, 1, 1, // Ry
+		1, 1, 1, 1, 0, 0  // Rz
+	};
+
 /*
  * Constructor.
  *
@@ -88,7 +103,14 @@ void Sphere::tkEnvUpdatePosition() {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-    EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
+	//if (manager->getMode() == CD_NNLIST) {
+		buffer << getListRadius();
+
+		getDisplayString().setTagArg("r",0, buffer.str().c_str());
+		buffer.str(std::string());
+	//}
+
+	EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
 
 }
 
@@ -116,8 +138,8 @@ void Sphere::tkEnvUpdatePosition(double t) {
 	buffer.str(std::string());
 
 	EV << "x: " << getX() + getVx()*(t - lc) <<
-        ", y: " << getY() + getVy()*(t - lc) <<
-        ", z: " << getZ() + getVz()*(t - lc) << "\n";
+		", y: " << getY() + getVy()*(t - lc) <<
+		", z: " << getZ() + getVz()*(t - lc) << "\n";
 
 }
 
@@ -131,38 +153,68 @@ void Sphere::firstEventTime() {
 // Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
-	double transferTime, collisionTime, wallCollisionTime;
+	double transferTime;
+	double collisionTime;
+	double wallCollisionTime;
+	double outOfNeighborhoodTime;
+	double smallestTime;
+
+	vector<double> times;
+	vector<double>::const_iterator t;
 
 	transferMsg = new MobilityMessage("mobility", EV_TRANSFER);
 	collisionMsg = new MobilityMessage("mobility", EV_COLLISION);
 	wallCollisionMsg =  new MobilityMessage("mobility", EV_WALLCOLLISION);
+	outOfNeighborhoodMsg = new MobilityMessage("mobility", EV_OUTOFNEIGHBORHOOD);
 
 // Compute the first collision and the first transfer
 	computeTransferTime();
-    computeWallCollisionTime();
-    computeCollisionTime();
+	computeWallCollisionTime();
+	computeCollisionTime();
+	computeOutOfNeighborhoodTime();
 
-    transferTime = transferMsg->getEventTime();
-    collisionTime = collisionMsg->getEventTime();
-    wallCollisionTime = wallCollisionMsg->getEventTime();
+	transferTime = transferMsg->getEventTime();
+	collisionTime = collisionMsg->getEventTime();
+	wallCollisionTime = wallCollisionMsg->getEventTime();
+	//outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
 
-	if (transferTime > 0) {
-		scheduleAt(transferTime, transferMsg);
+	times.push_back(transferTime);
+	times.push_back(collisionTime);
+	times.push_back(wallCollisionTime);
+	// times.push_back(outOfNeighborhoodTime);
+
+// Initialize the smallestTime so it is not a negative value (NO_TIME)
+	if (transferTime != NO_TIME) {
+		smallestTime = transferTime;
+	} else if (collisionTime != NO_TIME) {
+		smallestTime = collisionTime;
+	} else {
+// No event will be scheduled for this sphere for now
+		smallestTime = 0;
 	}
 
-// Schedule only the first event
+	for (t = times.begin(); t != times.end(); ++t) {
+		if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
+	}
 
-	if (0 < collisionTime && collisionTime < wallCollisionTime) {
+	if (smallestTime == transferTime) {
+
+		scheduleAt(transferTime, transferMsg);
+
+	} else if (smallestTime == collisionTime) {
 
 		scheduleAt(collisionTime, collisionMsg);
 
-	} else if (0 < wallCollisionTime &&
-	        (wallCollisionTime < collisionTime || collisionTime == NO_TIME)) {
+	} else if (smallestTime == wallCollisionTime) {
 
 		scheduleAt(wallCollisionTime, wallCollisionMsg);
 
+	//} else if (smallestTime == outOfNeighborhoodTime) {
+
+		//scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
+
 	} else {
-// TODO Something that I didn't think of just happened
+// Nothing can be scheduled for this sphere
 	}
 
 }
@@ -173,110 +225,116 @@ void Sphere::firstEventTime() {
  */
 void Sphere::nextEventTime() {
 // Methods called from other modules must have this macro
-    Enter_Method_Silent();
+	Enter_Method_Silent();
 
 // Steps 3, 4 and 5.
-    double transferTime,
-        collisionTime,
-        wallCollisionTime,
-        partnerCollisionTime;
+	double transferTime;
+	double collisionTime;
+	double wallCollisionTime;
+	double outOfNeighborhoodTime;
 
-    MobilityMessage *msg;
+	double partnerCollisionTime;
+
+	double smallestTime;
+
+	vector<double> times;
+	vector<double>::const_iterator t;
+
+	MobilityMessage *msg;
 
 // Step 3. Get the next space cell transfer time
-    if (transferMsg->isScheduled()) cancelEvent(transferMsg);
-    if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
-    if (wallCollisionMsg->isScheduled()) cancelEvent(wallCollisionMsg);
+	if (transferMsg->isScheduled()) cancelEvent(transferMsg);
+	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
+	if (wallCollisionMsg->isScheduled()) cancelEvent(wallCollisionMsg);
+	if (outOfNeighborhoodMsg->isScheduled()) cancelEvent(outOfNeighborhoodMsg);
 
-    computeTransferTime();
-    transferTime = transferMsg->getEventTime();
+	computeTransferTime();
+	computeCollisionTime();
+	computeWallCollisionTime();
+	computeOutOfNeighborhoodTime();
 
-    computeCollisionTime();
-    collisionTime = collisionMsg->getEventTime();
+	transferTime = transferMsg->getEventTime();
+	collisionTime = collisionMsg->getEventTime();
+	wallCollisionTime = wallCollisionMsg->getEventTime();
+	// outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
 
-    computeWallCollisionTime();
-    wallCollisionTime = wallCollisionMsg->getEventTime();
+	times.push_back(transferTime);
+	times.push_back(collisionTime);
+	times.push_back(wallCollisionTime);
+	// times.push_back(outOfNeighborhoodTime);
 
-    if (transferTime == NO_TIME) {
-// Particle is not moving ... but we may have detected a collision
-        if (collisionTime == NO_TIME) {
-// Nope
-        } else {
-// Some other particle expects to collide with us
-            collisionMsg->setKind(EV_CHECK);
-            scheduleAt(collisionTime, collisionMsg);
+// Initialize the smallestTime so it is not a negative value (NO_TIME)
+	if (transferTime != NO_TIME) {
+		smallestTime = transferTime;
+	} else if (collisionTime != NO_TIME) {
+		smallestTime = collisionTime;
+	} else if (wallCollisionTime != NO_TIME) {
+		smallestTime = wallCollisionTime;
+	// } else if (outOfNeighborhoodTime != NO_TIME) {
+		// smallestTime = outOfNeighborhoodTime;
+	} else {
+// No event will be scheduled for this sphere for now
+		smallestTime = 0;
+	}
 
-        }
+	for (t = times.begin(); t != times.end(); ++t) {
+		if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
+	}
 
-    } else {
+	if (smallestTime == transferTime) {
 
-        if (collisionTime == NO_TIME) {
-// No collision time with other particle has been found
-            if (wallCollisionTime <= transferTime) {
+		scheduleAt(transferTime, transferMsg);
 
-                scheduleAt(wallCollisionTime, wallCollisionMsg);
+	} else if (smallestTime == wallCollisionTime) {
 
-            } else {
+		scheduleAt(wallCollisionTime, wallCollisionMsg);
 
-                scheduleAt(transferTime, transferMsg);
+	// } else if (smallestTime == outOfNeighborhoodTime) {
 
-            }
+		//scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
 
-        } else {
+	} else if (smallestTime == collisionTime) {
 
-            if (collisionTime <= transferTime &&
-                collisionTime <= wallCollisionTime) {
+		partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
 
-                partnerCollisionTime = collisionMsg->getPartner()
-                    ->scheduledCollisionTime();
-
-                if (partnerCollisionTime == NO_TIME) {
+		if (partnerCollisionTime == NO_TIME) {
 // Partner particle does not have any scheduled collision event
-                    scheduleAt(collisionTime, collisionMsg);
-                    collisionMsg->getPartner()->nextEventTime();
+			scheduleAt(collisionTime, collisionMsg);
+			collisionMsg->getPartner()->nextEventTime();
 
-                } else {
+		} else {
 
-                    if (collisionTime < partnerCollisionTime) {
+			if (collisionTime < partnerCollisionTime) {
 
-                        scheduleAt(collisionTime, collisionMsg);
-                        collisionMsg->getPartner()->nextEventTime();
+				scheduleAt(collisionTime, collisionMsg);
+				collisionMsg->getPartner()->nextEventTime();
 
-                    } else {
+			} else {
 // Must check that the partner is solving the collision (its next event is not
 // of type EV_CHECK)
-                        msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
+				msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
 
-                        if (msg->getKind() == EV_CHECK) {
-                        	// Partner expects that we are solving the collision
-                        	collisionMsg->setKind(EV_COLLISION);
-                        	scheduleAt(collisionTime, collisionMsg);
+				if (msg->getKind() == EV_CHECK) {
+// Partner expects that we are solving the collision
+					collisionMsg->setKind(EV_COLLISION);
+					scheduleAt(collisionTime, collisionMsg);
 
-                        } else {
-                        	// Partner is solving the collision event
-                        	collisionMsg->setKind(EV_CHECK);
-                        	scheduleAt(collisionTime, collisionMsg);
+				} else {
+// Partner is solving the collision event
+					collisionMsg->setKind(EV_CHECK);
+					scheduleAt(collisionTime, collisionMsg);
 
-                        }
+				}
 
-                    }
+			}
 
-                }
+		}
 
-            } else if (wallCollisionTime < collisionTime &&
-                wallCollisionTime <= transferTime) {
+	} else {
 
-                scheduleAt(wallCollisionTime, wallCollisionMsg);
+// Do nothing
 
-            } else {
-
-                scheduleAt(transferTime, transferMsg);
-
-            }
-
-        }
-
-    }
+	}
 
 }
 
@@ -290,19 +348,6 @@ void Sphere::computeTransferTime() {
 	int Nx, Ny, Nz;			// Number of space cells (or divisions) in each axis
 
 	int counter;
-
-	int sp[] = { // side points
-	//  0, 1, 2, 3, 4, 5 <- dice side
-		1, 1, 0, 0, 0, 0,
-		0, 0, 0, 1, 0, 0,
-		1, 0, 0, 0, 0, 0,
-		1, 1, 1, 1, 0, 1,
-		1, 1, 0, 1, 0, 0,
-		1, 0, 0, 0, 1, 0,
-		0, 1, 0, 0, 0, 0,
-		0, 0, 0, 1, 1, 1,
-		1, 1, 1, 1, 0, 0
-	};
 
 	double x, y, z, vx, vy, vz;	// Particle position and velocity
 
@@ -547,19 +592,6 @@ void Sphere::computeWallCollisionTime() {
 
 	int collisionCounter;
 
-	int sp[] = { // side points
-	//  0, 1, 2, 3, 4, 5 <- dice side
-		1, 1, 0, 0, 0, 0,
-		0, 0, 0, 1, 0, 0,
-		1, 0, 0, 0, 0, 0,
-		1, 1, 1, 1, 0, 1,
-		1, 1, 0, 1, 0, 0,
-		1, 0, 0, 0, 1, 0,
-		0, 1, 0, 0, 0, 0,
-		0, 0, 0, 1, 1, 1,
-		1, 1, 1, 1, 0, 0
-	};
-
 	double Sx, Sy, Sz;
 	double rad, x, y, z, vx, vy, vz; // Particle radius, position and velocity
 	double wallCollisionTime,
@@ -631,18 +663,18 @@ void Sphere::computeWallCollisionTime() {
 
 		if (temp != 0) {
 
-		    if (*side == 0)
-		        temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z + rad)))/temp;
-		    else if (*side == 1)
-		        temp = (N.x*(P.x - (x + rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
-		    else if (*side == 2)
-		        temp = (N.x*(P.x - x) + N.y*(P.y - (y - rad)) + N.z*(P.z - z))/temp;
-		    else if (*side == 3)
-		        temp = (N.x*(P.x - x) + N.y*(P.y - (y + rad)) + N.z*(P.z - z))/temp;
-		    else if (*side == 4)
-		        temp = (N.x*(P.x - (x - rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
-		    else
-		        temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
+			if (*side == 0)
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z + rad)))/temp;
+			else if (*side == 1)
+				temp = (N.x*(P.x - (x + rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+			else if (*side == 2)
+				temp = (N.x*(P.x - x) + N.y*(P.y - (y - rad)) + N.z*(P.z - z))/temp;
+			else if (*side == 3)
+				temp = (N.x*(P.x - x) + N.y*(P.y - (y + rad)) + N.z*(P.z - z))/temp;
+			else if (*side == 4)
+				temp = (N.x*(P.x - (x - rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+			else
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
 
 
 // We found a solution :)
@@ -698,6 +730,33 @@ void Sphere::computeWallCollisionTime() {
 		wallCollisionMsg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
 
 	}
+
+}
+
+/*
+ * Computes the time when the particle leaves its neighborhood area and its
+ * Near-Neighbor List must be updated
+ */
+void Sphere::computeOutOfNeighborhoodTime() {
+
+	double sTime, outOfNeighborhoodTime;
+
+	double vx, vy, vz, lr;
+
+	sTime = simTime().dbl();
+	outOfNeighborhoodTime = NO_TIME;
+	
+	lr = getListRadius();
+
+	vx = getVx();
+	vy = getVy(); 
+	vz = getVz();
+
+	outOfNeighborhoodTime = lr/sqrt(vx*vx + vy*vy + vz*vz);
+	outOfNeighborhoodTime += sTime;
+
+	outOfNeighborhoodMsg->setKind(EV_OUTOFNEIGHBORHOOD);
+	outOfNeighborhoodMsg->setEventTime(outOfNeighborhoodTime);
 
 }
 
@@ -767,11 +826,11 @@ double Sphere::scheduledCollisionTime() {
 
 	} else if (wallCollisionMsg->isScheduled()) {
 
-	    return wallCollisionMsg->getEventTime();
+		return wallCollisionMsg->getEventTime();
 
 	} else {
 
-	    return NO_TIME;
+		return NO_TIME;
 
 	}
 
@@ -784,25 +843,25 @@ double Sphere::scheduledCollisionTime() {
  */
 void Sphere::handleMobilityMessage(MobilityMessage *msg) {
 
-    int kind = msg->getKind();
+	int kind = msg->getKind();
 
 // Step 2. Handle the event
-    if (kind == EV_TRANSFER) {
-        // Update the molecule space cell
-        updateStateAfterTransfer((MobilityMessage *)msg);
-        nextEventTime();
+	if (kind == EV_TRANSFER) {
+		// Update the molecule space cell
+		updateStateAfterTransfer((MobilityMessage *)msg);
+		nextEventTime();
 
-    } else if (kind == EV_WALLCOLLISION) {
-        // Update the molecule data
-        updateStateAfterWallCollision((MobilityMessage *)msg);
-        nextEventTime();
+	} else if (kind == EV_WALLCOLLISION) {
+		// Update the molecule data
+		updateStateAfterWallCollision((MobilityMessage *)msg);
+		nextEventTime();
 
-    } else if (kind == EV_COLLISION) {
+	} else if (kind == EV_COLLISION) {
 
-        updateStateAfterCollision((MobilityMessage *)msg);
-        nextEventTime();
+		updateStateAfterCollision((MobilityMessage *)msg);
+		nextEventTime();
 
-    } else if (kind == EV_CHECK) {
+	} else if (kind == EV_CHECK) {
 // TODO our collision time has turned invalid. We must check again for the next
 // event.
 
@@ -815,11 +874,11 @@ void Sphere::handleMobilityMessage(MobilityMessage *msg) {
 // expects a collision. If we have a scheduled collision event, we must cancel
 // it telling the partner to check again for its next collision time (thus
 // going to case 1).
-        nextEventTime();
+		nextEventTime();
 
-    } else {
+	} else {
 
-    }
+	}
 
 }
 
@@ -849,119 +908,119 @@ void Sphere::updateStateAfterTransfer(MobilityMessage *msg) {
  */
 void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
-    double tc, m1, m2, tmp;
-    double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
+	double tc, m1, m2, tmp;
+	double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
 
-    point_t c1, c2;
-    vect_t v1, n, e1, e2;
+	point_t c1, c2;
+	vect_t v1, n, e1, e2;
 
-    Particle *p;
+	Particle *p;
 
-    tc = msg->getEventTime();
-    p = msg->getPartner();
+	tc = msg->getEventTime();
+	p = msg->getPartner();
 
 // Find the center position of the spheres
-    c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
-    c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
-    c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
+	c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
+	c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
+	c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
 
-    c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
-    c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
-    c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
+	c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
+	c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
+	c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
 
-    m1 = this->getMass();
-    m2 = p->getMass();
+	m1 = this->getMass();
+	m2 = p->getMass();
 
 // Change frame of reference of the system to one of the spheres
-    v1.x = this->getVx() - p->getVx();
-    v1.y = this->getVy() - p->getVy();
-    v1.z = this->getVz() - p->getVz();
+	v1.x = this->getVx() - p->getVx();
+	v1.y = this->getVy() - p->getVy();
+	v1.z = this->getVz() - p->getVz();
 
 // Find the normal vector of the plane of collision
-    n.x = c2.x - c1.x;
-    n.y = c2.y - c1.y;
-    n.z = c2.z - c1.z;
+	n.x = c2.x - c1.x;
+	n.y = c2.y - c1.y;
+	n.z = c2.z - c1.z;
 
-    tmp = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+	tmp = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
 
-    n.x /= tmp;
-    n.y /= tmp;
-    n.z /= tmp;
+	n.x /= tmp;
+	n.y /= tmp;
+	n.z /= tmp;
 
 // Find e1 as the perpendicular vector to both n and v, and then e2 as the one
 // perpendicular to n and e1
-    e1.x = n.y*v1.z - n.z*v1.y;
-    e1.y = n.z*v1.x - n.x*v1.z;
-    e1.z = n.x*v1.y - n.y*v1.x;
+	e1.x = n.y*v1.z - n.z*v1.y;
+	e1.y = n.z*v1.x - n.x*v1.z;
+	e1.z = n.x*v1.y - n.y*v1.x;
 
 // Normalize the vector found, e1
-    tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
+	tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
 
-    e1.x /= tmp;
-    e1.y /= tmp;
-    e1.z /= tmp;
+	e1.x /= tmp;
+	e1.y /= tmp;
+	e1.z /= tmp;
 
 // Find the velocity vectors in the new basis and if ...
-    v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
+	v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
 
-    if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
+	if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
 // n and v are parallel, we can solve directly
-        tmp = (m1 - m2)*v1n/(m1 + m2);
-        v2n = 2*m1*v1n/(m1 + m2);
-        v1n = tmp;
+		tmp = (m1 - m2)*v1n/(m1 + m2);
+		v2n = 2*m1*v1n/(m1 + m2);
+		v1n = tmp;
 
 // Revert the frame of reference, the velocity vectors and set the new velocity
-        setVx(v1n*n.x + p->getVx());
-        setVy(v1n*n.y + p->getVy());
-        setVz(v1n*n.z + p->getVz());
+		setVx(v1n*n.x + p->getVx());
+		setVy(v1n*n.y + p->getVy());
+		setVz(v1n*n.z + p->getVz());
 
-        p->setVx(v2n*n.x + p->getVx());
-        p->setVy(v2n*n.y + p->getVy());
-        p->setVz(v2n*n.z + p->getVz());
+		p->setVx(v2n*n.x + p->getVx());
+		p->setVy(v2n*n.y + p->getVy());
+		p->setVz(v2n*n.z + p->getVz());
 
-    } else {
+	} else {
 
-        e2.x = e1.y*n.z - e1.z*n.y;
-        e2.y = e1.z*n.x - e1.x*n.z;
-        e2.z = e1.x*n.y - e1.y*n.x;
+		e2.x = e1.y*n.z - e1.z*n.y;
+		e2.y = e1.z*n.x - e1.x*n.z;
+		e2.z = e1.x*n.y - e1.y*n.x;
 
 // Find the rest of the components
-        v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
-        v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
+		v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
+		v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
 
-        v2n  = 0.0;
-        v2e1 = 0.0;
-        v2e2 = 0.0;
+		v2n  = 0.0;
+		v2e1 = 0.0;
+		v2e2 = 0.0;
 
 // Find the new velocity in the normal component (remember that v2n initially
 // is 0.0)
-        tmp = (m1 - m2)*v1n/(m1 + m2);
-        v2n = 2*m1*v1n/(m1 + m2);
-        v1n = tmp;
+		tmp = (m1 - m2)*v1n/(m1 + m2);
+		v2n = 2*m1*v1n/(m1 + m2);
+		v1n = tmp;
 
 // Revert the frame of reference, the velocity vectors and set the new velocity
-        setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
-        setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
-        setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
+		setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
+		setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
+		setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
 
-        p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
-        p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
-        p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
+		p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
+		p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
+		p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
 
-    }
+	}
 
 // Update the particles position
-    setX(c1.x);
-    setY(c1.y);
-    setZ(c1.z);
+	setX(c1.x);
+	setY(c1.y);
+	setZ(c1.z);
 
-    p->setX(c2.x);
-    p->setY(c2.y);
-    p->setZ(c2.z);
+	p->setX(c2.x);
+	p->setY(c2.y);
+	p->setZ(c2.z);
 
 // Update the last collision times
-    setLastCollisionTime(tc);
-    p->setLastCollisionTime(tc);
+	setLastCollisionTime(tc);
+	p->setLastCollisionTime(tc);
 
 }
 

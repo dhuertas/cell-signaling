@@ -19,6 +19,7 @@ class Sphere : public Circle, public cSimpleModule {
 		MobilityMessage *transferMsg;
 		MobilityMessage *collisionMsg;
 		MobilityMessage *wallCollisionMsg;
+		MobilityMessage *outOfNeighborhoodMsg;
 	
 	protected:
 
@@ -35,6 +36,7 @@ class Sphere : public Circle, public cSimpleModule {
 		void computeTransferTime(void);
 		void computeCollisionTime(void);
 		void computeWallCollisionTime(void);
+		void computeOutOfNeighborhoodTime(void);
 
 		double solveCollisionTime(Particle *);
 		double scheduledCollisionTime(void);

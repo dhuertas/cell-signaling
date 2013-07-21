@@ -13,26 +13,25 @@ class Particle {
 		point_t position;
 		vect_t velocity;
 
-		// Cell List attributes
-		int spaceCell;
-
-		// Verlet List attributes
-		std::list<Particle*> neighbourParticles;
-		double cutOffRadius;
-		double listRadius; // listRadius > cutOffRadius
-
 		double mass;
 		double lastCollisionTime;
+
+// Cell List attributes
+		int spaceCell;
+
+// Near Neighbor List attributes
+		std::list<Particle*> neighbourParticles;
+		double listRadius;
 
 	public:
 
 		Particle();
 		Particle(double, double, double, double, double);
 
-		// Verlet methods
-		void createVerletList(std::list<Particle*> *);
-		void updateVerletList(std::list<Particle*> *);
-		void addParticleToVerletList(Particle *);
+		// NNL methods
+		void createNNList(std::list<Particle*> *);
+		void updateNNList(std::list<Particle*> *);
+		void addParticleToNNList(Particle *);
 
 		// Gets and sets
 		double getX(void) { return position.x; };
@@ -44,7 +43,8 @@ class Particle {
 		double getVz(void) { return velocity.z; };
 		vect_t getVelocity(void) { return velocity; };
 		double getMass(void) { return mass; };
-		double getSpaceCell(void) { return spaceCell; }
+		double getSpaceCell(void) { return spaceCell; };
+		double getListRadius(void) { return listRadius; };
 		virtual double getRadius(void) = 0;
 		double getLastCollisionTime(void) { return lastCollisionTime; };
 
@@ -58,6 +58,7 @@ class Particle {
 		void setVelocity(vect_t v) { velocity = v; };
 		void setMass(double m) { mass = m; };
 		void setSpaceCell(int c) { spaceCell = c; };
+		void setListRadius(double r) { listRadius = r; };
 		virtual void setRadius(double) = 0;
 		void setLastCollisionTime(double tc) { lastCollisionTime = tc; };
 

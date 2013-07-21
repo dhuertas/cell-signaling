@@ -29,53 +29,39 @@ Particle::Particle(
 	mass = m;
 	lastCollisionTime = 0;
 
+	listRadius = 1;
+
 }
 
 /*
- * Create and populate the Verlet list
+ * Create and populate the Near-Neighbor list
  */
-void Particle::createVerletList(std::list<Particle*> *l) {
+void Particle::createNNList(std::list<Particle*> *l) {
 
-    bool found;
+	double dx, dy, dz;
+	double lrs; // listRadiusSquared
 
-    double dx, dy, dz;
+	std::list<Particle *>::const_iterator pa;
 
-    std::list<Particle *>::const_iterator pa, pn;
+	for (pa = l->begin(); pa != l->end(); ++pa) {
 
-    for (pa = l->begin(); pa != l->end(); ++pa) {
+		if ((*pa) == this) continue;
 
-        if ((*pa) == this) continue;
+// Two particles are said to be neighbor when the sum of their listRadius is greater
+// than the distance between their centroids.
+		dx = this->getX() - (*pa)->getX();
+		dy = this->getY() - (*pa)->getY();
+		dz = this->getZ() - (*pa)->getZ();
 
-// Check first if the particle has already been added to our list
-        found = false;
+		lrs = listRadius+(*pa)->getListRadius();
+		lrs *= lrs;
 
-        for (pn = neighbourParticles.begin();
-            pn != neighbourParticles.end(); ++pn) {
+		if (lrs > dx*dx+dy*dy+dz*dz) {
+			this->addParticleToNNList((*pa));
+		}
 
-            if ((*pa) == (*pn)) {
-// Particle pn is already in our list
-                found = true;
-                break;
+	}
 
-            }
-        }
-
-        if ( ! found) {
-// Compute distance and, if it is closer than or equal to listRadius, add the
-// particle to our list and add ourselves to its list
-            dx = this->getX() - (*pa)->getX();
-            dy = this->getY() - (*pa)->getY();
-            dz = this->getZ() - (*pa)->getZ();
-
-            if (listRadius*listRadius <= dx*dx + dy*dy + dz*dz) {
-                l->push_back((*pa));
-                (*pa)->addParticleToVerletList(this);
-            }
-        }
-    }
-
-// Eventually We will have to update our list.
-// TODO to be continued ...
 }
 
 /*
@@ -83,8 +69,22 @@ void Particle::createVerletList(std::list<Particle*> *l) {
  *
  * @param {Particle *} p
  */
-void Particle::addParticleToVerletList(Particle *p) {
+void Particle::addParticleToNNList(Particle *p) {
 
-    neighbourParticles.push_back(p);
+	neighbourParticles.push_back(p);
 
+}
+
+/*
+ * Add a particle to our Verlet list
+ *
+ * @param {Particle *} p
+ */
+void Particle::updateNNList(std::list<Particle*> *l) {
+
+// Empty previous list
+	neighbourParticles.clear();
+
+// Look for the particles closer than listRadius
+	this->createNNList(l);
 }

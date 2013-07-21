@@ -19,17 +19,19 @@ simple Cell {
 
 	parameters:
 		double emitEvery;
-		double xpos;		// x coordinate initial position
-		double ypos;		// y coordinate initial position
-		double zpos;		// z coordinate initial position
+		double xpos;			// x coordinate initial position
+		double ypos;			// y coordinate initial position
+		double zpos;			// z coordinate initial position
 
-		double vx = default(0);
-		double vy = default(0);
-		double vz = default(0);
+		double vx = default(0);	// x coordinate initial velocity
+		double vy = default(0);	// y coordinate initial velocity
+		double vz = default(0);	// z coordinate initial Velocity
 
-		double radius;		// Radius of the cell
+		double radius;			// Radius of the cell
 
 		double mass;
+
+		double listRadius = default(0);
 
 	gates:
 		input in;
@@ -40,17 +42,19 @@ simple Cell {
 simple Molecule {
 
 	parameters:
-	    double xpos;		// x coordinate initial position
-		double ypos;		// y coordinate initial position
-		double zpos;		// z coordinate initial position
+		double xpos;			// x coordinate initial position
+		double ypos;			// y coordinate initial position
+		double zpos;			// z coordinate initial position
 
-		double radius;		// Radius of the molecule
+		double vx;				// x coordinate initial velocity
+		double vy;				// y coordinate initial velocity
+		double vz;				// z coordinate initial Velocity
 
-		double vx;			// x coordinate initial velocity
-		double vy;			// y coordinate initial velocity
-		double vz;			// z coordinate initial Velocity
+		double radius;			// Radius of the molecule
 
 		double mass;
+
+		double listRadius = default(0);
 
 	gates:
 		input in;
@@ -63,6 +67,15 @@ simple Manager {
 		// The C++ class for Manager has spaceSizeX, spaceSizeY and spaceSizeZ
 		// attributes. Nevertheless this attributes are retrieved from the 
 		// network .ned file as network parameters.
+
+		// Manager name
+		string name = default("manager");
+
+		// Molecule Dynamics Mode. Options are: 
+		// 1 - Only use Cell Lists Method
+		// 2 - Combination of Near-Neighbor Lists and Cell Lists methods
+		int mode = default(2);
+
 	gates:
 	    input in;
 		output out;

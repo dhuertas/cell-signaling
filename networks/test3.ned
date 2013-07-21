@@ -19,7 +19,7 @@ import cellsignaling.src.Cell;
 import cellsignaling.src.Manager;
 import cellsignaling.src.Molecule;
 
-network test
+network test3
 {
 	@display("bgb=400,300");
 
@@ -39,7 +39,7 @@ network test
 		}
 		emitter: Cell;
 		receiver: Cell;
-		molecule: Molecule;
+		molecule[20]: Molecule;
 
 	connections allowunconnected:
 
