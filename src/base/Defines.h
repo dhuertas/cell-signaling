@@ -11,10 +11,13 @@
 #define EV_OUTOFNEIGHBORHOOD	5
 #define EV_TKENVUPDATE			6
 
-// Collision Dynamics Algorithm
-#define CD_CELLLIST				1	// Only Cell Lists are used
-#define CD_NNLIST				2 	// A combination of Near-Neighbor List and
+// Methods
+#define M_CELLLIST				1	// Only Cell Lists are used
+#define M_NNLIST				2 	// A combination of Near-Neighbor List and
 									// Cell List methods is used
+
+#define CELLBELONGSTOSIMSPACE(a,b,c,Nx,Ny,Nz) 0 <= a && a < Nx && 0 <= b && b < Ny && 0 <= c && c < Nz
+
 typedef struct Point {
 	double x;
 	double y;

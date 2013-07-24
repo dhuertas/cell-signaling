@@ -47,6 +47,10 @@ class Sphere : public Circle, public cSimpleModule {
 		void updateStateAfterCollision(MobilityMessage *);
 		void updateStateAfterWallCollision(MobilityMessage *);
 
+		// Near-Neighbor List methods
+		void createNearNeighborList(void);
+		void updateNearNeighborList(void);
+
 		// tk Environment related methods
 		void tkEnvDrawShape(void);
 		void tkEnvUpdatePosition(void);

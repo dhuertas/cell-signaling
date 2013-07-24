@@ -103,12 +103,12 @@ void Sphere::tkEnvUpdatePosition() {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-	//if (manager->getMode() == CD_NNLIST) {
+	if (mode == M_NNLIST) {
 		buffer << getListRadius();
 
 		getDisplayString().setTagArg("r",0, buffer.str().c_str());
 		buffer.str(std::string());
-	//}
+	}
 
 	EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
 
@@ -171,50 +171,80 @@ void Sphere::firstEventTime() {
 	computeTransferTime();
 	computeWallCollisionTime();
 	computeCollisionTime();
-	computeOutOfNeighborhoodTime();
 
 	transferTime = transferMsg->getEventTime();
 	collisionTime = collisionMsg->getEventTime();
 	wallCollisionTime = wallCollisionMsg->getEventTime();
-	//outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
 
 	times.push_back(transferTime);
 	times.push_back(collisionTime);
 	times.push_back(wallCollisionTime);
-	// times.push_back(outOfNeighborhoodTime);
+
+	switch (mode) {
+		
+		case M_NNLIST:
+
+			computeOutOfNeighborhoodTime();
+			outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
+
+			times.push_back(outOfNeighborhoodTime);
 
 // Initialize the smallestTime so it is not a negative value (NO_TIME)
-	if (transferTime != NO_TIME) {
-		smallestTime = transferTime;
-	} else if (collisionTime != NO_TIME) {
-		smallestTime = collisionTime;
-	} else {
+			if (transferTime != NO_TIME) {
+				smallestTime = transferTime;
+			} else if (collisionTime != NO_TIME) {
+				smallestTime = collisionTime;
+			} else {
 // No event will be scheduled for this sphere for now
-		smallestTime = 0;
-	}
+				smallestTime = 0;
+			}
 
-	for (t = times.begin(); t != times.end(); ++t) {
-		if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
-	}
+			for (t = times.begin(); t != times.end(); ++t) {
+				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
+			}
 
-	if (smallestTime == transferTime) {
-
-		scheduleAt(transferTime, transferMsg);
-
-	} else if (smallestTime == collisionTime) {
-
-		scheduleAt(collisionTime, collisionMsg);
-
-	} else if (smallestTime == wallCollisionTime) {
-
-		scheduleAt(wallCollisionTime, wallCollisionMsg);
-
-	//} else if (smallestTime == outOfNeighborhoodTime) {
-
-		//scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
-
-	} else {
+			if (smallestTime == transferTime) {
+				scheduleAt(transferTime, transferMsg);
+			} else if (smallestTime == collisionTime) {
+				scheduleAt(collisionTime, collisionMsg);
+			} else if (smallestTime == wallCollisionTime) {
+				scheduleAt(wallCollisionTime, wallCollisionMsg);
+			} else if (smallestTime == outOfNeighborhoodTime) {
+				scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
+			} else {
 // Nothing can be scheduled for this sphere
+			}
+
+			break;
+
+		case M_CELLLIST:
+		default:
+
+// Initialize the smallestTime so it is not a negative value (NO_TIME)
+			if (transferTime != NO_TIME) {
+				smallestTime = transferTime;
+			} else if (collisionTime != NO_TIME) {
+				smallestTime = collisionTime;
+			} else {
+// No event will be scheduled for this sphere for now
+				smallestTime = 0;
+			}
+
+			for (t = times.begin(); t != times.end(); ++t) {
+				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
+			}
+
+			if (smallestTime == transferTime) {
+				scheduleAt(transferTime, transferMsg);
+			} else if (smallestTime == collisionTime) {
+				scheduleAt(collisionTime, collisionMsg);
+			} else if (smallestTime == wallCollisionTime) {
+				scheduleAt(wallCollisionTime, wallCollisionMsg);
+			} else {
+// Nothing can be scheduled for this sphere
+			}
+
+			break;
 	}
 
 }
@@ -246,94 +276,171 @@ void Sphere::nextEventTime() {
 	if (transferMsg->isScheduled()) cancelEvent(transferMsg);
 	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
 	if (wallCollisionMsg->isScheduled()) cancelEvent(wallCollisionMsg);
-	if (outOfNeighborhoodMsg->isScheduled()) cancelEvent(outOfNeighborhoodMsg);
 
 	computeTransferTime();
 	computeCollisionTime();
 	computeWallCollisionTime();
-	computeOutOfNeighborhoodTime();
 
 	transferTime = transferMsg->getEventTime();
 	collisionTime = collisionMsg->getEventTime();
 	wallCollisionTime = wallCollisionMsg->getEventTime();
-	// outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
 
 	times.push_back(transferTime);
 	times.push_back(collisionTime);
 	times.push_back(wallCollisionTime);
-	// times.push_back(outOfNeighborhoodTime);
+
+	switch (mode) {
+
+		case M_NNLIST:
+
+			if (outOfNeighborhoodMsg->isScheduled()) cancelEvent(outOfNeighborhoodMsg);
+
+			computeOutOfNeighborhoodTime();
+			outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
+
+			times.push_back(outOfNeighborhoodTime);
 
 // Initialize the smallestTime so it is not a negative value (NO_TIME)
-	if (transferTime != NO_TIME) {
-		smallestTime = transferTime;
-	} else if (collisionTime != NO_TIME) {
-		smallestTime = collisionTime;
-	} else if (wallCollisionTime != NO_TIME) {
-		smallestTime = wallCollisionTime;
-	// } else if (outOfNeighborhoodTime != NO_TIME) {
-		// smallestTime = outOfNeighborhoodTime;
-	} else {
-// No event will be scheduled for this sphere for now
-		smallestTime = 0;
-	}
-
-	for (t = times.begin(); t != times.end(); ++t) {
-		if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
-	}
-
-	if (smallestTime == transferTime) {
-
-		scheduleAt(transferTime, transferMsg);
-
-	} else if (smallestTime == wallCollisionTime) {
-
-		scheduleAt(wallCollisionTime, wallCollisionMsg);
-
-	// } else if (smallestTime == outOfNeighborhoodTime) {
-
-		//scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
-
-	} else if (smallestTime == collisionTime) {
-
-		partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
-
-		if (partnerCollisionTime == NO_TIME) {
-// Partner particle does not have any scheduled collision event
-			scheduleAt(collisionTime, collisionMsg);
-			collisionMsg->getPartner()->nextEventTime();
-
-		} else {
-
-			if (collisionTime < partnerCollisionTime) {
-
-				scheduleAt(collisionTime, collisionMsg);
-				collisionMsg->getPartner()->nextEventTime();
-
+			if (collisionTime != NO_TIME) {
+				smallestTime = collisionTime;
+			} else if (wallCollisionTime != NO_TIME) {
+				smallestTime = wallCollisionTime;
+			} else if (transferTime != NO_TIME) {
+				smallestTime = transferTime;
+			} else if (outOfNeighborhoodTime != NO_TIME) {
+				smallestTime = outOfNeighborhoodTime;
 			} else {
-// Must check that the partner is solving the collision (its next event is not
-// of type EV_CHECK)
-				msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
+// No event will be scheduled for this sphere for now
+				smallestTime = 0;
+			}
 
-				if (msg->getKind() == EV_CHECK) {
-// Partner expects that we are solving the collision
-					collisionMsg->setKind(EV_COLLISION);
+			for (t = times.begin(); t != times.end(); ++t) {
+				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
+			}
+
+			if (smallestTime == outOfNeighborhoodTime) {
+
+				scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
+
+			} else if (smallestTime == transferTime) {
+
+				scheduleAt(transferTime, transferMsg);
+
+			} else if (smallestTime == wallCollisionTime) {
+
+				scheduleAt(wallCollisionTime, wallCollisionMsg);
+
+			} else if (smallestTime == collisionTime) {
+
+				partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
+				
+				if (partnerCollisionTime == NO_TIME) {
+// Partner particle does not have any scheduled collision event
 					scheduleAt(collisionTime, collisionMsg);
+					collisionMsg->getPartner()->updateNearNeighborList();
+					collisionMsg->getPartner()->nextEventTime();
 
 				} else {
+
+					if (collisionTime < partnerCollisionTime) {
+
+						scheduleAt(collisionTime, collisionMsg);
+						collisionMsg->getPartner()->updateNearNeighborList();
+						collisionMsg->getPartner()->nextEventTime();
+
+					} else {
+// Must check that the partner is solving the collision (its next event is not of type EV_CHECK)
+						msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
+
+						if (msg->getKind() == EV_CHECK) {
+// Partner expects that we are solving the collision
+							collisionMsg->setKind(EV_COLLISION);
+							scheduleAt(collisionTime, collisionMsg);
+						} else {
 // Partner is solving the collision event
-					collisionMsg->setKind(EV_CHECK);
-					scheduleAt(collisionTime, collisionMsg);
+							collisionMsg->setKind(EV_CHECK);
+							scheduleAt(collisionTime, collisionMsg);
+
+						}
+
+					}
 
 				}
 
+			} else {
+// Do nothing
 			}
 
-		}
+			break;
 
-	} else {
+		case M_CELLLIST:
+		default:
 
+// Initialize the smallestTime so it is not a negative value (NO_TIME)
+			if (transferTime != NO_TIME) {
+				smallestTime = transferTime;
+			} else if (collisionTime != NO_TIME) {
+				smallestTime = collisionTime;
+			} else if (wallCollisionTime != NO_TIME) {
+				smallestTime = wallCollisionTime;
+			} else {
+// No event will be scheduled for this sphere for now
+				smallestTime = 0;
+			}
+
+			for (t = times.begin(); t != times.end(); ++t) {
+				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
+			}
+
+			if (smallestTime == transferTime) {
+
+				scheduleAt(transferTime, transferMsg);
+
+			} else if (smallestTime == wallCollisionTime) {
+
+				scheduleAt(wallCollisionTime, wallCollisionMsg);
+
+			} else if (smallestTime == collisionTime) {
+				
+				partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
+				
+				if (partnerCollisionTime == NO_TIME) {
+// Partner particle does not have any scheduled collision event
+					scheduleAt(collisionTime, collisionMsg);
+					collisionMsg->getPartner()->nextEventTime();
+				} else {
+
+					if (collisionTime < partnerCollisionTime) {
+
+						scheduleAt(collisionTime, collisionMsg);
+						collisionMsg->getPartner()->nextEventTime();
+
+					} else {
+// Must check that the partner is solving the collision (its next event is not
+// of type EV_CHECK)
+						msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
+
+						if (msg->getKind() == EV_CHECK) {
+// Partner expects that we are solving the collision
+							collisionMsg->setKind(EV_COLLISION);
+							scheduleAt(collisionTime, collisionMsg);
+
+						} else {
+// Partner is solving the collision event
+							collisionMsg->setKind(EV_CHECK);
+							scheduleAt(collisionTime, collisionMsg);
+
+						}
+
+					}
+
+				}
+
+			} else {
 // Do nothing
+			}
 
+			break;
 	}
 
 }
@@ -432,9 +539,7 @@ void Sphere::computeTransferTime() {
 
 			temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
 
-// We found a solution :)
-// 
-// "temp" is the amount of time the particle takes to go from its last
+// Solution found. "temp" is the amount of time the particle takes to go from its last
 // event point to the space cell side where it is bounded now.
 			if (counter == 0) {
 
@@ -533,14 +638,47 @@ void Sphere::computeCollisionTime() {
 
 	collisionCounter = 0;
 
-	for (a = -1; a <= 1; a++) {
-		for (b = -1; b <= 1; b++) {
+	switch (mode) {
+
+		case M_NNLIST:
+
+			for (p = neighborParticles.begin(); p != neighborParticles.end(); ++p) {
+
+				if (*p == this) continue;
+
+// Solve particle to particle collision
+				temp = solveCollisionTime(*p);
+
+				if (collisionCounter == 0) {
+
+					if (sTime <= temp) {
+						collisionTime = temp;
+						partner = (*p);
+						collisionCounter++;
+					}
+
+				} else {
+
+					if (sTime <= temp  && temp < collisionTime) {
+						collisionTime = temp;
+						partner = (*p);
+						collisionCounter++;
+					}
+
+				}
+			}
+
+			break;
+
+		case M_CELLLIST:
+		default:
+
+			for (a = -1; a <= 1; a++)
+			for (b = -1; b <= 1; b++)
 			for (c = -1; c <= 1; c++) {
 
 // The neighbor cell must be contained in the simulation space
-				if (0 <= i+a && i+a < Nx && 
-					0 <= j+b && j+b < Ny && 
-					0 <= k+c && k+c < Nz) {
+				if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
 
 					N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
 					particles = manager->getSpaceCellParticles(N);
@@ -574,9 +712,9 @@ void Sphere::computeCollisionTime() {
 
 					}
 				}
-
 			}
-		}
+
+			break;
 	}
 
 	collisionMsg->setKind(EV_COLLISION);
@@ -615,8 +753,6 @@ void Sphere::computeWallCollisionTime() {
 
 	x = getX(); y = getY(); z = getZ();
 	vx = getVx(); vy = getVy(); vz = getVz();
-
-	// vm = sqrt(vx*vx + vy*vy + vz*vz);
 
 // In the simulation space we have 6 possible sides but since we know the 
 // direction of the particle we need to check only 3 (at most).
@@ -676,20 +812,17 @@ void Sphere::computeWallCollisionTime() {
 			else
 				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
 
-
-// We found a solution :)
-// 
-// "temp" is the amount of time the particle takes to go from its last 
+// Solution found. "temp" is the amount of time the particle takes to go from its last 
 // event point to the simulation space side.
 			if (collisionCounter == 0) {
-				// First
+
 				wallCollisionTime = temp;
 				hits.push_back(*side);
 				collisionCounter++;
 
 			} else {
 
-				if (temp > 0 && temp < wallCollisionTime) {
+				if (0 < temp && temp < wallCollisionTime) {
 
 					wallCollisionTime = temp;
 
@@ -697,7 +830,7 @@ void Sphere::computeWallCollisionTime() {
 					hits.push_back(*side);
 					collisionCounter = 1;
 
-				} else if (temp > 0 && temp == wallCollisionTime) {
+				} else if (0 < temp && temp == wallCollisionTime) {
 // The particle hit two or more sides at the same time
 					hits.push_back(*side);
 					collisionCounter++;
@@ -739,24 +872,58 @@ void Sphere::computeWallCollisionTime() {
  */
 void Sphere::computeOutOfNeighborhoodTime() {
 
-	double sTime, outOfNeighborhoodTime;
+	int i, j, k, Ny, Nz;
 
-	double vx, vy, vz, lr;
+	double spaceCellSize;
+	double sTime, outOfNeighborhoodTime;
+	double vx, vy, vz, vm, lr;
+
+	point_t C;
+	
+	Ny = manager->getNumberOfSpaceCellsY();
+	Nz = manager->getNumberOfSpaceCellsZ();
+
+	spaceCellSize = manager->getSpaceCellSize();
 
 	sTime = simTime().dbl();
 	outOfNeighborhoodTime = NO_TIME;
-	
-	lr = getListRadius();
 
 	vx = getVx();
 	vy = getVy(); 
 	vz = getVz();
 
-	outOfNeighborhoodTime = lr/sqrt(vx*vx + vy*vy + vz*vz);
-	outOfNeighborhoodTime += sTime;
+	lr = getListRadius();
+
+	vm = sqrt(vx*vx + vy*vy + vz*vz);
 
 	outOfNeighborhoodMsg->setKind(EV_OUTOFNEIGHBORHOOD);
-	outOfNeighborhoodMsg->setEventTime(outOfNeighborhoodTime);
+
+	if (vm != 0) {
+
+		outOfNeighborhoodTime = lr/vm;
+		outOfNeighborhoodTime += sTime;
+
+		outOfNeighborhoodMsg->setEventTime(outOfNeighborhoodTime);
+
+		C.x = getX() + vx*(outOfNeighborhoodTime - lastCollisionTime);
+		C.y = getY() + vy*(outOfNeighborhoodTime - lastCollisionTime);
+		C.z = getZ() + vz*(outOfNeighborhoodTime - lastCollisionTime);
+
+		i = floor(C.x/spaceCellSize);
+		j = floor(C.y/spaceCellSize);
+		k = floor(C.z/spaceCellSize);
+
+		outOfNeighborhoodMsg->setPrevSpaceCell(getSpaceCell());
+		outOfNeighborhoodMsg->setNextSpaceCell(i*Ny*Nz + j*Nz + k);
+
+	} else {
+// Particle is not moving
+		outOfNeighborhoodMsg->setEventTime(outOfNeighborhoodTime);
+
+		outOfNeighborhoodMsg->setPrevSpaceCell(getSpaceCell());
+		outOfNeighborhoodMsg->setNextSpaceCell(getSpaceCell());
+
+	}
 
 }
 
@@ -821,17 +988,11 @@ double Sphere::solveCollisionTime(Particle *p) {
 double Sphere::scheduledCollisionTime() {
 
 	if (collisionMsg->isScheduled()) {
-
 		return collisionMsg->getEventTime();
-
 	} else if (wallCollisionMsg->isScheduled()) {
-
 		return wallCollisionMsg->getEventTime();
-
 	} else {
-
 		return NO_TIME;
-
 	}
 
 }
@@ -845,39 +1006,78 @@ void Sphere::handleMobilityMessage(MobilityMessage *msg) {
 
 	int kind = msg->getKind();
 
+	switch (mode) {
+
+		case M_NNLIST:
+
 // Step 2. Handle the event
-	if (kind == EV_TRANSFER) {
-		// Update the molecule space cell
-		updateStateAfterTransfer((MobilityMessage *)msg);
-		nextEventTime();
+			if (kind == EV_TRANSFER) {
+				// Update the molecule space cell
+				updateStateAfterTransfer((MobilityMessage *)msg);
+				updateNearNeighborList();
+				
+				nextEventTime();
 
-	} else if (kind == EV_WALLCOLLISION) {
-		// Update the molecule data
-		updateStateAfterWallCollision((MobilityMessage *)msg);
-		nextEventTime();
+			} else if (kind == EV_WALLCOLLISION) {
+				// Update the molecule data
+				updateStateAfterWallCollision((MobilityMessage *)msg);
+				updateNearNeighborList();
+				
+				nextEventTime();
 
-	} else if (kind == EV_COLLISION) {
+			} else if (kind == EV_COLLISION) {
 
-		updateStateAfterCollision((MobilityMessage *)msg);
-		nextEventTime();
+				updateStateAfterCollision((MobilityMessage *)msg);
+				updateNearNeighborList();
+				
+				nextEventTime();
 
-	} else if (kind == EV_CHECK) {
-// TODO our collision time has turned invalid. We must check again for the next
-// event.
+			} else if (kind == EV_OUTOFNEIGHBORHOOD) {
 
-// Two cases are possible:
-// 1. We obtained an expected collision time, but the partner has a smaller
-// collision time. Therefore we can calculate next collision at the expected
-// collision time.
-//
-// 2. Someone else has forced us to recompute our collision time since it
-// expects a collision. If we have a scheduled collision event, we must cancel
-// it telling the partner to check again for its next collision time (thus
-// going to case 1).
-		nextEventTime();
+				updateStateAfterTransfer((MobilityMessage *)msg);
+				updateNearNeighborList();
+				
+				nextEventTime();
 
-	} else {
+			} else if (kind == EV_CHECK) {
 
+				updateNearNeighborList();
+				nextEventTime();
+
+			} else {
+
+			}
+
+			break;
+
+		case M_CELLLIST:
+		default:
+
+// Step 2. Handle the event
+			if (kind == EV_TRANSFER) {
+				// Update the molecule space cell
+				updateStateAfterTransfer((MobilityMessage *)msg);				
+				nextEventTime();
+
+			} else if (kind == EV_WALLCOLLISION) {
+				// Update the molecule data
+				updateStateAfterWallCollision((MobilityMessage *)msg);
+				nextEventTime();
+
+			} else if (kind == EV_COLLISION) {
+
+				updateStateAfterCollision((MobilityMessage *)msg);
+				nextEventTime();
+
+			} else if (kind == EV_CHECK) {
+
+				nextEventTime();
+
+			} else {
+
+			}
+
+			break;
 	}
 
 }
@@ -1022,6 +1222,9 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 	setLastCollisionTime(tc);
 	p->setLastCollisionTime(tc);
 
+// Refresh partner Near-NeighborList
+	p->updateNearNeighborList();
+
 }
 
 /*
@@ -1045,23 +1248,123 @@ void Sphere::updateStateAfterWallCollision(MobilityMessage *msg) {
 }
 
 /*
+ * Create and populate the Near-Neighbor list
+ */
+void Sphere::createNearNeighborList() {
+
+	int a, b, c;
+	int i, j, k, n;
+	int Nx, Ny, Nz, N; // Number of space cells (or divisions) in each axis
+
+	double dx, dy, dz;
+	double lrs; // listRadiusSquared
+
+	double sTime;
+
+	std::list<Particle *> particles;
+	std::list<Particle *>::const_iterator pa;
+
+	Nx = manager->getNumberOfSpaceCellsX();
+	Ny = manager->getNumberOfSpaceCellsY();
+	Nz = manager->getNumberOfSpaceCellsZ();
+
+	n = getSpaceCell();
+
+	sTime = simTime().dbl();
+
+// i, j and k are the indexes of the space cell for each axis
+	i = n / (Nz*Ny);
+	j = (n % (Nz*Ny)) / Nz;
+	k = (n % (Nz*Ny)) % Nz;
+
+	for (a = -1; a <= 1; a++)
+	for (b = -1; b <= 1; b++)
+	for (c = -1; c <= 1; c++) {
+
+// The neighbor cell must be contained in the simulation space
+		if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
+
+			N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
+			particles = manager->getSpaceCellParticles(N);
+
+			for (pa = particles.begin(); pa != particles.end(); ++pa) {
+
+				if ((*pa) == this) continue;
+
+// Two particles are said to be neighbor when the sum of their listRadius is 
+// greater than the distance between their centroids.
+				dx = getX() + getVx()*(sTime - lastCollisionTime) - 
+					((*pa)->getX() + (*pa)->getVx()*(sTime - (*pa)->getLastCollisionTime()));
+				dy = getY() + getVy()*(sTime - lastCollisionTime) - 
+					((*pa)->getY() + (*pa)->getVy()*(sTime - (*pa)->getLastCollisionTime()));
+				dz = getZ() + getVz()*(sTime - lastCollisionTime) - 
+					((*pa)->getZ() + (*pa)->getVz()*(sTime - (*pa)->getLastCollisionTime()));
+
+				lrs = listRadius + (*pa)->getListRadius();
+				lrs *= lrs;
+
+				if (dx*dx+dy*dy+dz*dz < lrs) {
+					this->neighborParticles.push_back(*pa);
+				}
+
+			}
+		}
+	}
+
+}
+
+/*
+ * Add a particle to our Verlet list
+ */
+void Sphere::updateNearNeighborList() {
+
+// Empty previous list
+	neighborParticles.clear();
+
+// Look for the particles closer than listRadius
+	this->createNearNeighborList();
+
+}
+
+/*
  * Returns the scheduled mobility message
  * 
  * @return {MobilityMessage *}
  */
 MobilityMessage *Sphere::getScheduledMobilityMessage() {
 
-	if (this->collisionMsg->isScheduled()) {
+	MobilityMessage *msg;
 
-		return this->collisionMsg;
+	switch (mode) {
 
-	} else if (this->wallCollisionMsg->isScheduled()) {
+		case M_NNLIST:
 
-		return this->wallCollisionMsg;
+			if (collisionMsg->isScheduled()) {
+				msg = collisionMsg;
+			} else if (wallCollisionMsg->isScheduled()) {
+				msg = wallCollisionMsg;
+			} else if (outOfNeighborhoodMsg->isScheduled()) {
+				msg = outOfNeighborhoodMsg;
+			} else {
+				msg = transferMsg;
+			}
 
-	} else {
+			break;
 
-		return this->transferMsg;
+		case M_CELLLIST:
+		default:
 
+			if (collisionMsg->isScheduled()) {
+				msg = collisionMsg;
+			} else if (wallCollisionMsg->isScheduled()) {
+				msg = wallCollisionMsg;
+			} else {
+				msg = transferMsg;
+			}
+
+			break;
 	}
+
+	return msg;
+	
 }

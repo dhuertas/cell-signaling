@@ -94,11 +94,15 @@ void Manager::initialize(int stage) {
 // All the particles are in the simulation space now. We can determine
 // the spaceCellSize
 		for (p = particles.begin(); p != particles.end(); ++p) {
+
 			diameter = 2*(*p)->getRadius();
 
 			if (spaceCellSize < diameter) {
 				spaceCellSize = diameter;
 			}
+
+// Also set the simulation mode (Cell List or Near-Neighbor List)
+			(*p)->setMode(mode);
 
 		}
 
@@ -111,8 +115,25 @@ void Manager::initialize(int stage) {
 
 		spaceCells.resize(N);
 
-		for (p = particles.begin(); p != particles.end(); ++p) {
-			attachParticleToSpaceCell(*p, -1);
+		if (mode == M_NNLIST) {
+// To start with, set the listRadius equal to the spaceCellSize
+			for (p = particles.begin(); p != particles.end(); ++p) {
+				(*p)->setListRadius(spaceCellSize);
+				attachParticleToSpaceCell(*p, -1);
+			}
+
+		} else {
+
+			for (p = particles.begin(); p != particles.end(); ++p) {
+				attachParticleToSpaceCell(*p, -1);
+			}
+
+		}
+
+		if (mode == M_NNLIST) {
+			for (p = particles.begin(); p != particles.end(); ++p) {
+				(*p)->createNearNeighborList();
+			}
 		}
 
 // Self message to refresh the tk environment
@@ -121,7 +142,6 @@ void Manager::initialize(int stage) {
 
 // Make that every subscribed particle compute its next event time
 		for (p = particles.begin(); p != particles.end(); ++p) {
-
 			(*p)->firstEventTime();
 		}
 	}

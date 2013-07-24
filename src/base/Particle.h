@@ -16,22 +16,19 @@ class Particle {
 		double mass;
 		double lastCollisionTime;
 
+		int mode;
+
 // Cell List attributes
 		int spaceCell;
 
 // Near Neighbor List attributes
-		std::list<Particle*> neighbourParticles;
+		std::list<Particle*> neighborParticles;
 		double listRadius;
 
 	public:
 
 		Particle();
 		Particle(double, double, double, double, double);
-
-		// NNL methods
-		void createNNList(std::list<Particle*> *);
-		void updateNNList(std::list<Particle*> *);
-		void addParticleToNNList(Particle *);
 
 		// Gets and sets
 		double getX(void) { return position.x; };
@@ -43,6 +40,7 @@ class Particle {
 		double getVz(void) { return velocity.z; };
 		vect_t getVelocity(void) { return velocity; };
 		double getMass(void) { return mass; };
+		int getMode(void) { return mode; };
 		double getSpaceCell(void) { return spaceCell; };
 		double getListRadius(void) { return listRadius; };
 		virtual double getRadius(void) = 0;
@@ -57,6 +55,7 @@ class Particle {
 		void setVz(double vz) { velocity.z = vz; };
 		void setVelocity(vect_t v) { velocity = v; };
 		void setMass(double m) { mass = m; };
+		void setMode(int m) { mode = m; };
 		void setSpaceCell(int c) { spaceCell = c; };
 		void setListRadius(double r) { listRadius = r; };
 		virtual void setRadius(double) = 0;
@@ -70,6 +69,8 @@ class Particle {
 		virtual void nextEventTime() = 0;
 		virtual double scheduledCollisionTime() = 0;
 
+		virtual void createNearNeighborList() = 0;
+		virtual void updateNearNeighborList() = 0;
 };
 
 #endif

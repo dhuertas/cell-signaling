@@ -33,7 +33,7 @@ void Molecule::initialize(int stage) {
 		setMass(par("mass").doubleValue());
 
 		// Near-Neighbor List radius
-		setListRadius(par("listRadius"));
+		setListRadius(par("listRadius").doubleValue());
 
 		lastCollisionTime = 0;
 
