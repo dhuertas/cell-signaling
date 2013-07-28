@@ -1,8 +1,12 @@
 cplusplus {{
+	#include "../base/Manager.h"
 	#include "../base/Particle.h"
+
+	typedef Manager *ManagerPtr;
 	typedef Particle *ParticlePtr;
 }}
 
+class noncobject ManagerPtr;
 class noncobject ParticlePtr;
 
 message MobilityMessage {
@@ -20,6 +24,7 @@ message MobilityMessage {
 	double vy;
 	double vz;
 
+	ManagerPtr manager;
 	ParticlePtr partner;
 
 }

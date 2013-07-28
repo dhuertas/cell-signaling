@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgc 4.2 from src/messages/Mobility.msg.
+// Generated file, do not edit! Created by opp_msgc 4.2 from Mobility.msg.
 //
 
 // Disable warnings about unused variables, empty switch stmts, etc:
@@ -75,6 +75,7 @@ void MobilityMessage::copy(const MobilityMessage& other)
     this->vx_var = other.vx_var;
     this->vy_var = other.vy_var;
     this->vz_var = other.vz_var;
+    this->manager_var = other.manager_var;
     this->partner_var = other.partner_var;
 }
 
@@ -91,6 +92,7 @@ void MobilityMessage::parsimPack(cCommBuffer *b)
     doPacking(b,this->vx_var);
     doPacking(b,this->vy_var);
     doPacking(b,this->vz_var);
+    doPacking(b,this->manager_var);
     doPacking(b,this->partner_var);
 }
 
@@ -107,6 +109,7 @@ void MobilityMessage::parsimUnpack(cCommBuffer *b)
     doUnpacking(b,this->vx_var);
     doUnpacking(b,this->vy_var);
     doUnpacking(b,this->vz_var);
+    doUnpacking(b,this->manager_var);
     doUnpacking(b,this->partner_var);
 }
 
@@ -210,6 +213,16 @@ void MobilityMessage::setVz(double vz)
     this->vz_var = vz;
 }
 
+ManagerPtr& MobilityMessage::getManager()
+{
+    return manager_var;
+}
+
+void MobilityMessage::setManager(const ManagerPtr& manager)
+{
+    this->manager_var = manager;
+}
+
 ParticlePtr& MobilityMessage::getPartner()
 {
     return partner_var;
@@ -267,7 +280,7 @@ const char *MobilityMessageDescriptor::getProperty(const char *propertyname) con
 int MobilityMessageDescriptor::getFieldCount(void *object) const
 {
     cClassDescriptor *basedesc = getBaseClassDescriptor();
-    return basedesc ? 11+basedesc->getFieldCount(object) : 11;
+    return basedesc ? 12+basedesc->getFieldCount(object) : 12;
 }
 
 unsigned int MobilityMessageDescriptor::getFieldTypeFlags(void *object, int field) const
@@ -290,8 +303,9 @@ unsigned int MobilityMessageDescriptor::getFieldTypeFlags(void *object, int fiel
         FD_ISEDITABLE,
         FD_ISEDITABLE,
         FD_ISCOMPOUND,
+        FD_ISCOMPOUND,
     };
-    return (field>=0 && field<11) ? fieldTypeFlags[field] : 0;
+    return (field>=0 && field<12) ? fieldTypeFlags[field] : 0;
 }
 
 const char *MobilityMessageDescriptor::getFieldName(void *object, int field) const
@@ -313,9 +327,10 @@ const char *MobilityMessageDescriptor::getFieldName(void *object, int field) con
         "vx",
         "vy",
         "vz",
+        "manager",
         "partner",
     };
-    return (field>=0 && field<11) ? fieldNames[field] : NULL;
+    return (field>=0 && field<12) ? fieldNames[field] : NULL;
 }
 
 int MobilityMessageDescriptor::findField(void *object, const char *fieldName) const
@@ -332,7 +347,8 @@ int MobilityMessageDescriptor::findField(void *object, const char *fieldName) co
     if (fieldName[0]=='v' && strcmp(fieldName, "vx")==0) return base+7;
     if (fieldName[0]=='v' && strcmp(fieldName, "vy")==0) return base+8;
     if (fieldName[0]=='v' && strcmp(fieldName, "vz")==0) return base+9;
-    if (fieldName[0]=='p' && strcmp(fieldName, "partner")==0) return base+10;
+    if (fieldName[0]=='m' && strcmp(fieldName, "manager")==0) return base+10;
+    if (fieldName[0]=='p' && strcmp(fieldName, "partner")==0) return base+11;
     return basedesc ? basedesc->findField(object, fieldName) : -1;
 }
 
@@ -355,9 +371,10 @@ const char *MobilityMessageDescriptor::getFieldTypeString(void *object, int fiel
         "double",
         "double",
         "double",
+        "ManagerPtr",
         "ParticlePtr",
     };
-    return (field>=0 && field<11) ? fieldTypeStrings[field] : NULL;
+    return (field>=0 && field<12) ? fieldTypeStrings[field] : NULL;
 }
 
 const char *MobilityMessageDescriptor::getFieldProperty(void *object, int field, const char *propertyname) const
@@ -407,7 +424,8 @@ std::string MobilityMessageDescriptor::getFieldAsString(void *object, int field,
         case 7: return double2string(pp->getVx());
         case 8: return double2string(pp->getVy());
         case 9: return double2string(pp->getVz());
-        case 10: {std::stringstream out; out << pp->getPartner(); return out.str();}
+        case 10: {std::stringstream out; out << pp->getManager(); return out.str();}
+        case 11: {std::stringstream out; out << pp->getPartner(); return out.str();}
         default: return "";
     }
 }
@@ -455,9 +473,10 @@ const char *MobilityMessageDescriptor::getFieldStructName(void *object, int fiel
         NULL,
         NULL,
         NULL,
+        "ManagerPtr",
         "ParticlePtr",
     };
-    return (field>=0 && field<11) ? fieldStructNames[field] : NULL;
+    return (field>=0 && field<12) ? fieldStructNames[field] : NULL;
 }
 
 void *MobilityMessageDescriptor::getFieldStructPointer(void *object, int field, int i) const
@@ -470,7 +489,8 @@ void *MobilityMessageDescriptor::getFieldStructPointer(void *object, int field, 
     }
     MobilityMessage *pp = (MobilityMessage *)object; (void)pp;
     switch (field) {
-        case 10: return (void *)(&pp->getPartner()); break;
+        case 10: return (void *)(&pp->getManager()); break;
+        case 11: return (void *)(&pp->getPartner()); break;
         default: return NULL;
     }
 }

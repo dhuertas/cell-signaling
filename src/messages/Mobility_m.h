@@ -1,5 +1,5 @@
 //
-// Generated file, do not edit! Created by opp_msgc 4.2 from src/messages/Mobility.msg.
+// Generated file, do not edit! Created by opp_msgc 4.2 from Mobility.msg.
 //
 
 #ifndef _MOBILITY_M_H_
@@ -14,14 +14,17 @@
 #endif
 
 // cplusplus {{
-#include "../base/Particle.h"
+#include "../base/Manager.h"
+	#include "../base/Particle.h"
+
+	typedef Manager *ManagerPtr;
 	typedef Particle *ParticlePtr;
 // }}
 
 
 
 /**
- * Class generated from <tt>src/messages/Mobility.msg</tt> by opp_msgc.
+ * Class generated from <tt>Mobility.msg</tt> by opp_msgc.
  * <pre>
  * message MobilityMessage {
  * 
@@ -38,6 +41,7 @@
  * 	double vy;
  * 	double vz;
  * 
+ * 	ManagerPtr manager;
  * 	ParticlePtr partner;
  * 
  * }
@@ -56,6 +60,7 @@ class MobilityMessage : public ::cMessage
     double vx_var;
     double vy_var;
     double vz_var;
+    ManagerPtr manager_var;
     ParticlePtr partner_var;
 
   private:
@@ -95,6 +100,9 @@ class MobilityMessage : public ::cMessage
     virtual void setVy(double vy);
     virtual double getVz() const;
     virtual void setVz(double vz);
+    virtual ManagerPtr& getManager();
+    virtual const ManagerPtr& getManager() const {return const_cast<MobilityMessage*>(this)->getManager();}
+    virtual void setManager(const ManagerPtr& manager);
     virtual ParticlePtr& getPartner();
     virtual const ParticlePtr& getPartner() const {return const_cast<MobilityMessage*>(this)->getPartner();}
     virtual void setPartner(const ParticlePtr& partner);

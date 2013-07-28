@@ -30,15 +30,10 @@ class Sphere : public Circle, public cSimpleModule {
 
 		// Initialize the event queue
 		void firstEventTime(void);
+
 		// Find the next event time for a given particle
-		void nextEventTime();
+		void nextEventTime(void);
 
-		void computeTransferTime(void);
-		void computeCollisionTime(void);
-		void computeWallCollisionTime(void);
-		void computeOutOfNeighborhoodTime(void);
-
-		double solveCollisionTime(Particle *);
 		double scheduledCollisionTime(void);
 
 		void handleMobilityMessage(MobilityMessage *);

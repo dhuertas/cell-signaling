@@ -45,7 +45,8 @@ class Particle {
 		double getListRadius(void) { return listRadius; };
 		virtual double getRadius(void) = 0;
 		double getLastCollisionTime(void) { return lastCollisionTime; };
-
+		std::list<Particle*> getNeighborParticles(void) { return neighborParticles; };
+		
 		void setX(double x) { position.x = x; };
 		void setY(double y) { position.y = y; };
 		void setZ(double z) { position.z = z; };

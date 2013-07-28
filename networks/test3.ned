@@ -36,7 +36,7 @@ network test3
 	submodules:
 		manager: Manager {
 			@display("p=30,30;i=block/cogwheel");
-			mode = 2;
+			mode = 1;
 		}
 		emitter: Cell;
 		receiver: Cell;
