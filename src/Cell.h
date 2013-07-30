@@ -11,8 +11,6 @@ class Cell : public Sphere {
 
 	private:
 
-		int identifier;
-
 		double emitEvery;   // Dumb var to test simulation
 		int emitCount;
 
@@ -27,10 +25,6 @@ class Cell : public Sphere {
 		virtual int numInitStages() const;
 		virtual void handleMessage(cMessage *);
 		virtual void finish();
-
-		// gets and sets
-		int getIdentifier(void) { return identifier; };
-		void setIdentifer(int id) { identifier = id; };
 		
 };
 

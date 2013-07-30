@@ -4,6 +4,7 @@
 #include <csimplemodule.h>
 #include <cmessage.h>
 #include <cqueue.h>
+#include <coutvector.h>
 #include <omnetpp.h>
 
 #include "Manager.h"
@@ -20,8 +21,10 @@ class Sphere : public Circle, public cSimpleModule {
 		MobilityMessage *collisionMsg;
 		MobilityMessage *wallCollisionMsg;
 		MobilityMessage *outOfNeighborhoodMsg;
-	
+
 	protected:
+
+		cOutVector collisionVector;
 
 	public:
 

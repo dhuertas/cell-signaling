@@ -18,6 +18,9 @@ void Molecule::initialize(int stage) {
 		// Manager module initializes during this stage
 	} else if (stage == 1) {
 
+		// Initialize coutVectors
+		collisionVector.setName("collisionVector");
+
 		// Initial position
 		setX(par("xpos").doubleValue());
 		setY(par("ypos").doubleValue());

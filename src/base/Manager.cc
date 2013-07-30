@@ -47,7 +47,7 @@ void Manager::unsubscribe(Particle * p) {
  */
 void Manager::initialize(int stage) {
 
-	int N;
+	int N, count;
 	double diameter;
 
 	// cPar *managerName;
@@ -93,6 +93,8 @@ void Manager::initialize(int stage) {
 
 // All the particles are in the simulation space now. We can determine
 // the spaceCellSize
+		count = 0;
+
 		for (p = particles.begin(); p != particles.end(); ++p) {
 
 			diameter = 2*(*p)->getRadius();
@@ -103,6 +105,9 @@ void Manager::initialize(int stage) {
 
 // Also set the simulation mode (Cell List or Near-Neighbor List)
 			(*p)->setMode(mode);
+			(*p)->setIdentifier(count);
+
+			count++;
 
 		}
 

@@ -239,13 +239,18 @@ void SphereMobility::wallCollisionTime(MobilityMessage *wallCollisionMsg, Sphere
 
 					hits.clear();
 					hits.push_back(*side);
-					collisionCounter = 1;
+					collisionCounter++;
 
 				} else if (0 < temp && temp == wallCollisionTime) {
 // The particle hit two or more sides at the same time
+
+					wallCollisionTime = temp;
+
 					hits.push_back(*side);
 					collisionCounter++;
 
+				} else {
+// It's greater
 				}
 
 			}
@@ -302,7 +307,7 @@ double SphereMobility::solveCollisionTime(Particle * pa, Particle * pb) {
 
 	double radd = pb->getRadius() + pa->getRadius();
 
-	// a*t² + b*t + c = 0
+// a*t² + b*t + c = 0
 	double a = dvx*dvx + dvy*dvy + dvz*dvz;
 	double b = 2*(dxi*dvx + dyi*dvy + dzi*dvz);
 	double c = dxi*dxi + dyi*dyi + dzi*dzi - radd*radd;
@@ -310,11 +315,9 @@ double SphereMobility::solveCollisionTime(Particle * pa, Particle * pb) {
 	double result = -1;
 
 	if (b*b >= 4*a*c) {
-		
-		double dtba = (-b + sqrt(b*b - 4*a*c))/(2*a);
+// Return the smaller solution
 		double dtbb = (-b - sqrt(b*b - 4*a*c))/(2*a);
-
-		result = dtbb < dtba ? dtbb : dtba;
+		result = dtbb;
 
 	}
 

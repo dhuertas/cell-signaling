@@ -89,13 +89,6 @@ void Sphere::tkEnvUpdatePosition() {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-	if (mode == M_NNLIST) {
-		buffer << getListRadius();
-
-		getDisplayString().setTagArg("r",0, buffer.str().c_str());
-		buffer.str(std::string());
-	}
-
 	EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
 
 }
@@ -296,12 +289,12 @@ void Sphere::nextEventTime() {
 // Initialize the smallestTime so it is not a negative value (NO_TIME)
 			if (collisionTime != NO_TIME) {
 				smallestTime = collisionTime;
+			} else if (outOfNeighborhoodTime != NO_TIME) {
+				smallestTime = outOfNeighborhoodTime;
 			} else if (wallCollisionTime != NO_TIME) {
 				smallestTime = wallCollisionTime;
 			} else if (transferTime != NO_TIME) {
 				smallestTime = transferTime;
-			} else if (outOfNeighborhoodTime != NO_TIME) {
-				smallestTime = outOfNeighborhoodTime;
 			} else {
 // No event will be scheduled for this sphere for now
 				smallestTime = 0;
@@ -311,19 +304,7 @@ void Sphere::nextEventTime() {
 				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
 			}
 
-			if (smallestTime == outOfNeighborhoodTime) {
-
-				scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
-
-			} else if (smallestTime == transferTime) {
-
-				scheduleAt(transferTime, transferMsg);
-
-			} else if (smallestTime == wallCollisionTime) {
-
-				scheduleAt(wallCollisionTime, wallCollisionMsg);
-
-			} else if (smallestTime == collisionTime) {
+			if (smallestTime == collisionTime) {
 
 				partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
 				
@@ -360,6 +341,18 @@ void Sphere::nextEventTime() {
 
 				}
 
+			} else if (smallestTime == outOfNeighborhoodTime) {
+
+				scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
+
+			} else if (smallestTime == transferTime) {
+
+				scheduleAt(transferTime, transferMsg);
+
+			} else if (smallestTime == wallCollisionTime) {
+
+				scheduleAt(wallCollisionTime, wallCollisionMsg);
+
 			} else {
 // Do nothing
 			}
@@ -385,15 +378,7 @@ void Sphere::nextEventTime() {
 				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
 			}
 
-			if (smallestTime == transferTime) {
-
-				scheduleAt(transferTime, transferMsg);
-
-			} else if (smallestTime == wallCollisionTime) {
-
-				scheduleAt(wallCollisionTime, wallCollisionMsg);
-
-			} else if (smallestTime == collisionTime) {
+			if (smallestTime == collisionTime) {
 				
 				partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
 				
@@ -428,6 +413,14 @@ void Sphere::nextEventTime() {
 					}
 
 				}
+
+			} else if (smallestTime == transferTime) {
+
+				scheduleAt(transferTime, transferMsg);
+
+			} else if (smallestTime == wallCollisionTime) {
+
+				scheduleAt(wallCollisionTime, wallCollisionMsg);
 
 			} else {
 // Do nothing
@@ -492,7 +485,7 @@ void Sphere::handleMobilityMessage(MobilityMessage *msg) {
 
 			} else if (kind == EV_OUTOFNEIGHBORHOOD) {
 
-				updateStateAfterTransfer((MobilityMessage *)msg);
+				// updateStateAfterTransfer((MobilityMessage *)msg);
 				updateNearNeighborList();
 				
 				nextEventTime();
@@ -588,6 +581,9 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
 	m1 = this->getMass();
 	m2 = p->getMass();
+
+// Log the collision
+	collisionVector.recordWithTimestamp(simTime().dbl(), this->getIdentifier());
 
 // Change frame of reference of the system to one of the spheres
 	v1.x = this->getVx() - p->getVx();

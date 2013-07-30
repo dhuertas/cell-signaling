@@ -4,6 +4,7 @@
 #include <csimplemodule.h>
 #include <cmessage.h>
 #include <cqueue.h>
+#include <coutvector.h>
 #include <omnetpp.h>
 #include <string.h>
 #include <iostream>
@@ -14,7 +15,6 @@ class Molecule : public Sphere {
 
 	private:
 
-		int identifier;
 		Manager *manager;
 
 	protected:

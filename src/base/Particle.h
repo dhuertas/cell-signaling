@@ -16,6 +16,8 @@ class Particle {
 		double mass;
 		double lastCollisionTime;
 
+		int identifier;
+
 		int mode;
 
 // Cell List attributes
@@ -31,6 +33,7 @@ class Particle {
 		Particle(double, double, double, double, double);
 
 		// Gets and sets
+		int getIdentifier(void) { return identifier; };
 		double getX(void) { return position.x; };
 		double getY(void) { return position.y; };
 		double getZ(void) { return position.z; };
@@ -47,6 +50,7 @@ class Particle {
 		double getLastCollisionTime(void) { return lastCollisionTime; };
 		std::list<Particle*> getNeighborParticles(void) { return neighborParticles; };
 		
+		void setIdentifier(int id) { identifier = id; };
 		void setX(double x) { position.x = x; };
 		void setY(double y) { position.y = y; };
 		void setZ(double z) { position.z = z; };
