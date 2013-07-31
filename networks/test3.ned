@@ -25,6 +25,8 @@ network test3
 
 	string managerName = "manager";
 
+	bool performanceSimulation = default(false);
+
 	double spaceSizeX = default(1000);
 	double spaceSizeY = default(1000);
 	double spaceSizeZ = default(1000);
@@ -36,7 +38,6 @@ network test3
 	submodules:
 		manager: Manager {
 			@display("p=30,30;i=block/cogwheel");
-			mode = 2;
 		}
 		emitter: Cell;
 		receiver: Cell;

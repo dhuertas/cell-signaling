@@ -47,7 +47,11 @@ void Manager::unsubscribe(Particle * p) {
  */
 void Manager::initialize(int stage) {
 
-	int N, count;
+	int N, m;
+	int i, j, k;
+
+    unsigned int count;
+
 	double diameter;
 
 	// cPar *managerName;
@@ -55,8 +59,18 @@ void Manager::initialize(int stage) {
 	std::list<Particle *>::const_iterator p;
 	std::stringstream buffer;
 
+// Initialize variables
+	N = 0;
+	m = 0;
+	count = 0;
+
+	diameter = 0.0;
+
 // The manager node should be the first module to be initialized
 	if (stage == 0) {
+
+// Set whether it is a performance simulation
+		setPerformanceSimulation(simulation.getSystemModule()->par("performanceSimulation"));
 
 // Set the mode of operation for the molecule dynamics 
 		mode = par("mode");
@@ -66,9 +80,9 @@ void Manager::initialize(int stage) {
 		this->setName(par("name").stringValue());
 
 // Get the simulation space size
-		spaceSizeX = simulation.getSystemModule()->par("spaceSizeX");
-		spaceSizeY = simulation.getSystemModule()->par("spaceSizeY");
-		spaceSizeZ = simulation.getSystemModule()->par("spaceSizeZ");
+		setSpaceSizeX(simulation.getSystemModule()->par("spaceSizeX"));
+		setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));
+		setSpaceSizeZ(simulation.getSystemModule()->par("spaceSizeZ"));
 
 		tkEnvRefreshRate = simulation.getSystemModule()->par("refreshRate");
 
@@ -91,8 +105,8 @@ void Manager::initialize(int stage) {
 // the rest of the modules are being initialized ...
 	} else if (stage == 2) {
 
-// All the particles are in the simulation space now. We can determine
-// the spaceCellSize
+// All the particles are in the simulation space now. We can determine the 
+// spaceCellSize
 		count = 0;
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
@@ -120,19 +134,60 @@ void Manager::initialize(int stage) {
 
 		spaceCells.resize(N);
 
-		if (mode == M_NNLIST) {
+// Piece of code for the perfomance tests. Set each particle position.
+		count = 0;
+		m = (int)round(pow(particles.size(), 1/3.0));
+		i = 0; j = 0; k = 0;
+
+		if (performanceSimulation) {
+			
+			for (p = particles.begin(); p != particles.end(); ++p) {
+
+				(*p)->setX((0.5 + i)*spaceSizeX/m);
+				(*p)->setY((0.5 + j)*spaceSizeY/m);
+				(*p)->setZ((0.5 + k)*spaceSizeZ/m);
+
+				k++;
+
+				if (k%m == 0) {
+
+					k = 0; j++;
+
+					if (j%m == 0) {
+
+						j = 0; i++;
+
+						if (i%m == 0) {
+							i = 0;
+						}
+
+					}
+
+				}
+
+			}
+
+		}
+
+		switch (mode) {
+
+			case M_NNLIST:
 // To start with, set the listRadius equal to the spaceCellSize
-			for (p = particles.begin(); p != particles.end(); ++p) {
-				(*p)->setListRadius(spaceCellSize);
-				attachParticleToSpaceCell(*p, -1);
-			}
+				for (p = particles.begin(); p != particles.end(); ++p) {
+					(*p)->setListRadius(spaceCellSize);
+					attachParticleToSpaceCell(*p, -1);
+				}
 
-		} else {
+				break;
 
-			for (p = particles.begin(); p != particles.end(); ++p) {
-				attachParticleToSpaceCell(*p, -1);
-			}
+			case M_CELLLIST:
+			default:
 
+				for (p = particles.begin(); p != particles.end(); ++p) {
+					attachParticleToSpaceCell(*p, -1);
+				}
+
+				break;
 		}
 
 		if (mode == M_NNLIST) {
@@ -149,6 +204,8 @@ void Manager::initialize(int stage) {
 		for (p = particles.begin(); p != particles.end(); ++p) {
 			(*p)->firstEventTime();
 		}
+
+		tkEnvUpdateNetwork();
 	}
 
 }
@@ -261,7 +318,7 @@ void Manager::handleMessage(cMessage *msg) {
 		tkEnvUpdateNetwork();
 
 // Self-message
-		scheduleAt(simTime().dbl() + tkEnvRefreshRate, msg);
+		scheduleAt(simTime() + tkEnvRefreshRate, msg);
 
 	}
 

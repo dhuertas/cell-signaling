@@ -15,30 +15,21 @@ class Manager : public cSimpleModule {
 
 	private:
 
-		// Name
-		std::string name;
-
-		// A list of particles contained in the simulation space. Every new
-		// particle must be subscribed to (and unsubscribed from).
-		std::list<Particle*> particles;
+		bool performanceSimulation;
 
 		// Molecule Dynamics Mode of operation
 		int mode;
-
-		// Space is divided into cells, each of which contains a list of
-		// particles belonging to it.
-		std::vector<std::list<Particle*> > spaceCells;
-
-		// the simulation space size in each direction
-		double spaceSizeX;
-		double spaceSizeY;
-		double spaceSizeZ;
 
 		// The number of space cells in each direction. They are used to
 		// access the spaceCells vector of vectors.
 		int Nx; 
 		int Ny;
 		int Nz;
+
+		// the simulation space size in each direction
+		double spaceSizeX;
+		double spaceSizeY;
+		double spaceSizeZ;
 
 		// The space cell size
 		double spaceCellSize;
@@ -47,6 +38,17 @@ class Manager : public cSimpleModule {
 		// It allows the manager module to send self-messages in order to
 		// update the position of each particle.
 		double tkEnvRefreshRate;
+
+		// Name
+		std::string name;
+
+		// A list of particles contained in the simulation space. Every new
+		// particle must be subscribed to (and unsubscribed from).
+		std::list<Particle*> particles;
+
+		// Space is divided into cells, each of which contains a list of
+		// particles belonging to it.
+		std::vector<std::list<Particle*> > spaceCells;
 
 	protected:
 
@@ -78,6 +80,7 @@ class Manager : public cSimpleModule {
 		void tkEnvUpdateNetwork(void);
 
 		// Gets and sets
+		bool getPerformanceSimulation(void) { return performanceSimulation; };
 		double getSpaceSizeX(void) { return spaceSizeX; };
 		double getSpaceSizeY(void) { return spaceSizeY; };
 		double getSpaceSizeZ(void) { return spaceSizeZ; };
@@ -89,6 +92,7 @@ class Manager : public cSimpleModule {
 
 		std::list<Particle *> getSpaceCellParticles(int);
 
+		void setPerformanceSimulation(bool tf) { performanceSimulation = tf; };
 		void setSpaceSizeX(double sx) { spaceSizeX = sx; };
 		void setSpaceSizeY(double sy) { spaceSizeY = sy; };
 		void setSpaceSizeZ(double sz) { spaceSizeZ = sz; };

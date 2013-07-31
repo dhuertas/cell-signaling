@@ -75,6 +75,8 @@ simple Manager {
 		// 1 - Only use Cell Lists Method
 		// 2 - Combination of Near-Neighbor Lists and Cell Lists methods
 		int mode = default(2);
+		
+		bool performanceSimulation = default(false);
 
 	gates:
 	    input in;

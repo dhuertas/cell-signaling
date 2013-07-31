@@ -25,6 +25,8 @@ network test
 
 	string managerName = "manager";
 
+	bool performanceSimulation = default(false);
+
 	double spaceSizeX = default(1000);
 	double spaceSizeY = default(1000);
 	double spaceSizeZ = default(1000);
