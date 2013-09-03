@@ -1,5 +1,4 @@
 #include "Molecule.h"
-#include "messages/Mobility_m.h"
 
 using namespace std;
 
@@ -38,8 +37,6 @@ void Molecule::initialize(int stage) {
 		// Near-Neighbor List radius
 		setListRadius(par("listRadius").doubleValue());
 
-		lastCollisionTime = 0;
-
 		// Subscribe to manager
 		setManager("managerName");
 		getManager()->subscribe(this);
@@ -74,7 +71,7 @@ void Molecule::handleMessage(cMessage *msg) {
 
     if (strcmp(msg->getName(), "mobility") == 0) {
 
-        handleMobilityMessage((MobilityMessage *)msg);
+        handleMobilityMessage(msg);
 
     }
 

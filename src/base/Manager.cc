@@ -84,6 +84,8 @@ void Manager::initialize(int stage) {
 		setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));
 		setSpaceSizeZ(simulation.getSystemModule()->par("spaceSizeZ"));
 
+		EV << "space size: X=" << spaceSizeX << ", Y=" << spaceSizeY << ", Z=" << spaceSizeZ << "\n";
+
 		tkEnvRefreshRate = simulation.getSystemModule()->par("refreshRate");
 
 // Set network size for tkenv
@@ -119,7 +121,11 @@ void Manager::initialize(int stage) {
 
 // Also set the simulation mode (Cell List or Near-Neighbor List)
 			(*p)->setMode(mode);
-			(*p)->setIdentifier(count);
+
+// Initialize particle attributes
+			(*p)->setParticleId(count);
+			(*p)->setLastCollisionTime(0);
+			(*p)->initMessages();
 
 			count++;
 
@@ -178,6 +184,10 @@ void Manager::initialize(int stage) {
 					attachParticleToSpaceCell(*p, -1);
 				}
 
+				for (p = particles.begin(); p != particles.end(); ++p) {
+					(*p)->createNearNeighborList();
+				}
+
 				break;
 
 			case M_CELLLIST:
@@ -190,19 +200,13 @@ void Manager::initialize(int stage) {
 				break;
 		}
 
-		if (mode == M_NNLIST) {
-			for (p = particles.begin(); p != particles.end(); ++p) {
-				(*p)->createNearNeighborList();
-			}
-		}
-
 // Self message to refresh the tk environment
 		scheduleAt(simTime() + tkEnvRefreshRate, 
 			new cMessage("refresh", EV_TKENVUPDATE));
 
 // Make that every subscribed particle compute its next event time
 		for (p = particles.begin(); p != particles.end(); ++p) {
-			(*p)->firstEventTime();
+			(*p)->initEvents();
 		}
 
 		tkEnvUpdateNetwork();

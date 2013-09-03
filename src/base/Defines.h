@@ -4,6 +4,7 @@
 #define NO_TIME             	-1
 
 // Mobility Event Types
+#define EV_NONE					0
 #define EV_COLLISION			1
 #define EV_CHECK				2
 #define EV_TRANSFER				3

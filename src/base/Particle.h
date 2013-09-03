@@ -2,7 +2,7 @@
 #define PARTICLE_H
 
 #include "Defines.h"
-#include <list>
+#include <vector>
 
 class Particle {
 
@@ -16,7 +16,7 @@ class Particle {
 		double mass;
 		double lastCollisionTime;
 
-		int identifier;
+		int particleId;
 
 		int mode;
 
@@ -24,7 +24,7 @@ class Particle {
 		int spaceCell;
 
 // Near Neighbor List attributes
-		std::list<Particle*> neighborParticles;
+		std::vector<Particle*> neighborParticles;
 		double listRadius;
 
 	public:
@@ -32,8 +32,8 @@ class Particle {
 		Particle();
 		Particle(double, double, double, double, double);
 
-		// Gets and sets
-		int getIdentifier(void) { return identifier; };
+// Gets and sets
+		int getParticleId(void) { return particleId; };
 		double getX(void) { return position.x; };
 		double getY(void) { return position.y; };
 		double getZ(void) { return position.z; };
@@ -48,9 +48,9 @@ class Particle {
 		double getListRadius(void) { return listRadius; };
 		virtual double getRadius(void) = 0;
 		double getLastCollisionTime(void) { return lastCollisionTime; };
-		std::list<Particle*> getNeighborParticles(void) { return neighborParticles; };
+		std::vector<Particle*> getNeighborParticles(void) { return neighborParticles; };
 		
-		void setIdentifier(int id) { identifier = id; };
+		void setParticleId(int id) { particleId = id; };
 		void setX(double x) { position.x = x; };
 		void setY(double y) { position.y = y; };
 		void setZ(double z) { position.z = z; };
@@ -66,13 +66,14 @@ class Particle {
 		virtual void setRadius(double) = 0;
 		void setLastCollisionTime(double tc) { lastCollisionTime = tc; };
 
-		// tk Environment methods
+// tk Environment methods
 		virtual void tkEnvDrawShape(void) = 0;
 		virtual void tkEnvUpdatePosition(void) = 0;
 		virtual void tkEnvUpdatePosition(double) = 0;
-		virtual void firstEventTime() = 0;
-		virtual void nextEventTime() = 0;
-		virtual double scheduledCollisionTime() = 0;
+
+// Event related methods
+		virtual void initMessages() = 0;
+		virtual void initEvents() = 0;
 
 		virtual void createNearNeighborList() = 0;
 		virtual void updateNearNeighborList() = 0;

@@ -3,10 +3,14 @@
 using namespace std;
 
 /*
- * Computes the collision time with the neighboring particles and returns the
+ * Computes the collision time with the neighboring particles and stores the
  * smallest one.
+ *
+ * @param {CollisionMessage *} msg
+ * @param {Sphere *} s
+ * @return {double} the computed collision time
  */
-void SphereMobility::collisionTime(MobilityMessage *collisionMsg, Sphere *s) {
+double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 	int a, b, c;			// Nested "for" loops
 
@@ -16,16 +20,24 @@ void SphereMobility::collisionTime(MobilityMessage *collisionMsg, Sphere *s) {
 	int Nx, Ny, Nz;			// Number of space cells (or divisions) in each axis
 
 	double collisionTime, sTime, temp;
+	double prevCollisionTime;
+	double partnerCollisionTime;
 
-	list<Particle *> particles;
-	list<Particle *>::const_iterator p;
+	vector<int> spaceCells;
+	vector<int>::iterator sc;
+
+	vector<Particle *> particles;
+	vector<Particle *>::iterator p;
+
+	list<Particle *> particleList;
+	list<Particle *>::const_iterator pl;
 
 	Manager * manager;
-	Particle * partner; // The collision partner
+	Particle * partner, * prevPartner; // The collision partner
 
-	manager = collisionMsg->getManager();
+	CollisionMessage *partnerCollisionMsg;
 
-	collisionTime = NO_TIME;
+	manager = msg->getManager();
 	sTime = simTime().dbl();
 
 	Nx = manager->getNumberOfSpaceCellsX();
@@ -34,104 +46,130 @@ void SphereMobility::collisionTime(MobilityMessage *collisionMsg, Sphere *s) {
 
 	n = s->getSpaceCell();
 
+	collisionCounter = 0;
+
 // i, j and k are the indexes of the space cell for each axis
 	i = n / (Nz*Ny);
 	j = (n % (Nz*Ny)) / Nz;
 	k = (n % (Nz*Ny)) % Nz;
 
-	collisionCounter = 0;
+	collisionTime = NO_TIME;
+	prevCollisionTime = NO_TIME;
+	partnerCollisionTime = NO_TIME;
 
-	switch (manager->getMode()) {
+	partner = NULL;
+	prevPartner = NULL;
 
-		case M_NNLIST:
+	if (manager->getMode() == M_NNLIST) {
 
-			// TODO better return a pointer to the list instead of replicating it
-			particles = s->getNeighborParticles();
+		particles = s->getNeighborParticles();
 
-			for (p = particles.begin(); p != particles.end(); ++p) {
+	} else {
+// M_CELLLIST / default
 
-				if (*p == s) continue;
+// Get the list of space cell indexes to ask the manager for the particles 
+		for (a = -1; a <= 1; a++)
+		for (b = -1; b <= 1; b++)
+		for (c = -1; c <= 1; c++) {
 
-// Solve particle to particle collision
-				temp = solveCollisionTime(s, *p);
+			if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
 
-				if (collisionCounter == 0) {
+				N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
+				spaceCells.push_back(N);
 
-					if (sTime <= temp) {
-						collisionTime = temp;
-						partner = (*p);
-						collisionCounter++;
-					}
-
-				} else {
-
-					if (sTime <= temp  && temp < collisionTime) {
-						collisionTime = temp;
-						partner = (*p);
-						collisionCounter++;
-					}
-
-				}
 			}
 
-			break;
+		}
 
-		case M_CELLLIST:
-		default:
+// Get the particles from each of the listed space cells
+		for (sc = spaceCells.begin(); sc != spaceCells.end(); ++sc) {
+			
+			particleList = manager->getSpaceCellParticles(*sc);
 
-			for (a = -1; a <= 1; a++)
-			for (b = -1; b <= 1; b++)
-			for (c = -1; c <= 1; c++) {
-
-// The neighbor cell must be contained in the simulation space
-				if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
-
-					N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
-					// TODO better return a pointer to the list instead of replicating it
-					particles = manager->getSpaceCellParticles(N);
-
-					for (p = particles.begin(); p != particles.end(); ++p) {
-
-						if (*p == s) {
-							continue;
-						}
-
-// Solve particle to particle collision
-						temp = solveCollisionTime(s, *p);
-
-						if (collisionCounter == 0) {
-
-							if (sTime <= temp) {
-								collisionTime = temp;
-								partner = (*p);
-								collisionCounter++;
-							}
-
-						} else {
-
-							if (sTime <= temp  && temp < collisionTime) {
-								collisionTime = temp;
-								partner = (*p);
-								collisionCounter++;
-							}
-
-						}
-
-					}
-				}
+			for (pl = particleList.begin(); pl != particleList.end(); ++pl) {
+				particles.push_back(*pl);
 			}
 
-			break;
+		}
+
 	}
 
-	collisionMsg->setKind(EV_COLLISION);
-	collisionMsg->setEventTime(collisionTime);
-	collisionMsg->setPartner(partner);
+// Initialize the collision time. If the collision event has been handled the
+// returned value should be NO_TIME. Otherwise it should return the current
+// scheduled collision time.
+	prevCollisionTime = msg->getCollisionTime();
+
+	if (prevCollisionTime != NO_TIME) {
+
+		partner = msg->getPartner();
+		prevPartner = msg->getPartner();
+
+		collisionTime = prevCollisionTime;
+		collisionCounter++;
+
+	}
+
+// Loop through the retrieved particles
+	for (p = particles.begin(); p != particles.end(); ++p) {
+
+		if (*p == s) continue;
+
+// Solve particle to particle collision
+		temp = solveCollision(s, *p);
+
+// Only keep the collision time if it's smaller than the rest of computed 
+// collision times so far and is also smaller than the partner collision time.
+		partnerCollisionMsg = ((Sphere *)(*p))->getCollisionMessage();
+		partnerCollisionTime = partnerCollisionMsg->getCollisionTime();
+
+		if (temp != NO_TIME && sTime < temp) {
+// Collision found!
+			if (collisionCounter == 0) {
+
+				if (temp < partnerCollisionTime || partnerCollisionTime == NO_TIME) {
+
+					collisionTime = temp;
+					partner = *p;
+					collisionCounter++;
+
+				}
+
+			} else {
+
+				if (temp < collisionTime) {
+
+					if (temp < partnerCollisionTime || partnerCollisionTime == NO_TIME) {
+
+						collisionTime = temp;
+						partner = *p;
+						collisionCounter++;
+
+					}
+
+				}
+
+			}
+
+		}
+
+	}
+
+	msg->setPartner(partner);
+	msg->setPrevPartner(prevPartner);
+
+	return collisionTime;
 
 }
 
-void SphereMobility::wallCollisionTime(MobilityMessage *wallCollisionMsg, Sphere *s) {
-	
+/*
+ * Computes the collision time with the simulation space walls and stores the
+ * smallest one.
+ *
+ * @param {CollisionMessage *} event
+ * @param {Sphere *} s
+ */
+double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
+
 	int collisionCounter;
 
 	double Sx, Sy, Sz;
@@ -146,7 +184,7 @@ void SphereMobility::wallCollisionTime(MobilityMessage *wallCollisionMsg, Sphere
 
 	Manager * manager;
 
-	manager = wallCollisionMsg->getManager();
+	manager = s->getManager();
 
 	wallCollisionTime = NO_TIME;
 	lastCollisionTime = s->getLastCollisionTime();
@@ -157,13 +195,11 @@ void SphereMobility::wallCollisionTime(MobilityMessage *wallCollisionMsg, Sphere
 
 	rad = s->getRadius();
 
-	x = s->getX();
-	y = s->getY();
-	z = s->getZ();
+	x = s->getX(); vx = s->getVx();
+	y = s->getY(); vy = s->getVy();
+	z = s->getZ(); vz = s->getVz();
 
-	vx = s->getVx();
-	vy = s->getVy();
-	vz = s->getVz();
+	if (vx == 0 && vy == 0 && vz == 0) return wallCollisionTime;
 
 // In the simulation space we have 6 possible sides but since we know the 
 // direction of the particle we need to check only 3 (at most).
@@ -261,31 +297,38 @@ void SphereMobility::wallCollisionTime(MobilityMessage *wallCollisionMsg, Sphere
 
 	}
 
-	wallCollisionMsg->setKind(EV_WALLCOLLISION);
-
-// Compute the future values
-	wallCollisionMsg->setEventTime(wallCollisionTime + lastCollisionTime);
-
 // The future particle position
-	wallCollisionMsg->setX(x + vx*wallCollisionTime);
-	wallCollisionMsg->setY(y + vy*wallCollisionTime);
-	wallCollisionMsg->setZ(z + vz*wallCollisionTime);
+	msg->setX(x + vx*wallCollisionTime);
+	msg->setY(y + vy*wallCollisionTime);
+	msg->setZ(z + vz*wallCollisionTime);
+
+// Compute the future value
+	wallCollisionTime += lastCollisionTime;
 
 // The future velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
-		wallCollisionMsg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
-		wallCollisionMsg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
-		wallCollisionMsg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
+		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
+		msg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
+		msg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
 
 	}
 
+	return wallCollisionTime;
+
 }
 
-double SphereMobility::solveCollisionTime(Particle * pa, Particle * pb) {
+/*
+ * Solves the Sphere-Sphere collision problem and returns the collision time
+ * 
+ * @param {Particle *} pa
+ * @param {Particle *} pb
+ * @return {double} the collision time
+ */
+double SphereMobility::solveCollision(Particle * pa, Particle * pb) {
 // Distance between centers A and B when t = tc (time of collision):
 //                 ______________________________________________
-//           \    / ( Ax + Avx*(tc-ta) - (Bx + Bvx*(tc-tb) )² + |
+//           \    / ( Ax + Avx*(tc-ta) - (Bx + Bvx*(tc-tb) )² +
 //  D(A, B) = \  /  ( Ay + Avy*(tc-ta) - (By + Bvy*(tc-tb) )² +   = Ra + Rb
 //             \/   ( Az + Avz*(tc-ta) - (Bz + Bvz*(tc-tb) )²
 //

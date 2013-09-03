@@ -1,0 +1,5 @@
+message OutOfNeighborhoodMessage {
+
+	double outOfNeighborhoodTime;
+
+}

@@ -29,10 +29,6 @@ class Molecule : public Sphere {
 		virtual void handleMessage(cMessage *);
 		virtual void finish();
 
-		// gets and sets
-		int getIdentifier(void) { return identifier; };
-		void setIdentifer(int id) { identifier = id; };
-
 };
 
 #endif

@@ -9,15 +9,18 @@
 #include "Mobility.h"
 #include "Manager.h"
 #include "Sphere.h"
-#include "../messages/Mobility_m.h"
+
+#include "../messages/Transfer_m.h"
+#include "../messages/Collision_m.h"
+#include "../messages/OutOfNeighborhood_m.h"
 
 class SphereMobility : public Mobility {
 
 	public:
 
-		static void collisionTime(MobilityMessage *, Sphere *);
-		static void wallCollisionTime(MobilityMessage *, Sphere *);
-		static double solveCollisionTime(Particle *, Particle *);
+		static double nextCollision(CollisionMessage *, Sphere *);
+		static double nextWallCollision(CollisionMessage *, Sphere *);
+		static double solveCollision(Particle *, Particle *);
 
 };
 

@@ -8,14 +8,20 @@
 
 #include "Manager.h"
 #include "Particle.h"
-#include "../messages/Mobility_m.h"
+
+#include "../messages/Transfer_m.h"
+#include "../messages/Collision_m.h"
+#include "../messages/OutOfNeighborhood_m.h"
 
 class Mobility {
 
 	public:
 
-		static void transferTime(MobilityMessage *, Particle *);
-		static void outOfNeighborhoodTime(MobilityMessage *, Particle *);
+		static double nextTransfer(TransferMessage *, Particle *);
+		static double outOfNeighborhoodTime(OutOfNeighborhoodMessage *, Particle *);
+
+		static void resetCollisionMessage(CollisionMessage *);
+
 };
 
 #endif

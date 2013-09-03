@@ -9,7 +9,10 @@
 
 #include "Manager.h"
 #include "Circle.h"
-#include "../messages/Mobility_m.h"
+
+#include "messages/Transfer_m.h"
+#include "messages/Collision_m.h"
+#include "messages/OutOfNeighborhood_m.h"
 
 class Sphere : public Circle, public cSimpleModule {
 
@@ -17,10 +20,10 @@ class Sphere : public Circle, public cSimpleModule {
 
 		Manager *manager;
 
-		MobilityMessage *transferMsg;
-		MobilityMessage *collisionMsg;
-		MobilityMessage *wallCollisionMsg;
-		MobilityMessage *outOfNeighborhoodMsg;
+// Self messages
+		TransferMessage *transferMsg;
+		CollisionMessage *collisionMsg;
+		OutOfNeighborhoodMessage *outOfNeighborhoodMsg;
 
 	protected:
 
@@ -31,34 +34,35 @@ class Sphere : public Circle, public cSimpleModule {
 		Sphere() : Circle() {};
 		Sphere(double, double, double, double , double, double, double, double);
 
-		// Initialize the event queue
-		void firstEventTime(void);
+		void initMessages(void);
 
-		// Find the next event time for a given particle
-		void nextEventTime(void);
+// Initialize the event queue
+		void initEvents(void);
 
-		double scheduledCollisionTime(void);
+		void handleMobilityMessage(cMessage *);
 
-		void handleMobilityMessage(MobilityMessage *);
+		void handleTransfer(TransferMessage *);
+		void handleCollision(CollisionMessage *);
+		void handleWallCollision(CollisionMessage *);
 
-		void updateStateAfterTransfer(MobilityMessage *);
-		void updateStateAfterCollision(MobilityMessage *);
-		void updateStateAfterWallCollision(MobilityMessage *);
+		void adjustCollision(double, Particle *);
 
-		// Near-Neighbor List methods
+// Near-Neighbor List methods
 		void createNearNeighborList(void);
 		void updateNearNeighborList(void);
 
-		// tk Environment related methods
+// tk Environment related methods
 		void tkEnvDrawShape(void);
 		void tkEnvUpdatePosition(void);
 		void tkEnvUpdatePosition(double);
 
-		// Gets and sets
-		Manager *getManager(void) { return manager; }
-		MobilityMessage *getScheduledMobilityMessage(void);
+// Gets and sets
+		Manager * getManager(void) { return manager; }
+		TransferMessage * getTransferMessage(void);
+		CollisionMessage * getCollisionMessage(void);
 
 		void setManager(std::string);
+
 };
 
 #endif

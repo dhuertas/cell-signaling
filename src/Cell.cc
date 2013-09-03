@@ -19,39 +19,34 @@ void Cell::initialize(int stage) {
 		// Manager module initializes during this stage
 	} else if (stage == 1) {
 
-		// Initial position
+// Initial position
 		setX(par("xpos").doubleValue());
 		setY(par("ypos").doubleValue());
 		setZ(par("zpos").doubleValue());
 
-		// Velocity
+// Velocity
 		setVx(par("vx").doubleValue());
 		setVy(par("vy").doubleValue());
 		setVz(par("vz").doubleValue());
 
-		// Cell radius
+// Cell radius
 		setRadius(par("radius").doubleValue());
 		setMass(par("radius").doubleValue());
 
-		// Near-Neighbor List radius
+// Near-Neighbor List radius
 		setListRadius(par("listRadius").doubleValue());
 
-		lastCollisionTime = 0;
-
-		// Subscribe to manager
+// Subscribe to manager
 		setManager("managerName");
 		getManager()->subscribe(this);
-	
-		// update Cell position in the tk environment
+
+// update Cell position in the tk environment
 		tkEnvUpdatePosition();
 
-		// draw module shape in the tk environment
+// draw module shape in the tk environment
 		tkEnvDrawShape();
 
-
 	}
-
-	// Get the time of the first collision
 
 }
 
@@ -71,7 +66,7 @@ void Cell::handleMessage(cMessage *msg) {
 
     if (strcmp(msg->getName(), "mobility") == 0) {
 
-        handleMobilityMessage((MobilityMessage *)msg);
+        handleMobilityMessage(msg);
 
     }
 

@@ -20,8 +20,11 @@ char sp[10*6] = {
 /*
  * Computes the transfer time of the particle with the sides of its space cell
  * and returns the smallest one.
+ *
+ * @param {TransferMessage *} msg
+ * @param {Particle *} p
  */
-void Mobility::transferTime(MobilityMessage *transferMsg, Particle *p) {
+double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	int i, j, k, n;			// Indexes to access the current space cell
 	int Nx, Ny, Nz;			// Number of space cells (or divisions) in each axis
@@ -40,7 +43,7 @@ void Mobility::transferTime(MobilityMessage *transferMsg, Particle *p) {
 
 	Manager *manager;
 
-	manager = transferMsg->getManager();
+	manager = msg->getManager();
 
 	transferTime = NO_TIME;
 
@@ -111,25 +114,29 @@ void Mobility::transferTime(MobilityMessage *transferMsg, Particle *p) {
 // Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and solve for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 
-// Check that temp really is greater than 0 ...
 		if (temp != 0) {
 
 			temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
 
-// Solution found. "temp" is the amount of time the particle takes to go from its last
-// event point to the space cell side where it is bounded now.
+// Solution found. "temp" is the amount of time the centroid of the particle 
+// takes to go from its current position to the space cell side where it is 
+// bounded.
 			if (counter == 0) {
 
 				transferTime = temp;
 				hits.push_back(*side);
 
-				if (temp == 0) break;
+				if (temp == 0) {
+// The centroid of the particle is on a space cell side and needs to update its
+// space cell value and recalculate the transfer time.
+					break;
+				}
 
 			} else {
 
 				if (temp == 0) {
-// The particle is on a space cell side and needs to update its space cell
-// value and recalculate the transfer time.
+// The centroid of the particle is on a space cell side and needs to update its
+// space cell value and recalculate the transfer time.
 					transferTime = temp;
 					hits.push_back(*side);
 					break;
@@ -158,11 +165,23 @@ void Mobility::transferTime(MobilityMessage *transferMsg, Particle *p) {
 	}
 
 	if (transferTime > 0) {
+
 		transferTime += sTime;
+
+	} else if (transferTime == 0) {
+// If transferTime equals the simuation time sTime means that temp equals = 0,
+// thus the centroid of the particle belongs to the plane it is crossing
+
+// Set an event transfer at the same simulation time
+
+// Update the NextSpaceCell value
+
+	} else {
+// transfer time not found (NO_TIME)
 	}
 
-	transferMsg->setEventTime(transferTime);
-	transferMsg->setPrevSpaceCell(p->getSpaceCell());
+	msg->setTransferTime(transferTime);
+	msg->setPrevSpaceCell(p->getSpaceCell());
 
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
@@ -175,72 +194,66 @@ void Mobility::transferTime(MobilityMessage *transferMsg, Particle *p) {
 
 	}
 
-	transferMsg->setNextSpaceCell(i*Nz*Ny + j*Nz + k);
+	msg->setNextSpaceCell(i*Nz*Ny + j*Nz + k);
+
+	return transferTime;
 
 }
 
 /*
  * Computes the time when the particle leaves its neighborhood area and its
  * Near-Neighbor List must be updated
+ *
+ * @param {OutOfNeighborhoodMessage *} msg
+ * @param {Particle *} p
  */
-void Mobility::outOfNeighborhoodTime(MobilityMessage *outOfNeighborhoodMsg, Particle *p) {
+double Mobility::outOfNeighborhoodTime(OutOfNeighborhoodMessage *msg, Particle *p) {
 
-	int i, j, k, Ny, Nz;
-
-	double spaceCellSize;
-	double sTime, outOfNeighborhoodTime, lastCollisionTime;
 	double vx, vy, vz, vm, lr;
 
-	point_t C;
-	
-	Manager *manager;
-
-	manager = outOfNeighborhoodMsg->getManager();
-
-	Ny = manager->getNumberOfSpaceCellsY();
-	Nz = manager->getNumberOfSpaceCellsZ();
-
-	spaceCellSize = manager->getSpaceCellSize();
-
-	sTime = simTime().dbl();
-	outOfNeighborhoodTime = NO_TIME;
-	lastCollisionTime = p->getLastCollisionTime();
+	double outOfNeighborhoodTime;
+	double sTime;
 
 	vx = p->getVx();
 	vy = p->getVy(); 
 	vz = p->getVz();
 
+	sTime = simTime().dbl();
+	outOfNeighborhoodTime = NO_TIME;
+
 	lr = p->getListRadius();
 
 	vm = sqrt(vx*vx + vy*vy + vz*vz);
 
-	outOfNeighborhoodMsg->setKind(EV_OUTOFNEIGHBORHOOD);
-
 	if (vm != 0) {
 
-		outOfNeighborhoodTime = lr/vm;
-		outOfNeighborhoodTime += sTime;
-
-		outOfNeighborhoodMsg->setEventTime(outOfNeighborhoodTime);
-
-		C.x = p->getX() + vx*(outOfNeighborhoodTime - lastCollisionTime);
-		C.y = p->getY() + vy*(outOfNeighborhoodTime - lastCollisionTime);
-		C.z = p->getZ() + vz*(outOfNeighborhoodTime - lastCollisionTime);
-
-		i = floor(C.x/spaceCellSize);
-		j = floor(C.y/spaceCellSize);
-		k = floor(C.z/spaceCellSize);
-
-		outOfNeighborhoodMsg->setPrevSpaceCell(p->getSpaceCell());
-		outOfNeighborhoodMsg->setNextSpaceCell(i*Ny*Nz + j*Nz + k);
-
-	} else {
-// Particle is not moving
-		outOfNeighborhoodMsg->setEventTime(NO_TIME);
-
-		outOfNeighborhoodMsg->setPrevSpaceCell(p->getSpaceCell());
-		outOfNeighborhoodMsg->setNextSpaceCell(p->getSpaceCell());
+		outOfNeighborhoodTime = lr/vm + sTime;
 
 	}
+
+	msg->setOutOfNeighborhoodTime(outOfNeighborhoodTime);
+
+	    return outOfNeighborhoodTime;
+}
+
+/*
+ * Set default values for the collision message.
+ *
+ * @param {CollisionMessage *} msg
+ */
+void Mobility::resetCollisionMessage(CollisionMessage *msg) {
+
+	msg->setCollisionTime(NO_TIME);
+
+	msg->setX(-1);
+	msg->setY(-1);
+	msg->setZ(-1);
+
+	msg->setVx(0);
+	msg->setVy(0);
+	msg->setVz(0);
+
+	msg->setPartner(NULL);
+	msg->setPrevPartner(NULL);
 
 }

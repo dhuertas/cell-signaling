@@ -31,514 +31,266 @@ Sphere::Sphere(
 }
 
 /*
- * Sets the manager attribute.
- * 
- * @param {string} param: the name of the manager module.
+ * Initialize the self messages. This method is called by the manager module
+ * during network initialization.
  */
-void Sphere::setManager(string param) {
-
-	cPar *managerName;
-
-	try {
-
-		managerName = & simulation.getSystemModule()->par(param.c_str());
-		manager = (Manager *)simulation.getSystemModule()
-			->getSubmodule(managerName->stringValue());
-
-	} catch (cException *e) {
-// TODO stop simulation
-	}
-
-}
-
-/*
- * Draws the shape of the cell in the tk environment.
- */
-void Sphere::tkEnvDrawShape() {
-
-	std::stringstream buffer;
-
-// We will use the shape drawing tool to draw a circle around the particle
-// center instead of using
-	buffer << 2*getRadius();
-	getDisplayString().setTagArg("b", 0, buffer.str().c_str());
-	getDisplayString().setTagArg("b", 1, buffer.str().c_str());
-
-	getDisplayString().setTagArg("b", 2, "oval");
-	getDisplayString().setTagArg("b", 3, "white");
-	getDisplayString().setTagArg("b", 4, "black");
-	getDisplayString().setTagArg("b", 5, 1);
-}
-
-/*
- * Update the module position in the tk environment. This method is used when
- * the particle is initialized.
- */
-void Sphere::tkEnvUpdatePosition() {
-
-	std::stringstream buffer;
-
-// Set position string for tkenv
-	buffer << getY();
-
-	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
-	buffer.str(std::string()); // clear buffer
-
-	buffer << getX();
-
-	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
-	buffer.str(std::string());
-
-	EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
-
-}
-
-/*
- * Update the module position in the tk environment. This method is used 
- * during the simulation.
- *
- * @param {Double} t
- */
-void Sphere::tkEnvUpdatePosition(double t) {
-
-	std::stringstream buffer;
-
-	double lc = getLastCollisionTime();
-
-// Set position string for tkenv
-	buffer << getY() + getVy()*(t-getLastCollisionTime());
-
-	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
-	buffer.str(std::string()); // clear buffer
-
-	buffer << getX() + getVx()*(t-getLastCollisionTime());
-
-	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
-	buffer.str(std::string());
-
-	EV << "x: " << getX() + getVx()*(t - lc) <<
-		", y: " << getY() + getVy()*(t - lc) <<
-		", z: " << getZ() + getVz()*(t - lc) << "\n";
-
-}
-
-/*
- * Initialize the event queue by computing the first event for the particle.
- * This function is called by the manager in order to initialize the event
- * queue.
- */
-void Sphere::firstEventTime() {
-
+void Sphere::initMessages() {
 // Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
-	double transferTime;
-	double collisionTime;
-	double wallCollisionTime;
-	double outOfNeighborhoodTime;
-	double smallestTime;
+	transferMsg = new TransferMessage("mobility", EV_TRANSFER);
+	collisionMsg = new CollisionMessage("mobility", EV_NONE);
 
-	vector<double> times;
-	vector<double>::const_iterator t;
-
-	transferMsg = new MobilityMessage("mobility", EV_TRANSFER);
-	collisionMsg = new MobilityMessage("mobility", EV_COLLISION);
-	wallCollisionMsg =  new MobilityMessage("mobility", EV_WALLCOLLISION);
-	outOfNeighborhoodMsg = new MobilityMessage("mobility", EV_OUTOFNEIGHBORHOOD);
+	SphereMobility::resetCollisionMessage(collisionMsg);
 
 	transferMsg->setManager(manager);
 	collisionMsg->setManager(manager);
-	wallCollisionMsg->setManager(manager);
-	outOfNeighborhoodMsg->setManager(manager);
-
-// Compute the first collision and the first transfer
-	SphereMobility::transferTime(transferMsg, this);
-	SphereMobility::wallCollisionTime(wallCollisionMsg, this);
-	SphereMobility::collisionTime(collisionMsg, this);
-
-	transferTime = transferMsg->getEventTime();
-	collisionTime = collisionMsg->getEventTime();
-	wallCollisionTime = wallCollisionMsg->getEventTime();
-
-	times.push_back(transferTime);
-	times.push_back(collisionTime);
-	times.push_back(wallCollisionTime);
-
-	switch (mode) {
-		
-		case M_NNLIST:
-
-			SphereMobility::outOfNeighborhoodTime(outOfNeighborhoodMsg, this);
-
-			outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
-
-			times.push_back(outOfNeighborhoodTime);
-
-// Initialize the smallestTime so it is not a negative value (NO_TIME)
-			if (transferTime != NO_TIME) {
-				smallestTime = transferTime;
-			} else if (collisionTime != NO_TIME) {
-				smallestTime = collisionTime;
-			} else {
-// No event will be scheduled for this sphere for now
-				smallestTime = 0;
-			}
-
-			for (t = times.begin(); t != times.end(); ++t) {
-				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
-			}
-
-			if (smallestTime == transferTime) {
-				scheduleAt(transferTime, transferMsg);
-			} else if (smallestTime == collisionTime) {
-				scheduleAt(collisionTime, collisionMsg);
-			} else if (smallestTime == wallCollisionTime) {
-				scheduleAt(wallCollisionTime, wallCollisionMsg);
-			} else if (smallestTime == outOfNeighborhoodTime) {
-				scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
-			} else {
-// Nothing can be scheduled for this sphere
-			}
-
-			break;
-
-		case M_CELLLIST:
-		default:
-
-// Initialize the smallestTime so it is not a negative value (NO_TIME)
-			if (transferTime != NO_TIME) {
-				smallestTime = transferTime;
-			} else if (collisionTime != NO_TIME) {
-				smallestTime = collisionTime;
-			} else {
-// No event will be scheduled for this sphere for now
-				smallestTime = 0;
-			}
-
-			for (t = times.begin(); t != times.end(); ++t) {
-				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
-			}
-
-			if (smallestTime == transferTime) {
-				scheduleAt(transferTime, transferMsg);
-			} else if (smallestTime == collisionTime) {
-				scheduleAt(collisionTime, collisionMsg);
-			} else if (smallestTime == wallCollisionTime) {
-				scheduleAt(wallCollisionTime, wallCollisionMsg);
-			} else {
-// Nothing can be scheduled for this sphere
-			}
-
-			break;
-	}
 
 }
 
 /*
- * Generates a cMessage object for the next event. That event can be a transfer
- * event, a particle-particle collision event or a wall bounce event.
+ * Initialize the event queue by computing the first event for the sphere. This
+ * method is called by the manager in order to initialize the event queue.
  */
-void Sphere::nextEventTime() {
+void Sphere::initEvents() {
+
 // Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
-// Steps 3, 4 and 5.
 	double transferTime;
 	double collisionTime;
 	double wallCollisionTime;
-	double outOfNeighborhoodTime;
+	double scheduledCollisionTime;
+	//double outOfNeighborhoodTime;
 
-	double partnerCollisionTime;
-
-	double smallestTime;
+	double minTime;
 
 	vector<double> times;
 	vector<double>::const_iterator t;
 
-	MobilityMessage *msg;
+	transferTime = NO_TIME;
+	collisionTime = NO_TIME;
+	wallCollisionTime = NO_TIME;
+	scheduledCollisionTime = NO_TIME;
+	minTime = NO_TIME;
 
-// Step 3. Get the next space cell transfer time
-	if (transferMsg->isScheduled()) cancelEvent(transferMsg);
-	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
-	if (wallCollisionMsg->isScheduled()) cancelEvent(wallCollisionMsg);
+// Compute the first collision and the first transfer
+	transferTime = SphereMobility::nextTransfer(transferMsg, this);
 
-	SphereMobility::transferTime(transferMsg, this);
-	SphereMobility::collisionTime(collisionMsg, this);
-	SphereMobility::wallCollisionTime(wallCollisionMsg, this);
+	collisionTime = SphereMobility::nextCollision(collisionMsg, this);
+	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
 
-	transferTime = transferMsg->getEventTime();
-	collisionTime = collisionMsg->getEventTime();
-	wallCollisionTime = wallCollisionMsg->getEventTime();
+	if (transferTime != NO_TIME) {
 
-	times.push_back(transferTime);
-	times.push_back(collisionTime);
-	times.push_back(wallCollisionTime);
+		scheduleAt(transferTime, transferMsg);
 
-	switch (mode) {
-
-		case M_NNLIST:
-
-			if (outOfNeighborhoodMsg->isScheduled()) cancelEvent(outOfNeighborhoodMsg);
-
-			SphereMobility::outOfNeighborhoodTime(outOfNeighborhoodMsg, this);
-
-			outOfNeighborhoodTime = outOfNeighborhoodMsg->getEventTime();
-
-			times.push_back(outOfNeighborhoodTime);
-
-// Initialize the smallestTime so it is not a negative value (NO_TIME)
-			if (collisionTime != NO_TIME) {
-				smallestTime = collisionTime;
-			} else if (outOfNeighborhoodTime != NO_TIME) {
-				smallestTime = outOfNeighborhoodTime;
-			} else if (wallCollisionTime != NO_TIME) {
-				smallestTime = wallCollisionTime;
-			} else if (transferTime != NO_TIME) {
-				smallestTime = transferTime;
-			} else {
-// No event will be scheduled for this sphere for now
-				smallestTime = 0;
-			}
-
-			for (t = times.begin(); t != times.end(); ++t) {
-				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
-			}
-
-			if (smallestTime == collisionTime) {
-
-				partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
-				
-				if (partnerCollisionTime == NO_TIME) {
-// Partner particle does not have any scheduled collision event
-					scheduleAt(collisionTime, collisionMsg);
-					collisionMsg->getPartner()->updateNearNeighborList();
-					collisionMsg->getPartner()->nextEventTime();
-
-				} else {
-
-					if (collisionTime < partnerCollisionTime) {
-
-						scheduleAt(collisionTime, collisionMsg);
-						collisionMsg->getPartner()->updateNearNeighborList();
-						collisionMsg->getPartner()->nextEventTime();
-
-					} else {
-// Must check that the partner is solving the collision (its next event is not of type EV_CHECK)
-						msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
-
-						if (msg->getKind() == EV_CHECK) {
-// Partner expects that we are solving the collision
-							collisionMsg->setKind(EV_COLLISION);
-							scheduleAt(collisionTime, collisionMsg);
-						} else {
-// Partner is solving the collision event
-							collisionMsg->setKind(EV_CHECK);
-							scheduleAt(collisionTime, collisionMsg);
-
-						}
-
-					}
-
-				}
-
-			} else if (smallestTime == outOfNeighborhoodTime) {
-
-				scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
-
-			} else if (smallestTime == transferTime) {
-
-				scheduleAt(transferTime, transferMsg);
-
-			} else if (smallestTime == wallCollisionTime) {
-
-				scheduleAt(wallCollisionTime, wallCollisionMsg);
-
-			} else {
-// Do nothing
-			}
-
-			break;
-
-		case M_CELLLIST:
-		default:
-
-// Initialize the smallestTime so it is not a negative value (NO_TIME)
-			if (transferTime != NO_TIME) {
-				smallestTime = transferTime;
-			} else if (collisionTime != NO_TIME) {
-				smallestTime = collisionTime;
-			} else if (wallCollisionTime != NO_TIME) {
-				smallestTime = wallCollisionTime;
-			} else {
-// No event will be scheduled for this sphere for now
-				smallestTime = 0;
-			}
-
-			for (t = times.begin(); t != times.end(); ++t) {
-				if (0 < (*t) && (*t) < smallestTime) smallestTime = (*t);
-			}
-
-			if (smallestTime == collisionTime) {
-				
-				partnerCollisionTime = collisionMsg->getPartner()->scheduledCollisionTime();
-				
-				if (partnerCollisionTime == NO_TIME) {
-// Partner particle does not have any scheduled collision event
-					scheduleAt(collisionTime, collisionMsg);
-					collisionMsg->getPartner()->nextEventTime();
-				} else {
-
-					if (collisionTime < partnerCollisionTime) {
-
-						scheduleAt(collisionTime, collisionMsg);
-						collisionMsg->getPartner()->nextEventTime();
-
-					} else {
-// Must check that the partner is solving the collision (its next event is not
-// of type EV_CHECK)
-						msg = ((Sphere *) collisionMsg->getPartner())->getScheduledMobilityMessage();
-
-						if (msg->getKind() == EV_CHECK) {
-// Partner expects that we are solving the collision
-							collisionMsg->setKind(EV_COLLISION);
-							scheduleAt(collisionTime, collisionMsg);
-
-						} else {
-// Partner is solving the collision event
-							collisionMsg->setKind(EV_CHECK);
-							scheduleAt(collisionTime, collisionMsg);
-
-						}
-
-					}
-
-				}
-
-			} else if (smallestTime == transferTime) {
-
-				scheduleAt(transferTime, transferMsg);
-
-			} else if (smallestTime == wallCollisionTime) {
-
-				scheduleAt(wallCollisionTime, wallCollisionMsg);
-
-			} else {
-// Do nothing
-			}
-
-			break;
 	}
 
+// TODO complete this part
+	if (collisionMsg->isScheduled()) {
+		scheduledCollisionTime = collisionMsg->getCollisionTime();
+		times.push_back(scheduledCollisionTime);
+	}
+
+	if (collisionTime != NO_TIME) {
+		times.push_back(collisionTime);
+	}
+
+	if (wallCollisionTime != NO_TIME) {
+		times.push_back(wallCollisionTime);
+	}
+
+	minTime = wallCollisionTime;
+
+	for (t = times.begin(); t!= times.end(); ++t) {
+		if ((*t) < minTime) minTime = (*t);
+	}
+
+	if (minTime == collisionTime) {
+
+		if (collisionMsg->isScheduled()) {
+			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
+		}
+
+		cancelEvent(collisionMsg);
+
+		collisionMsg->setKind(EV_COLLISION);
+		collisionMsg->setCollisionTime(collisionTime);
+
+		scheduleAt(collisionTime, collisionMsg);
+
+		((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
+
+	} else if (minTime == wallCollisionTime) {
+
+		if (collisionMsg->isScheduled()) {
+			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
+		}
+
+		cancelEvent(collisionMsg);
+
+		collisionMsg->setKind(EV_WALLCOLLISION);
+		collisionMsg->setCollisionTime(wallCollisionTime);
+
+		scheduleAt(wallCollisionTime, collisionMsg);
+
+	} else if (minTime == scheduledCollisionTime) {
+// Leave it as it is scheduled
+	} else {
+// minTime == NO_TIME;
+	}
 }
 
 /*
- * Returns the eventTime from the scheduled collision event.
+ * This method gets called when the sphere is a partner in a collision event.
  *
- * @return {double} the event time 
+ * @param {double} newTime: the collision event time
+ * @param {Particle *} from: the particle who is handling the collision
  */
-double Sphere::scheduledCollisionTime() {
+void Sphere::adjustCollision(double newTime, Particle *from) {
 
-	if (collisionMsg->isScheduled()) {
-		return collisionMsg->getEventTime();
-	} else if (wallCollisionMsg->isScheduled()) {
-		return wallCollisionMsg->getEventTime();
-	} else {
-		return NO_TIME;
+// Methods called from other modules must have this macro
+	Enter_Method_Silent();
+
+	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
+
+// Change the event type of the third party sphere to EV_CHECK
+	if (collisionMsg->getPartner() != NULL) {
+
+		if (from->getParticleId() != collisionMsg->getPartner()->getParticleId()) {
+
+			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
+
+		}
+
 	}
+
+	SphereMobility::resetCollisionMessage(collisionMsg);
+
+	collisionMsg->setKind(EV_CHECK);
+	collisionMsg->setCollisionTime(newTime);
+	collisionMsg->setPartner(from);
+
+	scheduleAt(newTime, collisionMsg);
 
 }
 
 /*
  * Handles the mobility of the sphere
  *
- * @param {MobilityMessage *} msg
+ * @param {cMessage *} msg
  */
-void Sphere::handleMobilityMessage(MobilityMessage *msg) {
+void Sphere::handleMobilityMessage(cMessage *msg) {
+
+	double transferTime;
+	double collisionTime;
+	double wallCollisionTime;
+
+	vector<double> times;
+	vector<double>::const_iterator t;
+
+	transferTime = NO_TIME;
+	collisionTime = NO_TIME;
+	wallCollisionTime = NO_TIME;
+
+// Step 1. Find the next event in the queue.
 
 	int kind = msg->getKind();
 
-	switch (mode) {
+// Step 2. Handle the event.
 
-		case M_NNLIST:
+	if (kind == EV_TRANSFER) {
 
-// Step 2. Handle the event
-			if (kind == EV_TRANSFER) {
-				// Update the molecule space cell
-				updateStateAfterTransfer((MobilityMessage *)msg);
-				updateNearNeighborList();
-				
-				nextEventTime();
+		this->handleTransfer((TransferMessage *)msg);
 
-			} else if (kind == EV_WALLCOLLISION) {
-				// Update the molecule data
-				updateStateAfterWallCollision((MobilityMessage *)msg);
-				updateNearNeighborList();
-				
-				nextEventTime();
+	} else if (kind == EV_COLLISION) {
 
-			} else if (kind == EV_COLLISION) {
+		this->handleCollision((CollisionMessage *)msg);
+		SphereMobility::resetCollisionMessage(collisionMsg);
 
-				updateStateAfterCollision((MobilityMessage *)msg);
-				updateNearNeighborList();
-				
-				nextEventTime();
+	} else if (kind == EV_WALLCOLLISION) {
 
-			} else if (kind == EV_OUTOFNEIGHBORHOOD) {
+		this->handleWallCollision((CollisionMessage *)msg);
+		SphereMobility::resetCollisionMessage(collisionMsg);
 
-				// updateStateAfterTransfer((MobilityMessage *)msg);
-				updateNearNeighborList();
-				
-				nextEventTime();
+	} else if (kind == EV_CHECK) {
 
-			} else if (kind == EV_CHECK) {
+		SphereMobility::resetCollisionMessage(collisionMsg);
 
-				updateNearNeighborList();
-				nextEventTime();
-
-			} else {
-
-			}
-
-			break;
-
-		case M_CELLLIST:
-		default:
-
-// Step 2. Handle the event
-			if (kind == EV_TRANSFER) {
-				// Update the molecule space cell
-				updateStateAfterTransfer((MobilityMessage *)msg);				
-				nextEventTime();
-
-			} else if (kind == EV_WALLCOLLISION) {
-				// Update the molecule data
-				updateStateAfterWallCollision((MobilityMessage *)msg);
-				nextEventTime();
-
-			} else if (kind == EV_COLLISION) {
-
-				updateStateAfterCollision((MobilityMessage *)msg);
-				nextEventTime();
-
-			} else if (kind == EV_CHECK) {
-
-				nextEventTime();
-
-			} else {
-
-			}
-
-			break;
 	}
+
+// Step 3. Compute the next transfer time for the particle corresponding to the
+// event.
+
+	if (transferMsg->isScheduled()) cancelEvent(transferMsg);
+
+	transferTime = SphereMobility::nextTransfer(transferMsg, this);
+
+	scheduleAt(transferTime, transferMsg);
+
+// Step 4. Compute the next collision time with particles in appropriate 
+// neighboring cells.
+
+	collisionTime = SphereMobility::nextCollision(collisionMsg, this);
+	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
+
+// Step 5. Adjust the position of the event and its new partner’s event in the 
+// event queue. Since a wall collision changes the path of a particle, we only 
+// keep either a particle collision or a wall collision for each particle.
+
+	if (collisionMsg->isScheduled()) {
+
+		if (collisionTime < collisionMsg->getCollisionTime() && collisionTime != NO_TIME) {
+
+			if (collisionMsg->getPrevPartner() != NULL) {
+
+				((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
+
+			}
+
+			cancelEvent(collisionMsg);
+
+			collisionMsg->setKind(EV_COLLISION);
+			collisionMsg->setCollisionTime(collisionTime);
+
+			scheduleAt(collisionTime, collisionMsg);
+
+			((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
+
+		}
+
+	} else {
+
+		if (collisionTime < wallCollisionTime && collisionTime != NO_TIME) {
+
+			collisionMsg->setKind(EV_COLLISION);
+			collisionMsg->setCollisionTime(collisionTime);
+
+			scheduleAt(collisionTime, collisionMsg);
+
+			((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
+
+		} else {
+
+			collisionMsg->setKind(EV_WALLCOLLISION);
+			collisionMsg->setCollisionTime(wallCollisionTime);
+
+			scheduleAt(wallCollisionTime, collisionMsg);
+		
+		}
+
+	}
+
+// Step 6. Return to Step 1.
 
 }
 
 /*
- * Tells the manager to update the space cell position for the particle.
+ * Tells the manager to update the space cell position.
  *
- * @param {MobilityMessage *} msg
+ * @param {TransferMessage *} msg
  */
-void Sphere::updateStateAfterTransfer(MobilityMessage *msg) {
+void Sphere::handleTransfer(TransferMessage *msg) {
 
 	int prevSpaceCell, nextSpaceCell;
 
@@ -553,11 +305,11 @@ void Sphere::updateStateAfterTransfer(MobilityMessage *msg) {
 
 /*
  * Updates the particle position, velocity and the last collision time values
- * and does the same for the partner particle.
+ * and does the same for the partner sphere.
  *
- * @param {MobilityMessage *} msg
+ * @param {CollisionMessage *} msg
  */
-void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
+void Sphere::handleCollision(CollisionMessage *msg) {
 
 	double tc, m1, m2, tmp;
 	double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
@@ -567,7 +319,7 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 
 	Particle *p;
 
-	tc = msg->getEventTime();
+	tc = msg->getCollisionTime();
 	p = msg->getPartner();
 
 // Find the center position of the spheres
@@ -583,7 +335,7 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 	m2 = p->getMass();
 
 // Log the collision
-	collisionVector.recordWithTimestamp(simTime().dbl(), this->getIdentifier());
+	collisionVector.recordWithTimestamp(simTime().dbl(), this->getParticleId());
 
 // Change frame of reference of the system to one of the spheres
 	v1.x = this->getVx() - p->getVx();
@@ -676,8 +428,7 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
 	setLastCollisionTime(tc);
 	p->setLastCollisionTime(tc);
 
-// Refresh partner Near-NeighborList
-	p->updateNearNeighborList();
+	SphereMobility::resetCollisionMessage(msg);
 
 }
 
@@ -685,9 +436,9 @@ void Sphere::updateStateAfterCollision(MobilityMessage *msg) {
  * Updates the position, velocity and the last collision time when the particle
  * collides with a wall.
  *
- * @param {MobilityMessage *} msg
+ * @param {WallCollisionMessage *} msg
  */
-void Sphere::updateStateAfterWallCollision(MobilityMessage *msg) {
+void Sphere::handleWallCollision(CollisionMessage *msg) {
 
 	setX(msg->getX());
 	setY(msg->getY());
@@ -697,7 +448,9 @@ void Sphere::updateStateAfterWallCollision(MobilityMessage *msg) {
 	setVy(msg->getVy());
 	setVz(msg->getVz());
 
-	setLastCollisionTime(msg->getEventTime());
+	setLastCollisionTime(msg->getCollisionTime());
+
+	SphereMobility::resetCollisionMessage(msg);
 
 }
 
@@ -781,44 +534,115 @@ void Sphere::updateNearNeighborList() {
 }
 
 /*
- * Returns the scheduled mobility message
+ * Returns the scheduled transfer mobility message
  * 
- * @return {MobilityMessage *}
+ * @return {TransferMessage *}
  */
-MobilityMessage *Sphere::getScheduledMobilityMessage() {
+TransferMessage * Sphere::getTransferMessage() {
 
-	MobilityMessage *msg;
+	return this->transferMsg;
 
-	switch (mode) {
+}
 
-		case M_NNLIST:
+/*
+ * Returns the scheduled collision mobility message
+ * 
+ * @return {CollisionMessage *}
+ */
+CollisionMessage * Sphere::getCollisionMessage() {
 
-			if (collisionMsg->isScheduled()) {
-				msg = collisionMsg;
-			} else if (wallCollisionMsg->isScheduled()) {
-				msg = wallCollisionMsg;
-			} else if (outOfNeighborhoodMsg->isScheduled()) {
-				msg = outOfNeighborhoodMsg;
-			} else {
-				msg = transferMsg;
-			}
+	return this->collisionMsg;
 
-			break;
+}
 
-		case M_CELLLIST:
-		default:
+/*
+ * Draws the shape of the cell in the tk environment.
+ */
+void Sphere::tkEnvDrawShape() {
 
-			if (collisionMsg->isScheduled()) {
-				msg = collisionMsg;
-			} else if (wallCollisionMsg->isScheduled()) {
-				msg = wallCollisionMsg;
-			} else {
-				msg = transferMsg;
-			}
+	std::stringstream buffer;
 
-			break;
+// We will use the shape drawing tool to draw a circle around the particle
+// center instead of using
+	buffer << 2*getRadius();
+	getDisplayString().setTagArg("b", 0, buffer.str().c_str());
+	getDisplayString().setTagArg("b", 1, buffer.str().c_str());
+
+	getDisplayString().setTagArg("b", 2, "oval");
+	getDisplayString().setTagArg("b", 3, "white");
+	getDisplayString().setTagArg("b", 4, "black");
+	getDisplayString().setTagArg("b", 5, 1);
+}
+
+/*
+ * Update the module position in the tk environment. This method is used when
+ * the particle is initialized.
+ */
+void Sphere::tkEnvUpdatePosition() {
+
+	std::stringstream buffer;
+
+// Set position string for tkenv
+	buffer << getY();
+
+	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	buffer.str(std::string()); // clear buffer
+
+	buffer << getX();
+
+	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
+	buffer.str(std::string());
+
+	EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
+
+}
+
+/*
+ * Update the module position in the tk environment. This method is used 
+ * during the simulation.
+ *
+ * @param {Double} t
+ */
+void Sphere::tkEnvUpdatePosition(double t) {
+
+	std::stringstream buffer;
+
+	double lc = getLastCollisionTime();
+
+// Set position string for tkenv
+	buffer << getY() + getVy()*(t-getLastCollisionTime());
+
+	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	buffer.str(std::string()); // clear buffer
+
+	buffer << getX() + getVx()*(t-getLastCollisionTime());
+
+	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
+	buffer.str(std::string());
+
+	EV << "x: " << getX() + getVx()*(t - lc) <<
+		", y: " << getY() + getVy()*(t - lc) <<
+		", z: " << getZ() + getVz()*(t - lc) << "\n";
+
+}
+
+/*
+ * Sets the manager attribute.
+ * 
+ * @param {string} param: the name of the manager module.
+ */
+void Sphere::setManager(string param) {
+
+	cPar *managerName;
+
+	try {
+
+		managerName = & simulation.getSystemModule()->par(param.c_str());
+		manager = (Manager *)simulation.getSystemModule()
+			->getSubmodule(managerName->stringValue());
+
+	} catch (cException *e) {
+// TODO stop simulation
 	}
 
-	return msg;
-	
 }
