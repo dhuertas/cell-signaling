@@ -201,8 +201,10 @@ void Manager::initialize(int stage) {
 		}
 
 // Self message to refresh the tk environment
-		scheduleAt(simTime() + tkEnvRefreshRate, 
-			new cMessage("refresh", EV_TKENVUPDATE));
+		if (tkEnvRefreshRate > 0) {
+			scheduleAt(simTime() + tkEnvRefreshRate, 
+				new cMessage("refresh", EV_TKENVUPDATE));
+		}
 
 // Make that every subscribed particle compute its next event time
 		for (p = particles.begin(); p != particles.end(); ++p) {
@@ -322,7 +324,9 @@ void Manager::handleMessage(cMessage *msg) {
 		tkEnvUpdateNetwork();
 
 // Self-message
-		scheduleAt(simTime() + tkEnvRefreshRate, msg);
+		if (tkEnvRefreshRate > 0) {
+			scheduleAt(simTime() + tkEnvRefreshRate, msg);
+		}
 
 	}
 
