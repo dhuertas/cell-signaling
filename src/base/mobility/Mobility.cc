@@ -231,9 +231,8 @@ double Mobility::outOfNeighborhoodTime(OutOfNeighborhoodMessage *msg, Particle *
 
 	}
 
-	msg->setOutOfNeighborhoodTime(outOfNeighborhoodTime);
+    return outOfNeighborhoodTime;
 
-	    return outOfNeighborhoodTime;
 }
 
 /*

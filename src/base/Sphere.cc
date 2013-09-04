@@ -40,6 +40,7 @@ void Sphere::initMessages() {
 
 	transferMsg = new TransferMessage("mobility", EV_TRANSFER);
 	collisionMsg = new CollisionMessage("mobility", EV_NONE);
+	outOfNeighborhoodMsg = new OutOfNeighborhoodMessage("mobility",EV_OUTOFNEIGHBORHOOD);
 
 	SphereMobility::resetCollisionMessage(collisionMsg);
 
@@ -61,7 +62,6 @@ void Sphere::initEvents() {
 	double collisionTime;
 	double wallCollisionTime;
 	double scheduledCollisionTime;
-	//double outOfNeighborhoodTime;
 
 	double minTime;
 
@@ -72,21 +72,23 @@ void Sphere::initEvents() {
 	collisionTime = NO_TIME;
 	wallCollisionTime = NO_TIME;
 	scheduledCollisionTime = NO_TIME;
+
 	minTime = NO_TIME;
 
 // Compute the first collision and the first transfer
 	transferTime = SphereMobility::nextTransfer(transferMsg, this);
 
+	if (transferTime != NO_TIME) {
+		scheduleAt(transferTime, transferMsg);
+	}
+
+	if (manager->getMode() == M_NNLIST) {
+		this->handleOutOfNeighborhood();
+	}
+
 	collisionTime = SphereMobility::nextCollision(collisionMsg, this);
 	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
 
-	if (transferTime != NO_TIME) {
-
-		scheduleAt(transferTime, transferMsg);
-
-	}
-
-// TODO complete this part
 	if (collisionMsg->isScheduled()) {
 		scheduledCollisionTime = collisionMsg->getCollisionTime();
 		times.push_back(scheduledCollisionTime);
@@ -106,7 +108,7 @@ void Sphere::initEvents() {
 		if ((*t) < minTime) minTime = (*t);
 	}
 
-	if (minTime == collisionTime) {
+	if (minTime == collisionTime && collisionTime != NO_TIME) {
 
 		if (collisionMsg->isScheduled()) {
 			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
@@ -121,7 +123,7 @@ void Sphere::initEvents() {
 
 		((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
 
-	} else if (minTime == wallCollisionTime) {
+	} else if (minTime == wallCollisionTime && wallCollisionTime != NO_TIME) {
 
 		if (collisionMsg->isScheduled()) {
 			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
@@ -203,15 +205,31 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 		this->handleTransfer((TransferMessage *)msg);
 
+		if (manager->getMode() == M_NNLIST) {
+			this->handleOutOfNeighborhood();
+		}
+
+	} else if (kind == EV_OUTOFNEIGHBORHOOD) {
+
+		this->handleOutOfNeighborhood();
+
 	} else if (kind == EV_COLLISION) {
 
 		this->handleCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
+		if (manager->getMode() == M_NNLIST) {
+			this->handleOutOfNeighborhood();
+		}
+
 	} else if (kind == EV_WALLCOLLISION) {
 
 		this->handleWallCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
+
+		if (manager->getMode() == M_NNLIST) {
+			this->handleOutOfNeighborhood();
+		}
 
 	} else if (kind == EV_CHECK) {
 
@@ -455,6 +473,31 @@ void Sphere::handleWallCollision(CollisionMessage *msg) {
 }
 
 /*
+ * Handler for the out-of-neighborhood event
+ */
+void Sphere::handleOutOfNeighborhood() {
+
+	double outOfNeighborhoodTime;
+
+	outOfNeighborhoodTime = NO_TIME;
+
+	if (outOfNeighborhoodMsg->isScheduled()) {
+		cancelEvent(outOfNeighborhoodMsg);
+	}
+
+	this->updateNearNeighborList();
+
+	outOfNeighborhoodTime = SphereMobility::outOfNeighborhoodTime(outOfNeighborhoodMsg, this);
+
+	outOfNeighborhoodMsg->setOutOfNeighborhoodTime(outOfNeighborhoodTime);
+
+	if (outOfNeighborhoodTime != NO_TIME) {
+		scheduleAt(outOfNeighborhoodTime, outOfNeighborhoodMsg);
+	}
+
+}
+
+/*
  * Create and populate the Near-Neighbor list
  */
 void Sphere::createNearNeighborList() {
@@ -521,7 +564,7 @@ void Sphere::createNearNeighborList() {
 }
 
 /*
- * Add a particle to our Verlet list
+ * Add nearby spheres to the list
  */
 void Sphere::updateNearNeighborList() {
 

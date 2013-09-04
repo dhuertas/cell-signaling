@@ -44,6 +44,7 @@ class Sphere : public Circle, public cSimpleModule {
 		void handleTransfer(TransferMessage *);
 		void handleCollision(CollisionMessage *);
 		void handleWallCollision(CollisionMessage *);
+		void handleOutOfNeighborhood(void);
 
 		void adjustCollision(double, Particle *);
 
