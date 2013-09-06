@@ -188,9 +188,6 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 	double collisionTime;
 	double wallCollisionTime;
 
-	vector<double> times;
-	vector<double>::const_iterator t;
-
 	transferTime = NO_TIME;
 	collisionTime = NO_TIME;
 	wallCollisionTime = NO_TIME;

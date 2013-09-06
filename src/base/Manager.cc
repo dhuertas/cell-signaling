@@ -323,7 +323,7 @@ void Manager::handleMessage(cMessage *msg) {
 
 		tkEnvUpdateNetwork();
 
-// Self-message
+// Self message to refresh the tk environment
 		if (tkEnvRefreshRate > 0) {
 			scheduleAt(simTime() + tkEnvRefreshRate, msg);
 		}

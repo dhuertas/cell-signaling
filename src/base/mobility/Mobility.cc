@@ -45,12 +45,14 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	manager = msg->getManager();
 
+	spaceCellSize = manager->getSpaceCellSize();
+
 	transferTime = NO_TIME;
 
 	sTime = simTime().dbl();
 	lastCollisionTime = p->getLastCollisionTime();
 
-	spaceCellSize = manager->getSpaceCellSize();
+	temp = NO_TIME;
 
 	Nx = manager->getNumberOfSpaceCellsX();
 	Ny = manager->getNumberOfSpaceCellsY();
@@ -169,13 +171,10 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 		transferTime += sTime;
 
 	} else if (transferTime == 0) {
-// If transferTime equals the simuation time sTime means that temp equals = 0,
-// thus the centroid of the particle belongs to the plane it is crossing
-
-// Set an event transfer at the same simulation time
-
-// Update the NextSpaceCell value
-
+// If transferTime equals the simuation time sTime it means that temp 
+// equals = 0, thus the centroid of the particle belongs to the plane it is 
+// crossing. Set an event transfer at the same simulation time so it will 
+// update the NextSpaceCell value and compute again the next transfer time.
 	} else {
 // transfer time not found (NO_TIME)
 	}
@@ -202,10 +201,11 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 /*
  * Computes the time when the particle leaves its neighborhood area and its
- * Near-Neighbor List must be updated
+ * Near-Neighbor List must be updated.
  *
  * @param {OutOfNeighborhoodMessage *} msg
  * @param {Particle *} p
+ * @return {double} the computed time
  */
 double Mobility::outOfNeighborhoodTime(OutOfNeighborhoodMessage *msg, Particle *p) {
 

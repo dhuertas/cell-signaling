@@ -8,7 +8,7 @@ using namespace std;
  *
  * @param {CollisionMessage *} msg
  * @param {Sphere *} s
- * @return {double} the computed collision time
+ * @return {double} the smallest computed collision time
  */
 double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
@@ -83,7 +83,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 // Get the particles from each of the listed space cells
 		for (sc = spaceCells.begin(); sc != spaceCells.end(); ++sc) {
-			
+
 			particleList = manager->getSpaceCellParticles(*sc);
 
 			for (pl = particleList.begin(); pl != particleList.end(); ++pl) {
@@ -94,9 +94,9 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 	}
 
-// Initialize the collision time. If the collision event has been handled the
-// returned value should be NO_TIME. Otherwise it should return the current
-// scheduled collision time.
+// Initialize the collision time. If the collision event is still scheduled
+// it should return the current scheduled collision time. Otherwise it should
+// return NO_TIME.
 	prevCollisionTime = msg->getCollisionTime();
 
 	if (prevCollisionTime != NO_TIME) {
@@ -167,6 +167,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
  *
  * @param {CollisionMessage *} event
  * @param {Sphere *} s
+ * @return {double} the smallest computed time
  */
 double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 
@@ -236,7 +237,7 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 		N.y = V.z * W.x - V.x * W.z;
 		N.z = V.x * W.y - V.y * W.x;
 
-// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
+// This is the plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
 // Substitute for:
 //     x = xi + vx*t + R*vnx, vnx = vx/sqrt(vx2+vy2+vz2), R = radius
 //     y = yi + vy*t + R*vny, vny = vy/sqrt(vx2+vy2+vz2), "
@@ -302,10 +303,10 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 	msg->setY(y + vy*wallCollisionTime);
 	msg->setZ(z + vz*wallCollisionTime);
 
-// Compute the future value
+// Compute the future time value
 	wallCollisionTime += lastCollisionTime;
 
-// The future velocity vector
+// Compute the future velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
 		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
@@ -332,7 +333,7 @@ double SphereMobility::solveCollision(Particle * pa, Particle * pb) {
 //  D(A, B) = \  /  ( Ay + Avy*(tc-ta) - (By + Bvy*(tc-tb) )² +   = Ra + Rb
 //             \/   ( Az + Avz*(tc-ta) - (Bz + Bvz*(tc-tb) )²
 //
-// ta: when the previous collision take place for particle A
+// ta: time when the previous collision took place for particle A
 // tb: same for particle B
 
 // (dxi + dvx*tc)² + (dyi + dvy*tc)² + (dyi + dvy*tc)²= (A.r + B.r)²
