@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Simulation Visualizer</title>
+	<script src="https://rawgithub.com/mrdoob/three.js/master/build/three.js"></script>
+	<style type="text/css">
+	body {
+		padding: 0;
+		margin: 0;
+	}
+	</style>
+</head>
+<body>
+
+	<div id="simspace-container">
+	
+	</div>
+
+	<script type="text/javascript">
+
+		// Simulation environment
+		var settings = {};
+
+		// var spaceSize = settings.simSpaceSize;
+		var spaceSize = { x: 1000, y: 1000, z: 1000}; // TODO remove this when receiving settings from the simulation web server
+
+		var elements = [];
+
+		for (var i = 0; i < 100; i++) {
+
+			elements.push({
+				type: "sphere",
+				radius: 50*Math.random(),
+				position: { 
+					x: spaceSize.x*Math.random(), 
+					y: spaceSize.y*Math.random(), 
+					z: spaceSize.z*Math.random() },
+				velocity: { x: 0, y: 0, z: 0}
+			});
+
+		}
+
+		console.log(elements);
+
+		function simSpaceCube(x, y, z) {
+
+		}
+
+		// Camera coordinates
+		var r, t, p;
+
+		var x, y, z;
+
+		var max;
+
+		max = Math.max(spaceSize.x, spaceSize.y, spaceSize.z);
+
+		var scene = new THREE.Scene();
+		var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 4*max);
+
+		r = 2*max;
+		theta = 0;
+		phi = 0;
+
+		x = spaceSize.x/2 + r*Math.sin(theta)*Math.cos(phi);
+		y = spaceSize.y/2 + r*Math.sin(theta)*Math.sin(phi);
+		z = spaceSize.z/2 + r*Math.cos(theta);
+
+		camera.position.x = x;
+		camera.position.y = y;
+		camera.position.z = z;
+
+		var renderer = new THREE.WebGLRenderer();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+		document.body.appendChild( renderer.domElement );
+
+		var material = new THREE.LineBasicMaterial({ 
+			color: 0x000000
+		});
+
+		// axis
+		var geo = new THREE.Geometry();
+
+		geo.vertices.push(new THREE.Vector3(-max*0.1, -max*0.1, -max*0.1));		
+		geo.vertices.push(new THREE.Vector3(0, -max*0.1, -max*0.1));
+
+		var xAxis = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xff0000 }));
+
+		var geo = new THREE.Geometry();
+
+		geo.vertices.push(new THREE.Vector3(-max*0.1, -max*0.1, -max*0.1));		
+		geo.vertices.push(new THREE.Vector3(-max*0.1, 0, -max*0.1));
+
+		var yAxis = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x00ff00 }));
+
+		var geo = new THREE.Geometry();
+
+		geo.vertices.push(new THREE.Vector3(-max*0.1, -max*0.1, -max*0.1));		
+		geo.vertices.push(new THREE.Vector3(-max*0.1, -max*0.1, 0));
+
+		var zAxis = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x0000ff }));
+
+		scene.add(xAxis);
+		scene.add(yAxis);
+		scene.add(zAxis);
+
+		// sim space bottom side
+		var geometry = new THREE.Geometry();
+
+		geometry.vertices.push(new THREE.Vector3(          0,           0, 0));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x,           0, 0));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x, spaceSize.y, 0));
+		geometry.vertices.push(new THREE.Vector3(          0, spaceSize.y, 0));
+		geometry.vertices.push(new THREE.Vector3(          0,           0, 0));
+
+		var bottomSide = new THREE.Line(geometry, material);
+
+		scene.add(bottomSide);
+
+		// sim space top side
+		var geometry = new THREE.Geometry();
+
+		geometry.vertices.push(new THREE.Vector3(          0,           0, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x,           0, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x, spaceSize.y, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(          0, spaceSize.y, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(          0,           0, spaceSize.z));
+
+		var topSide = new THREE.Line(geometry, material);
+
+		scene.add(topSide);
+
+		// sim space left side
+		var geometry = new THREE.Geometry();
+
+		geometry.vertices.push(new THREE.Vector3(          0, 0,           0));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x, 0,           0));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x, 0, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(          0, 0, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(          0, 0,           0));
+
+		var leftSide = new THREE.Line(geometry, material);
+
+		scene.add(leftSide);
+
+		// sim space right side
+		var geometry = new THREE.Geometry();
+
+		geometry.vertices.push(new THREE.Vector3(          0, spaceSize.y,           0));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x, spaceSize.y,           0));
+		geometry.vertices.push(new THREE.Vector3(spaceSize.x, spaceSize.y, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(          0, spaceSize.y, spaceSize.z));
+		geometry.vertices.push(new THREE.Vector3(          0, spaceSize.y,           0));
+
+		var rightSide = new THREE.Line(geometry, material);
+
+		scene.add(rightSide);
+
+		// add simulation elements
+		var sphereMaterial = new THREE.MeshLambertMaterial({ color: 0x0000cc });
+
+		for (var i = 0; i < elements.length; i++) {
+
+			var sphere = new THREE.Mesh(
+				new THREE.SphereGeometry(
+					elements[i].radius, 
+					16 /* segments*/,
+					16 /* rings */),
+				sphereMaterial);
+
+			sphere.position.x = elements[i].position.x;
+			sphere.position.y = elements[i].position.y;
+			sphere.position.z = elements[i].position.z;
+
+			sphere.geometry.dynamic = true;
+			sphere.geometry.verticesNeedUpdate = true;
+			sphere.geometry.normalsNeedUpdate = true;
+
+			scene.add(sphere);
+
+		}
+
+		// add a point light
+		var pointLight = new THREE.PointLight(0xffffff);
+
+		// set its position
+		pointLight.position.x = x;
+		pointLight.position.y = y;
+		pointLight.position.z = z;
+
+		// add to the scene
+		scene.add(pointLight);
+
+		// update element positions
+		function updateElements() {
+
+		}
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+
+			render();
+
+		}
+
+		function render() {
+
+			camera.lookAt({ x: spaceSize.x/2, y: spaceSize.y/2, z: spaceSize.z/2 });
+
+			updateElements();
+
+			renderer.render(scene, camera);
+		}
+
+		animate();
+
+
+		// Event handlers
+		var isMouseDown = false;
+
+		var prevClickPos = { x: 0,  y: 0 };
+
+		function onMouseDown(event) {
+
+			prevClickPos.x = event.x;
+			prevClickPos.y = event.y;
+
+			isMouseDown = true;
+
+		}
+
+		function onMouseMove(event) {
+
+			var dx, dy;
+
+			if (isMouseDown) {
+
+				dx = event.x - prevClickPos.x;
+				dy = event.y - prevClickPos.y;
+
+				theta -= 0.005*dx;
+				phi -= 0.005*dy;
+
+				x = spaceSize.x/2 + r*Math.sin(theta)*Math.cos(phi);
+				y = spaceSize.y/2 + r*Math.sin(theta)*Math.sin(phi);
+				z = spaceSize.z/2 + r*Math.cos(theta);
+
+				camera.position.x = x;
+				camera.position.y = y;
+				camera.position.z = z;
+
+				pointLight.position.x = x;
+				pointLight.position.y = y;
+				pointLight.position.z = z;
+
+				prevClickPos.x = event.x;
+				prevClickPos.y = event.y;
+
+			}
+
+		}
+
+		function onMouseUp(event) {
+
+			isMouseDown = false;
+
+		}
+
+		function onKeyPress(event) {
+
+			console.log(event);
+
+		}
+
+		window.addEventListener("mousedown", onMouseDown, false);
+		window.addEventListener("mousemove", onMouseMove, false);
+		window.addEventListener("mouseup", onMouseUp, false);
+		window.addEventListener("keypress", onKeyPress, false);
+
+		// ajax
+		function requestSettings() {
+
+			var xhr = new XMLHttpRequest();
+
+			xhr.onreadystatechange = function() {
+
+				if (xhr.readyState == 4 && xhr.status == 200) {
+					onSettingsSuccess(xhr.responseText);
+				}
+
+			}
+
+			xhr.open("GET", "/settings", true);
+
+			xhr.send(null);
+
+		}
+
+		function onSettingsSuccess(responseText) {
+
+			settings = JSON.parse(responseText);
+
+			requestStream();
+
+		}
+
+		function requestStream() {
+
+			var xhr = new XMLHttpRequest();
+
+			xhr.onreadystatechange = function() {
+				onStreamLoad(xhr);
+			}
+
+			xhr.open("GET", "/simstream", true);
+
+			xhr.send(null);
+
+		}
+
+		// parse the received data so far
+		function onStreamLoad(xhr) {
+
+		}
+	</script>
+
+</body>
+</html>

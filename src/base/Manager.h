@@ -10,6 +10,7 @@
 #include <list>
 
 #include "Particle.h"
+#include "WebServer.h"
 
 class Manager : public cSimpleModule {
 
