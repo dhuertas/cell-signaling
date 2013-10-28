@@ -5,6 +5,8 @@ var spaceSize;
 
 var particles = [];
 
+var xhrStream;
+
 var spheresMap = {};
 
 var sphereMaterial;
@@ -280,59 +282,6 @@ function onKeyPress(event) {
 
 }
 
-// Button handlers --------------------------------------------------------- //
-function onPlay() {
-
-	var xhr = new XMLHttpRequest();
-
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState == 4 && xhr.status == 200) {
-			onPlaySuccess(xhr.responseText);
-		}
-	}
-
-	xhr.open("GET", "/action?cmd=start", true);
-	xhr.send(null);
-}
-
-function onPlaySuccess(responseText) {
-	requestStream();
-}
-
-function onFastPlay() {
-
-	var xhr = new XMLHttpRequest();
-
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState == 4 && xhr.status == 200) {
-			onFastPlaySuccess(xhr.responseText);
-		}
-	}
-
-	xhr.open("GET", "/action?cmd=fast", true);
-	xhr.send(null);
-}
-
-function onFastPlaySuccess(responseText) {}
-
-function onStop() {
-
-	var xhr = new XMLHttpRequest();
-
-	xhr.onreadystatechange = function() {
-		if (xhr.readyState == 4 && xhr.status == 200) {
-			onStopSuccess(xhr.responseText);
-		}
-	}
-
-	xhr.open("GET", "/action?cmd=stop", true);
-	xhr.send(null);
-}
-
-function onStopSuccess(responseText) {
-
-}
-
 function requestSettings() {
 
 	var xhr = new XMLHttpRequest();
@@ -353,15 +302,14 @@ function onSettingsSuccess(responseText) {
 	spaceSize = settings.simSpaceSize;
 
 	initEnvironment();
-	
+	requestStream();
 	animate();
 
 }
 
-// parse the received data so far
-var xhrStream = new XMLHttpRequest();
-
 function requestStream() {
+
+	xhrStream = new XMLHttpRequest();
 
 	xhrStream.onreadystatechange = function() {
 		//onStreamLoad(xhrStream);
@@ -408,10 +356,6 @@ function loadHandler(e) {
 
 	document.getElementById("main").style.height = (window.innerHeight - heights.top - heights.bottom - 2)+"px";
 	document.getElementById("view").style.width = (window.innerWidth - sideWidth - 1 - 20)+"px";
-
-	document.getElementById("play").addEventListener("click", onPlay, false);
-	document.getElementById("fast").addEventListener("click", onFastPlay, false);
-	document.getElementById("stop").addEventListener("click", onStop, false);
 
 	window.addEventListener("resize", resizeHandler, false);
 	window.addEventListener("keypress", onKeyPress, false);

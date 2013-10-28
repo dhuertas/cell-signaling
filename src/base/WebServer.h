@@ -31,11 +31,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <errno.h>
-
-// Tk environment
-#include <tcl.h>
-#include <tk.h>
-#include "tkenv.h"
+#include <signal.h>
 
 #include "Defines.h"
 #include "Particle.h"
@@ -78,7 +74,6 @@ struct arg_struct {
 	int quitFd;							// Quit file descriptor
 	settings_t settings;				// Simulation settings structure
 	std::list<Particle *> *particles;	// List of particles
-	Tkenv *tkenv;						// Tk environment
 };
 
 // utils

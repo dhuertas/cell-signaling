@@ -382,7 +382,6 @@ void Manager::startWebServerThread() {
 	webServerArgs.quitFd = quitFd[READ];
 	webServerArgs.settings = settings;
 	webServerArgs.particles = &particles;
-	webServerArgs.tkenv = getTkenv();
 
 	res = pthread_create(&webServerThread, NULL, startServerThread, &webServerArgs);
 

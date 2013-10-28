@@ -122,26 +122,12 @@ namespace WebServer {
 
 		std::list<Particle *> *particles;
 
-		Tkenv *tkenv;
-
 		void sendSettings(int);
 
 		void sendStream(int);
 	
-		void performAction();
-
 		// Parameters
 		uint16_t rate;
-
-		// Actions are:
-		// 0 - None
-		// 1 - Run
-		// 2 - Fast Run
-		// 3 - Pause
-		// 4 - Stop
-		uint16_t action;
-
-		uint16_t lastAction;
 
 		settings_t settings;
 
@@ -231,6 +217,15 @@ void *WebServer::handler(void *arg) {
 
 	tid = (int *) arg;
 
+	sigset_t sigpipe_mask;
+	sigemptyset(&sigpipe_mask);
+	sigaddset(&sigpipe_mask, SIGPIPE);
+	sigset_t saved_mask;
+
+	if (pthread_sigmask(SIG_BLOCK, &sigpipe_mask, &saved_mask) == -1) {
+		// ev << "pthread_sigmask error" << endl;
+	}
+
 	while (1) {
 
 		// start of mutex area
@@ -255,7 +250,7 @@ void *WebServer::handler(void *arg) {
 
 	}
 
-    return 0;
+	return 0;
 }
 
 /*
@@ -285,7 +280,7 @@ std::string WebServer::getRequestHeader(request_t *req, std::string name) {
  */
 void WebServer::requestHandler(int tid, int clientSockFd) {
 
-	short n, m, reqCount;
+	short n, m;
 
 	fd_set selectSet;
 
@@ -338,7 +333,6 @@ void WebServer::requestHandler(int tid, int clientSockFd) {
 	}
 
 	conn = WebServer::getRequestHeader(&req, "Connection");
-	reqCount = 1;
 
 	if (conn.length() == 0) {
 		// Some http clients (e.g. curl) may not send the Connection header ...
@@ -348,39 +342,11 @@ void WebServer::requestHandler(int tid, int clientSockFd) {
 
 	} else {
 		
-		// Assume keep-alive connection
+		// Assume keep-alive connection... but keep it simple for now
 		timeout.tv_sec = 0;
 		timeout.tv_usec = 250;
 
 		WebServer::handleResponse(clientSockFd, &req, &resp);
-
-		while ((n = select(clientSockFd + 1, &selectSet, NULL, NULL, &timeout)) > 0) {
-
-			if (FD_ISSET(clientSockFd, &selectSet)) {
-
-				WebServer::clearRequest(&req);
-				WebServer::clearResponse(&resp);
-
-				m = WebServer::handleRequest(clientSockFd, &req);
-				
-				if (m == 0) {
-
-					WebServer::handleResponse(clientSockFd, &req, &resp);
-					reqCount++;
-
-				} else {
-
-					break;
-
-				}
-
-			}
-
-			if (reqCount > MAX_KEEPALIVE) {
-				break;
-			}
-
-		}
 
 	}
 
@@ -652,21 +618,6 @@ void WebServer::handleGetRequest(int clientSockFd, WebServer::request_t *req, We
 		WebServer::sendResponseHeaders(clientSockFd, resp);
 		WebServer::parseQueryParameters(req);
 		WebServer::Simulation::sendStream(clientSockFd);
-
-	} else if (req->uri.find("/action") == 0) {
-
-		resp->statusCode = 200;
-		resp->reasonPhrase = "OK";
-
-		if (strncasecmp(WebServer::getRequestHeader(req, "Connection").c_str(), "close", strlen("close")) == 0) {
-			WebServer::addResponseHeader(resp, "Connection", "close");
-		} else {
-			WebServer::addResponseHeader(resp, "Connection", "keep-alive");
-		}
-
-		WebServer::parseQueryParameters(req);
-		WebServer::Simulation::performAction();
-		WebServer::sendResponseHeaders(clientSockFd, resp);
 		WebServer::sendCRLF(clientSockFd);
 
 	} else {
@@ -713,27 +664,6 @@ void WebServer::parseQueryParameters(WebServer::request_t *req) {
 
 			}
 
-			if (tmp[0].compare("cmd") == 0) {
-
-				if (tmp[1].compare("start") == 0) {
-
-					WebServer::Simulation::action = 1;
-
-				} else if (tmp[1].compare("fast") == 0) {
-
-					WebServer::Simulation::action = 2;
-
-				} else if (tmp[1].compare("stop") == 0) {
-
-					WebServer::Simulation::action = 3;
-
-				} else {
-
-					WebServer::Simulation::action = 0;
-
-				}
-
-			}
 // Add more if sections here ...
 
 			tmp.clear();
@@ -805,7 +735,6 @@ void WebServer::Simulation::sendSettings(int clientSockFd) {
 void WebServer::Simulation::sendStream(int clientSockFd) {
 
 	bool connClosed = false;
-	bool simStopped = false;
 
 	int w, uSleepTime;
 	unsigned int t1, t2;
@@ -819,114 +748,68 @@ void WebServer::Simulation::sendStream(int clientSockFd) {
 
 	uSleepTime = 1000*1000/rate;
 
-	simStopped = WebServer::Simulation::tkenv->getStopSimulationFlag();
-
-	while ( ! connClosed) {
+	while ( ! (connClosed || WebServer::quit)) {
 
 		// Clear buffer
 		buffer.str("");
 
-		if ( ! simStopped) {
+		// Compute the amount of time it takes to generate the JSON data
+		gettimeofday(&t, NULL);
+		t1 = t.tv_sec*1000*1000 + t.tv_usec;
 
-			// Compute the amount of time it takes to generate the JSON data
-			gettimeofday(&t, NULL);
-			t1 = t.tv_sec*1000*1000 + t.tv_usec;
+		// Prepare data to be sent
+		buffer << "[";
 
-			// Prepare data to be sent
-			buffer << "[";
+		sTime = simTime().dbl();
 
-			sTime = simTime().dbl();
+		for (p = WebServer::Simulation::particles->begin();
+			p != WebServer::Simulation::particles->end(); 
+			++p) {
 
-			for (p = WebServer::Simulation::particles->begin();
-				p != WebServer::Simulation::particles->end(); 
-				++p) {
+			dTime = (sTime - (*p)->getLastCollisionTime());
 
-				dTime = (sTime - (*p)->getLastCollisionTime());
+			buffer << "{";
 
-				buffer << "{";
+			buffer << "\"id\":" << (*p)->getParticleId() << ",";
 
-				buffer << "\"id\":" << (*p)->getParticleId() << ",";
+			buffer << "\"radius\":" << (*p)->getRadius() << ",";
 
-				buffer << "\"radius\":" << (*p)->getRadius() << ",";
+			buffer << "\"pos\":{";
+			buffer << "\"x\":" << (*p)->getX() + (*p)->getVx()*dTime << ",";
+			buffer << "\"y\":" << (*p)->getY() + (*p)->getVy()*dTime << ",";
+			buffer << "\"z\":" << (*p)->getZ() + (*p)->getVz()*dTime;
+			buffer << "}";
 
-				buffer << "\"pos\":{";
-				buffer << "\"x\":" << (*p)->getX() + (*p)->getVx()*dTime << ",";
-				buffer << "\"y\":" << (*p)->getY() + (*p)->getVy()*dTime << ",";
-				buffer << "\"z\":" << (*p)->getZ() + (*p)->getVz()*dTime;
-				buffer << "}";
+			buffer << "}";
 
-				buffer << "}";
+			pt = p;
+			pt++;
 
-				pt = p;
-				pt++;
+			if ( ! (p != WebServer::Simulation::particles->end() && pt == WebServer::Simulation::particles->end())) {
 
-				if ( ! (p != WebServer::Simulation::particles->end() &&
-					pt == WebServer::Simulation::particles->end())) {
-
-					buffer << ",";
-
-				}
+				buffer << ",";
 
 			}
-
-			buffer << "];";
-			// Subtract the amount of time it has taken to loop through the list so we truly
-			// wait the requested time
-			gettimeofday(&t, NULL);
-			t2 = t.tv_sec*1000*1000 + t.tv_usec;
-
-			if (uSleepTime - (t2-t1) > 0) {
-				usleep(uSleepTime -t2+t1);
-			}
-
-			w = send(clientSockFd, buffer.str().c_str(), buffer.str().length(), 0);
-
-			if (w == -1) connClosed = true;
 
 		}
 
-		simStopped = WebServer::Simulation::tkenv->getStopSimulationFlag();
+		buffer << "];";
+		// Subtract the amount of time it has taken to loop through the list so we truly
+		// wait the requested time
+		gettimeofday(&t, NULL);
+		t2 = t.tv_sec*1000*1000 + t.tv_usec;
+
+		if (uSleepTime - (t2-t1) > 0) {
+			usleep(uSleepTime -t2+t1);
+		}
+
+		w = send(clientSockFd, buffer.str().c_str(), buffer.str().length(), 0);
+
+		if (w == -1) {
+		    connClosed = true;
+		}
 
 	}
-
-}
-
-/*
- *
- */
-void WebServer::Simulation::performAction() {
-
-	switch (WebServer::Simulation::action) {
-
-		case 1:
-
-			//WebServer::Simulation::tkenv->setSimulationRunMode(Tkenv::RUNMODE_NORMAL);
-			//Tcl_GlobalEval(WebServer::Simulation::tkenv->getInterp(), "update");
-
-			if (Tcl_Eval(WebServer::Simulation::tkenv->getInterp(), "opp_run") == TCL_ERROR)
-            	ev << "Tkenv: " << Tcl_GetStringResult(WebServer::Simulation::tkenv->getInterp());
-
-			break;
-
-		case 2:
-
-			WebServer::Simulation::tkenv->setSimulationRunMode(Tkenv::RUNMODE_FAST);
-
-			break;
-
-		case 3:
-
-			WebServer::Simulation::tkenv->setStopSimulationFlag();
-
-			break;
-
-		case 0:
-		default:
-			break;
-	}
-
-	WebServer::Simulation::lastAction = WebServer::Simulation::action;
-	WebServer::Simulation::action = 0;
 
 }
 
@@ -935,7 +818,7 @@ void WebServer::Simulation::performAction() {
  */
 void WebServer::sendCRLF(int clientSockFd) {
 
-    uint8_t w;
+	uint8_t w;
 
 	if ((w = send(clientSockFd, "\r\n", 2, 0)) != 2) {
 		// EV << "DEBUG: send" << endl;
@@ -1038,7 +921,6 @@ void *startServerThread(void *arguments) {
 
 	WebServer::Simulation::settings = (settings_t )(args->settings);
 	WebServer::Simulation::particles = args->particles;
-	WebServer::Simulation::tkenv = args->tkenv;
 
 	WebServer::run();
 
