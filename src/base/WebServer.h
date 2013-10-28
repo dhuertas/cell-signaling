@@ -1,98 +1,96 @@
-#ifndef WEBSERVER_H
-#define WEBSERVER_H
+#ifndef __WEBSERVER_H
+#define __WEBSERVER_H
 
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+#include <vector>
+#include <ctime>
+#include <list>
+
+// integers
+#include <stdint.h>
+
+// connection
+#include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <pthread.h>
-#include <string.h>
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <ctime>
-#include <algorithm>
+// threading
+#include <pthread.h>
+
+// file
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+
+// others
+#include <sys/time.h>
+#include <string.h>
+#include <errno.h>
+
+// Tk environment
+#include <tcl.h>
+#include <tk.h>
+#include "tkenv.h"
 
 #include "Defines.h"
+#include "Particle.h"
 
-struct arg_struct {
-	int arg1;
-	int arg2;
-};
+#define MAX_LISTEN			30
+#define MAX_THREADS			10
+#define MAX_DATE_SIZE		64
+#define MAX_BUFFER			1024
+#define MAX_KEEPALIVE		100
 
-typedef struct header {
-	std::string name;
-	std::string value;
-} header_t;
+#define TRUE 				1
+#define FALSE				0
+#define ERROR				-1
 
-typedef struct request {
-	std::string method;
-	std::string uri;
-	std::string version;
-	std::string body;
-	std::vector<header_t> headers;
-} request_t;
+#define PORT				8080
 
-typedef struct response {
-	unsigned short status_code;
-	std::string reason_phrase;
-	std::string version;
-	std::vector<header_t> headers;
-} response_t;
+#define GET					0
+#define HEAD				1
+#define POST				2
+#define PUT					3
+#define DELETE				4
+#define TRACE				5
+#define CONNECT				6
+
+#define SOCK_RD				0
+#define SOCK_WR				1
+#define TIME_OUT			10 // Keep Alive timeout 10 seconds
+#define RECV_TIME_OUT		10
+#define KEEPALIVE_TIME_OUT	1
+#define QUIT_TIME_OUT		10
 
 typedef std::vector<std::string> vectstr_t;
 
-class WebServer {
+typedef struct settings {
+	int numberOfParticles;
+	vect_t simSpaceSize;
+} settings_t;
 
-	private:
-
-	protected:
-
-		unsigned short listenPort;
-
-		int quitFd;
-		int streamFd;
-
-		int serverSockFd;
-		int clientSockFd;
-
-		socklen_t clientSize;
-
-		struct sockaddr_in serverAddr, clientAddr;
-
-		std::string documentRoot;
-
-		settings_t settings;
-
-	public:
-
-		WebServer(int);
-		WebServer(int, unsigned short);
-		WebServer(int, int, unsigned short);
-		~WebServer();
-
-		void start();
-		void stop(void);
-
-		void acceptConn();
-
-		void handleRequest(void);
-		request_t receiveRequest(void);
-
-		void route(request_t *, response_t *);
-
-		void addResponseHeader(response_t *, std::string, std::string);
-		void sendResponseHeaders(response_t *);
-		void sendResponseBody();
-
-		void sendSettings();
-		void sendStream();
-
-		void setSettings(settings_t s) { settings = s; } ;
-
+struct arg_struct {
+	int quitFd;							// Quit file descriptor
+	settings_t settings;				// Simulation settings structure
+	std::list<Particle *> *particles;	// List of particles
+	Tkenv *tkenv;						// Tk environment
 };
+
+// utils
+vectstr_t split(std::string, char);
+
+// Trim a string left and right
+std::string &trim(std::string &);
+
+// Start server
+void *startServerThread(void *);
+
+// Stop server
+void endServerThread(int);
 
 #endif

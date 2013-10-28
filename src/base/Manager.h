@@ -27,6 +27,9 @@ class Manager : public cSimpleModule {
 		int Ny;
 		int Nz;
 
+		// File Descriptors to communicate with the Web Server thread
+		int quitFd[2];
+
 		// the simulation space size in each direction
 		double spaceSizeX;
 		double spaceSizeY;
@@ -40,6 +43,10 @@ class Manager : public cSimpleModule {
 		// update the position of each particle.
 		double tkEnvRefreshRate;
 
+		pthread_t webServerThread;
+
+		struct arg_struct webServerArgs;
+
 		// Name
 		std::string name;
 
@@ -50,6 +57,8 @@ class Manager : public cSimpleModule {
 		// Space is divided into cells, each of which contains a list of
 		// particles belonging to it.
 		std::vector<std::list<Particle*> > spaceCells;
+
+		
 
 	protected:
 
@@ -79,6 +88,10 @@ class Manager : public cSimpleModule {
 
 		// Update the tk environment
 		void tkEnvUpdateNetwork(void);
+
+		// Web Server related methods
+		void startWebServerThread(void);
+		void stopWebServerThread(void);
 
 		// Gets and sets
 		bool getPerformanceSimulation(void) { return performanceSimulation; };

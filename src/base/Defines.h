@@ -16,8 +16,6 @@
 #define M_CELLLIST				1	// Only Cell Lists are used
 #define M_NNLIST				2	// A combination of Near-Neighbor List andCell List methods is used
 
-#define MAX_LISTEN 		10
-#define LISTEN_PORT 	8080
 #define BUFFER_LENGTH 	1048576 // 1024*1024
 #define READ			0
 #define WRITE			1
@@ -35,12 +33,6 @@ typedef struct Vector3D {
 	double y;
 	double z;
 } vect_t;
-
-typedef struct settings {
-	int numberOfParticles;
-	double simTimeLimit;
-	vect_t simSpaceSize;
-} settings_t;
 
 // Space cell side points that allows to obtain the side equation and compute 
 // the transfer time.

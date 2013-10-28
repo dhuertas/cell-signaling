@@ -212,6 +212,10 @@ void Manager::initialize(int stage) {
 		}
 
 		tkEnvUpdateNetwork();
+
+// Start the web server
+		startWebServerThread();
+
 	}
 
 }
@@ -337,6 +341,8 @@ void Manager::handleMessage(cMessage *msg) {
  */
 void Manager::finish() {
 
+	stopWebServerThread();
+
 }
 
 /*
@@ -353,5 +359,51 @@ void Manager::tkEnvUpdateNetwork() {
 		(*p)->tkEnvUpdatePosition(simTime().dbl());
 
 	}
+
+}
+
+/*
+ * Spawns a new thread that starts a Web Server
+ */
+void Manager::startWebServerThread() {
+
+	int res;
+
+	pipe(quitFd);
+
+	settings_t settings;
+
+	// Gather simulation settings
+	settings.numberOfParticles = particles.size();
+	settings.simSpaceSize.x = spaceSizeX;
+	settings.simSpaceSize.y = spaceSizeY;
+	settings.simSpaceSize.z = spaceSizeZ;
+
+	webServerArgs.quitFd = quitFd[READ];
+	webServerArgs.settings = settings;
+	webServerArgs.particles = &particles;
+	webServerArgs.tkenv = getTkenv();
+
+	res = pthread_create(&webServerThread, NULL, startServerThread, &webServerArgs);
+
+	if (res == 0) {
+	    EV << "Web server started" << endl;
+	} else {
+	    EV << "Error starting the web server" << endl;
+	}
+
+}
+
+/*
+ * Terminates the Web Server thread
+ */
+void Manager::stopWebServerThread() {
+
+	endServerThread(quitFd[WRITE]);
+
+	pthread_join(webServerThread, NULL);
+
+	close(quitFd[READ]);
+	close(quitFd[WRITE]);
 
 }
