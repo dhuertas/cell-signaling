@@ -144,7 +144,9 @@ namespace WebServer {
 }
 
 /*
+ * Initializes the WebServer. Creates the mutex, conditions and threads.
  *
+ * @return {uint8_t} 0 if everything went ok
  */
 uint8_t WebServer::initialize() {
 
@@ -193,7 +195,9 @@ uint8_t WebServer::initialize() {
 }
 
 /*
+ * Clean up everything.
  *
+ * @return {uint8_t} 0 if everything went ok
  */
 uint8_t WebServer::finalize() {
 
@@ -214,7 +218,10 @@ uint8_t WebServer::finalize() {
 }
 
 /*
+ * The WebServer handler. This function is called in a new thread in order
+ * to handle the client request.
  *
+ * @param {void *} arg: the thread id
  */
 void *WebServer::handler(void *arg) {
 
@@ -259,7 +266,12 @@ void *WebServer::handler(void *arg) {
 }
 
 /*
+ * Return the request header value given a request data structure and a header
+ * name.
  *
+ * @param {request_t *} req
+ * @param {std::string} name
+ * @return {std::string}
  */
 std::string WebServer::getRequestHeader(request_t *req, std::string name) {
 
@@ -281,7 +293,11 @@ std::string WebServer::getRequestHeader(request_t *req, std::string name) {
 }
 
 /*
+ * Receives the client request and handles the response. Closes the client 
+ * socket after handling the response.
  *
+ * @param {int} tid: the thread id that handles the request
+ * @param {int} clientSockFd: the client socket
  */
 void WebServer::requestHandler(int tid, int clientSockFd) {
 
@@ -366,9 +382,13 @@ void WebServer::requestHandler(int tid, int clientSockFd) {
 }
 
 /*
+ * Receives the client request and fills the request_t data structure.
  *
+ * @param {int} clientSockFd: the client socket
+ * @param {request_t *} req: the request data structure
+ * @return {uint8_t} 0 if everything went ok
  */
-uint8_t WebServer::handleRequest(int clientSockFd, WebServer::request_t *req) {
+uint8_t WebServer::handleRequest(int clientSockFd, request_t *req) {
 
 	vectstr_t components;
 
@@ -389,7 +409,11 @@ uint8_t WebServer::handleRequest(int clientSockFd, WebServer::request_t *req) {
 }
 
 /*
+ * Reads the client request and fills the request_t data structure. This
+ * function gets called from the WebServer::handleRequest function.
  *
+ * @param {int} clientSockFd: the client socket
+ * @param {request_t *} req: the request data structure
  */
 void WebServer::receiveRequest(int clientSockFd, request_t *req) {
 
@@ -459,9 +483,11 @@ void WebServer::receiveRequest(int clientSockFd, request_t *req) {
 
 
 /*
+ * Clears the content from the given request data structure.
  *
+ * @param {request_t *} req: the request data structure
  */
-void WebServer::clearRequest(WebServer::request_t *req) {
+void WebServer::clearRequest(request_t *req) {
 
 	req->method.clear();
 
@@ -475,7 +501,12 @@ void WebServer::clearRequest(WebServer::request_t *req) {
 }
 
 /*
+ * The main response handler. Calls the WebServer::route function.
  *
+ * @param {int} clientSockFd: the client socket
+ * @param {request_t *} req: the request data structure
+ * @param {response_t *} resp: the response data structure
+ * @return {uint8_t} 0 if everything went ok
  */
 uint8_t WebServer::handleResponse(int clientSockFd, WebServer::request_t *req, WebServer::response_t *resp) {
 
@@ -499,9 +530,11 @@ uint8_t WebServer::handleResponse(int clientSockFd, WebServer::request_t *req, W
 }
 
 /*
+ * Clears the content from the given response data structure.
  *
+ * @param {response_t *} resp: the response data structure
  */
-void WebServer::clearResponse(WebServer::response_t *resp) {
+void WebServer::clearResponse(response_t *resp) {
 
 	resp->statusCode = 0;
 
@@ -513,9 +546,14 @@ void WebServer::clearResponse(WebServer::response_t *resp) {
 }
 
 /*
+ * Routes the response in depending on the method received. Mainly used to 
+ * separate GET from POST requests, though the later is not implemented yet.
  *
+ * @param {int} clientSockFd: the client socket
+ * @param {request_t *} req: the request data structure
+ * @param {response_t *} resp: the response data structure
  */
-void WebServer::route(int clientSockFd, WebServer::request_t *req, WebServer::response_t *resp) {
+void WebServer::route(int clientSockFd, request_t *req, response_t *resp) {
 
 	if (strncasecmp(req->method.c_str(), "GET", strlen("GET")) == 0) {
 
@@ -527,7 +565,15 @@ void WebServer::route(int clientSockFd, WebServer::request_t *req, WebServer::re
 
 }
 
-void WebServer::handleGetRequest(int clientSockFd, WebServer::request_t *req, WebServer::response_t *resp) {
+/*
+ * Handles the GET requests (both files and/or special resources from the 
+ * simulation).
+ *
+ * @param {int} clientSockFd: the client socket
+ * @param {request_t *} req: the request data structure
+ * @param {response_t *} resp: the response data structure
+ */
+void WebServer::handleGetRequest(int clientSockFd, request_t *req, response_t *resp) {
 
 	int size, w;
 
@@ -651,11 +697,11 @@ void WebServer::handleGetRequest(int clientSockFd, WebServer::request_t *req, We
 }
 
 /*
- * Parse the query parameters
+ * Parse the query parameters.
  *
- * @param {request_t *} req
+ * @param {request_t *} req: the request data structure
  */
-void WebServer::parseQueryParameters(WebServer::request_t *req) {
+void WebServer::parseQueryParameters(request_t *req) {
 
 	vectstr_t params, tmp;
 	vectstr_t::iterator p;
@@ -690,9 +736,12 @@ void WebServer::parseQueryParameters(WebServer::request_t *req) {
 }
 
 /*
- *
+ * Sends the response header back to the client.
+ * 
+ * @param {int} clientSockFd: the client socket
+ * @param {response_t *} resp: the response data structure
  */
-void WebServer::sendResponseHeaders(int clientSockFd, WebServer::response_t *resp) {
+void WebServer::sendResponseHeaders(int clientSockFd, response_t *resp) {
 
 	unsigned int w;
 
@@ -718,7 +767,9 @@ void WebServer::sendResponseHeaders(int clientSockFd, WebServer::response_t *res
 }
 
 /*
+ * Sends the settings from the ongoing simulation.
  *
+ * @param {int} clientSockFd: the client socket
  */
 void WebServer::Simulation::sendSettings(int clientSockFd) {
 
@@ -745,7 +796,9 @@ void WebServer::Simulation::sendSettings(int clientSockFd) {
 }
 
 /*
+ * Sends a stream of data from the ongoing simulation.
  *
+ * @param {int} clientSockFd: the client socket 
  */
 void WebServer::Simulation::sendStream(int clientSockFd) {
 
@@ -880,6 +933,12 @@ void WebServer::Simulation::sendStream(int clientSockFd) {
 
 }
 
+/*
+ * Perform the requested action from the client. Mainly used to 
+ * start and stop the ongoing simulation.
+ *
+ * @param {request_t *} req: the request data structure
+ */
 void WebServer::Simulation::performAction(request_t *req) {
 
 	uint8_t action;
@@ -940,7 +999,9 @@ void WebServer::Simulation::performAction(request_t *req) {
 }
 
 /*
+ * Sends a carriage return - line feed tuple to the client.
  *
+ * @param {int} clientSockFd: the client socket
  */
 void WebServer::sendCRLF(int clientSockFd) {
 
@@ -953,7 +1014,12 @@ void WebServer::sendCRLF(int clientSockFd) {
 }
 
 /*
- * WebServer main thread
+ * WebServer main thread. Initializes the web server, and enters the main loop
+ * accepting client connections. Sends a broadcast notification to the idle 
+ * threads to handle the request at the returned socket from the accept() call.
+ *
+ * The server loops forever until data is available at the quitServerFd file 
+ * descriptor, that is pipe-connected to the Manager Module of the simulator.
  */
 void WebServer::run() {
 
@@ -1022,9 +1088,9 @@ void WebServer::run() {
 }
 
 /*
- * Adds a header (key:value pair) to the response data structure
+ * Adds a header (key:value pair) to the response data structure.
  *
- * @param {response_t*} resp
+ * @param {response_t *} resp
  * @param {header_t} header
  */
 void WebServer::addResponseHeader(response_t *resp, std::string name, std::string value) {
@@ -1038,7 +1104,12 @@ void WebServer::addResponseHeader(response_t *resp, std::string name, std::strin
 
 }
 
-// Starts the server thread
+/*
+ * Starts a web server thread. The Manager module spawns a new thread during 
+ * the initialization process.
+ *
+ * @param {void *} arguments: the thread arguments
+ */
 void *startServerThread(void *arguments) {
 
 	struct arg_struct *args = (struct arg_struct *)arguments;
@@ -1054,7 +1125,12 @@ void *startServerThread(void *arguments) {
 
 }
 
-// Stops the server thread
+/*
+ * Stops the server thread. This functions is called from the Manager module
+ * during the finalization process.
+ *
+ * @param {int} quitFd: the write end of the pipe used to stop the server
+ */
 void endServerThread(int quitFd) {
 
 	write(quitFd, "1", 1);
