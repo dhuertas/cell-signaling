@@ -735,11 +735,17 @@ void WebServer::Simulation::sendSettings(int clientSockFd) {
 void WebServer::Simulation::sendStream(int clientSockFd) {
 
 	bool connClosed = false;
+	bool simStopped = false;
 
 	int w, uSleepTime;
-	unsigned int t1, t2;
+	int stoppedCount;
+	int statsCount;
+	uint64_t t1, t2;
 
-	double sTime, dTime;
+	double st; // simulation time
+	double dt; // delta time
+
+	uint64_t uSimTime, uPrevSimTime;
 
 	struct timeval t;
 
@@ -748,52 +754,92 @@ void WebServer::Simulation::sendStream(int clientSockFd) {
 
 	uSleepTime = 1000*1000/rate;
 
+	stoppedCount = rate;
+	statsCount = rate;
+
 	while ( ! (connClosed || WebServer::quit)) {
 
-		// Clear buffer
-		buffer.str("");
+		st = simTime().dbl();
+		uSimTime = (uint64_t )SIMTIME_RAW(simTime());
 
-		// Compute the amount of time it takes to generate the JSON data
-		gettimeofday(&t, NULL);
-		t1 = t.tv_sec*1000*1000 + t.tv_usec;
+		// if simtime does not change in "rate" times, consider that the simulation is stopped
+		if (uPrevSimTime == uSimTime) {
 
-		// Prepare data to be sent
-		buffer << "[";
+			stoppedCount--;
 
-		sTime = simTime().dbl();
-
-		for (p = WebServer::Simulation::particles->begin();
-			p != WebServer::Simulation::particles->end(); 
-			++p) {
-
-			dTime = (sTime - (*p)->getLastCollisionTime());
-
-			buffer << "{";
-
-			buffer << "\"id\":" << (*p)->getParticleId() << ",";
-
-			buffer << "\"radius\":" << (*p)->getRadius() << ",";
-
-			buffer << "\"pos\":{";
-			buffer << "\"x\":" << (*p)->getX() + (*p)->getVx()*dTime << ",";
-			buffer << "\"y\":" << (*p)->getY() + (*p)->getVy()*dTime << ",";
-			buffer << "\"z\":" << (*p)->getZ() + (*p)->getVz()*dTime;
-			buffer << "}";
-
-			buffer << "}";
-
-			pt = p;
-			pt++;
-
-			if ( ! (p != WebServer::Simulation::particles->end() && pt == WebServer::Simulation::particles->end())) {
-
-				buffer << ",";
-
+			if (stoppedCount == 0) {
+				simStopped = true;
 			}
+
+		} else {
+
+			stoppedCount = rate;
+			simStopped = false;
 
 		}
 
-		buffer << "];";
+		gettimeofday(&t, NULL);
+		t1 = t.tv_sec*1000*1000 + t.tv_usec;
+
+		if ( ! simStopped) {
+
+			// Clear buffer
+			buffer.str("");
+
+			// Prepare data to be sent
+			buffer << "[";
+
+			for (p = WebServer::Simulation::particles->begin();
+				p != WebServer::Simulation::particles->end(); 
+				++p) {
+
+				dt = (st - (*p)->getLastCollisionTime());
+
+				buffer << "{";
+
+				buffer << "\"id\":" << (*p)->getParticleId() << ",";
+
+				buffer << "\"radius\":" << (*p)->getRadius() << ",";
+
+				buffer << "\"pos\":{";
+				buffer << "\"x\":" << (*p)->getX() + (*p)->getVx()*dt << ",";
+				buffer << "\"y\":" << (*p)->getY() + (*p)->getVy()*dt << ",";
+				buffer << "\"z\":" << (*p)->getZ() + (*p)->getVz()*dt;
+				buffer << "}";
+
+				buffer << "}";
+
+				pt = p;
+				pt++;
+
+				if ( ! (p != WebServer::Simulation::particles->end() && 
+						pt == WebServer::Simulation::particles->end())) {
+
+					buffer << ",";
+
+				}
+
+			}
+
+			// Add a stats JSON object at the end
+			if (statsCount == 0) {
+
+				buffer << ",{";
+				buffer << "\"id\": -1,";
+				buffer << "\"stats\": true,";
+				buffer << "\"st\":" << st;// Simulation time
+				buffer << "}";
+
+				statsCount = rate;
+
+			} else {
+				statsCount--;
+			}
+
+			buffer << "];";
+
+		}
+			
 		// Subtract the amount of time it has taken to loop through the list so we truly
 		// wait the requested time
 		gettimeofday(&t, NULL);
@@ -803,11 +849,17 @@ void WebServer::Simulation::sendStream(int clientSockFd) {
 			usleep(uSleepTime -t2+t1);
 		}
 
-		w = send(clientSockFd, buffer.str().c_str(), buffer.str().length(), 0);
+		if ( ! simStopped) {
 
-		if (w == -1) {
-		    connClosed = true;
+			w = send(clientSockFd, buffer.str().c_str(), buffer.str().length(), 0);
+
+			if (w == -1) {
+				connClosed = true;
+			}
+
 		}
+
+		uPrevSimTime = uSimTime;
 
 	}
 

@@ -75,7 +75,11 @@
 		height: 100%;
 		margin: 10px;
 	}
-	
+
+	#side .container table {
+		width: 100%;
+	}
+
 	#view {
 		width: 700px;
 		height: 100%;
@@ -123,12 +127,25 @@
 			<div id="side">
 				<div class="container">
 					<h2>Details</h2>
-					<ul>
-						<li>Simulation time: <span id="sim-time">0</span></li>
-						<li>Number of particles: <span id="num-particles">0</span></li>
-					</ul>
+					<table class="details">
+						<tr>
+							<td>Simulation time:</td>
+							<td class="number" id="sim-time">0</td>
+						</tr><tr>
+							<td>Number of particles:</td>
+							<td class="number" id="number-of-particles">0</td>
+						</tr><tr>
+							<td>Space size x:</td>
+							<td class="number" id="space-size-x">0</td>
+						</tr><tr>
+							<td>Space size y:</td>
+							<td class="number" id="space-size-y">0</td>
+						</tr><tr>
+							<td>Space size z:</td>
+							<td class="number" id="space-size-z">0</td>
+						</tr>
+					</table>
 				</div>
-				
 			</div>
 			<div id="view"></div>
 		</div>

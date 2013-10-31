@@ -5,8 +5,6 @@ var spaceSize;
 
 var particles = [];
 
-var xhrStream;
-
 var spheresMap = {};
 
 var sphereMaterial;
@@ -26,15 +24,23 @@ var pointLight;
 var xAxis, yAxis, zAxis;
 var bottomSide, topSide, leftSide, rightSide;
 
-// Variables to parse the received data so far
+// XHR stream object and variables to parse the received data so far
+var stream;
+var rate;
 var start, end;
-
-start = 0;
-end = 0;
 
 var view = {
 	width: 0,
 	height: 0
+};
+
+// Stats
+var stats = {
+	simulationTime: 0,
+	numberOfParticles: 0,
+	spaceSizeX: 0,
+	spaceSizeY: 0,
+	spaceSizeZ:0
 };
 
 function initEnvironment() {
@@ -167,40 +173,74 @@ function initEnvironment() {
 // update particles position
 function updateParticles() {
 
-	end = xhrStream.responseText.indexOf(";", start);
+	var tmp;
+
+	tmp = stream.responseText.indexOf(";", start);
+
+	if (tmp == -1) {
+		// We have reached the end of the received data so far
+		// console.log("end of stream reached");
+		return;
+	}
+
+	end = tmp;
 
 	try {
 
-		if (end > 0 && start >= 0) {
+		if ( 0 <= start && start < end && end > 0) {
+
 			particles.length = 0;
-			particles = JSON.parse(xhrStream.responseText.substring(start, end));
+			particles = JSON.parse(stream.responseText.substring(start, end));
+
+			stats.numberOfParticles = particles.length;
+
+			start = end;
+			start++;
+
+		}
+
+		for (var i = 0, len = particles.length; i < len; i++) {
+
+			if (particles[i].hasOwnProperty("stats")) {
+				// Received a stats JSON object update
+				stats.simulationTime = particles[i].st;
+				continue;
+			}
+
+			if ( ! spheresMap.hasOwnProperty(particles[i].id)) {
+
+				spheresMap[particles[i].id] = new THREE.Mesh(
+					new THREE.SphereGeometry(particles[i].radius, 16, 16),
+					sphereMaterial
+				);
+
+				spheresMap[particles[i].id].geometry.dynamic = true;
+				spheresMap[particles[i].id].geometry.verticesNeedUpdate = true;
+				spheresMap[particles[i].id].geometry.normalsNeedUpdate = true;
+
+				scene.add(spheresMap[particles[i].id]);
+
+			}
+
+			spheresMap[particles[i].id].position.x = particles[i].pos.x;
+			spheresMap[particles[i].id].position.y = particles[i].pos.y;
+			spheresMap[particles[i].id].position.z = particles[i].pos.z;
+			spheresMap[particles[i].id].updated = true;
+
+		}
+
+		// Remove the spheres that have not been updated
+		for (var sphere in spheresMap) {
+			if (spheresMap[sphere].updated == false) {
+				// This sphere has not been updated, remove it
+				delete spheresMap[sphere];
+			} else {
+				spheresMap[sphere].updated = false;
+			}
 		}
 
 	} catch (e) {
 		console.log(e);
-	}
-
-	start = end;
-	start++;
-
-	for (var i = 0, len = particles.length; i < len; i++) {
-
-		if ( ! spheresMap.hasOwnProperty(particles[i].id)) {
-
-			spheresMap[particles[i].id] = new THREE.Mesh(new THREE.SphereGeometry(particles[i].radius, 16, 16),sphereMaterial);
-
-			spheresMap[particles[i].id].geometry.dynamic = true;
-			spheresMap[particles[i].id].geometry.verticesNeedUpdate = true;
-			spheresMap[particles[i].id].geometry.normalsNeedUpdate = true;
-
-			scene.add(spheresMap[particles[i].id]);
-
-		}
-
-		spheresMap[particles[i].id].position.x = particles[i].pos.x;
-		spheresMap[particles[i].id].position.y = particles[i].pos.y;
-		spheresMap[particles[i].id].position.z = particles[i].pos.z;
-
 	}
 
 }
@@ -301,6 +341,9 @@ function onSettingsSuccess(responseText) {
 	settings = JSON.parse(responseText);
 	spaceSize = settings.simSpaceSize;
 
+	// Update stats every 2 secs
+	setInterval(updateStatistics, 2000);
+
 	initEnvironment();
 	requestStream();
 	animate();
@@ -309,14 +352,18 @@ function onSettingsSuccess(responseText) {
 
 function requestStream() {
 
-	xhrStream = new XMLHttpRequest();
+	rate = 30;
+	start = 0;
+	end = 0;
 
-	xhrStream.onreadystatechange = function() {
-		//onStreamLoad(xhrStream);
+	stream = new XMLHttpRequest();
+
+	stream.onreadystatechange = function() {
+		//onStreamLoad(stream);
 	}
 
-	xhrStream.open("GET", "/simstream?rate=30", true);
-	xhrStream.send(null);
+	stream.open("GET", "/simstream?rate=" + rate, true);
+	stream.send(null);
 
 }
 
@@ -339,9 +386,11 @@ function resizeHandler(e) {
 	document.getElementById("main").style.height = (window.innerHeight - heights.top - heights.bottom - 2)+"px";
 	document.getElementById("view").style.width = (window.innerWidth - sideWidth - 1 - 20)+"px";
 
-	renderer.setSize(view.width, view.height
-		/* window.innerWidth, window.innerHeight */
-	);
+	if (typeof renderer !== "undefined") {
+		renderer.setSize(view.width, view.height
+			/* window.innerWidth, window.innerHeight */
+		);
+	}
 
 }
 
@@ -365,6 +414,19 @@ function loadHandler(e) {
 	document.getElementById("view").addEventListener("mouseup", onMouseUp, false);
 
 	requestSettings();
+
+}
+
+// Statistics -------------------------------------------------------------- //
+
+function updateStatistics() {
+
+	// Get the DOM elements and update them
+	document.getElementById("number-of-particles").innerText = stats.numberOfParticles;
+	document.getElementById("sim-time").innerText = stats.simulationTime;
+	document.getElementById("space-size-x").innerText = spaceSize.x;
+	document.getElementById("space-size-y").innerText = spaceSize.y;
+	document.getElementById("space-size-z").innerText = spaceSize.z;
 
 }
 
