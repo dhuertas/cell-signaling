@@ -1,6 +1,9 @@
 #include "WebServer.h"
 
 #include <omnetpp.h>
+#include <tcl.h>
+#include <tk.h>
+#include <tkenv.h>
 
 // Splits a string given a delimiter and returns a vector of substrings
 vectstr_t split(std::string str, char delim) {
@@ -126,6 +129,8 @@ namespace WebServer {
 
 		void sendStream(int);
 	
+		void performAction(request_t *);
+
 		// Parameters
 		uint16_t rate;
 
@@ -620,6 +625,16 @@ void WebServer::handleGetRequest(int clientSockFd, WebServer::request_t *req, We
 		WebServer::Simulation::sendStream(clientSockFd);
 		WebServer::sendCRLF(clientSockFd);
 
+	} else if (req->uri.find("/action") == 0) {
+
+		resp->statusCode = 200;
+		resp->reasonPhrase = "OK";
+
+		WebServer::addResponseHeader(resp, "Connection", "close");
+		WebServer::sendResponseHeaders(clientSockFd, resp);
+
+		WebServer::Simulation::performAction(req);
+
 	} else {
 
 		resp->statusCode = 404;
@@ -863,6 +878,65 @@ void WebServer::Simulation::sendStream(int clientSockFd) {
 
 	}
 
+}
+
+void WebServer::Simulation::performAction(request_t *req) {
+
+	uint8_t action;
+
+	vectstr_t params, tmp;
+	vectstr_t::iterator p;
+
+	action = 0;
+
+	if (req->uri.find("?") != std::string::npos) {
+
+		tmp = split(req->uri, '?');
+		req->query = tmp[1];
+
+		params = split(req->query, '&');
+
+		tmp.clear();
+
+		for (p = params.begin(); p != params.end(); ++p) {
+
+			tmp = split(*p, '=');
+
+			if (tmp[0].compare("cmd") == 0) {
+
+				if (tmp[1].compare("start") == 0) {
+					action = 1;
+				}
+
+				if (tmp[1].compare("stop") == 0) {
+					action = 2;
+				}
+
+			}
+
+			tmp.clear();
+
+		}
+	}
+
+	switch (action) {
+
+		case 1:
+			if (Tcl_Eval(getTkenv()->getInterp(), "run_normal") == TCL_ERROR) {
+				EV << "Tcl_Eval error" << "\n";
+			}
+			break;
+
+		case 2:
+			if (Tcl_Eval(getTkenv()->getInterp(), "stop_simulation") == TCL_ERROR) {
+				EV << "Tcl_Eval error" << "\n";
+			}
+			break;
+
+		case 0:
+		default:
+			break;
+	}
 }
 
 /*

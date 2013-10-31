@@ -413,6 +413,9 @@ function loadHandler(e) {
 	document.getElementById("view").addEventListener("mousemove", onMouseMove, false);
 	document.getElementById("view").addEventListener("mouseup", onMouseUp, false);
 
+	document.getElementById("start").addEventListener("click", start, false);
+	document.getElementById("stop").addEventListener("click", stop, false);
+
 	requestSettings();
 
 }
@@ -427,6 +430,30 @@ function updateStatistics() {
 	document.getElementById("space-size-x").innerText = spaceSize.x;
 	document.getElementById("space-size-y").innerText = spaceSize.y;
 	document.getElementById("space-size-z").innerText = spaceSize.z;
+
+}
+
+// Actions ----------------------------------------------------------------- //
+
+function start() {
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.onreadystatechange = function() {}
+
+	xhr.open("GET", "action?cmd=start", true);
+	xhr.send(null);
+
+}
+
+function stop() {
+
+	var xhr = new XMLHttpRequest();
+
+	xhr.onreadystatechange = function() {}
+
+	xhr.open("GET", "action?cmd=stop", true);
+	xhr.send(null);
 
 }
 
