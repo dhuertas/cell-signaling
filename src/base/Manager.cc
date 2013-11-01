@@ -143,23 +143,23 @@ void Manager::initialize(int stage) {
 		if (particleDistribution.compare("undefined") != 0) {
 
 			if (particleDistribution.compare("random") == 0) {
+
 				randomDistribution(spaceSize, &particles);
-			}
 
-			if (particleDistribution.compare("cube") == 0) {
+			} else if (particleDistribution.compare("cube") == 0) {
+
 				cubeDistribution(spaceSize, &particles);
-			}
 
-			if (particleDistribution.compare("sphere") == 0) {
-				//sphereDistribution(spaceSize, &particles, NULL, 0);
-			}
+			} else if (particleDistribution.compare("sphere") == 0) {
 
-			if (particleDistribution.compare("twosided") == 0) {
-				//twoSidedDistribution(spaceSize, &particles, NULL, NULL);
-			}
+			    point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
+				sphereDistribution(spaceSize, &particles, c, 0);
 
-			if (particleDistribution.compare("highdensity") == 0) {
-				//highDensityDistribution(spaceSize, &particles, NULL);
+			} else if (particleDistribution.compare("highdensity") == 0) {
+
+			    point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
+				highDensityDistribution(spaceSize, &particles, c);
+
 			}
 
 		}

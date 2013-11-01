@@ -201,36 +201,29 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 		this->handleTransfer((TransferMessage *)msg);
 
-		if (manager->getMode() == M_NNLIST) {
-			this->handleOutOfNeighborhood();
-		}
-
 	} else if (kind == EV_OUTOFNEIGHBORHOOD) {
 
-		this->handleOutOfNeighborhood();
+		// The list will be updated anyway ... 
+		// Remove this "else if" section?
 
 	} else if (kind == EV_COLLISION) {
 
 		this->handleCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
-		if (manager->getMode() == M_NNLIST) {
-			this->handleOutOfNeighborhood();
-		}
-
 	} else if (kind == EV_WALLCOLLISION) {
 
 		this->handleWallCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
-		if (manager->getMode() == M_NNLIST) {
-			this->handleOutOfNeighborhood();
-		}
-
 	} else if (kind == EV_CHECK) {
 
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
+	}
+
+	if (manager->getMode() == M_NNLIST) {
+		this->handleOutOfNeighborhood();
 	}
 
 	// Step 3. Compute the next transfer time for the particle corresponding to the
@@ -651,12 +644,12 @@ void Sphere::tkEnvUpdatePosition(double t) {
 	double lc = getLastCollisionTime();
 
 	// Set position string for tkenv
-	buffer << getY() + getVy()*(t-getLastCollisionTime());
+	buffer << getY() + getVy()*(t-lc);
 
 	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
 	buffer.str(std::string()); // clear buffer
 
-	buffer << getX() + getVx()*(t-getLastCollisionTime());
+	buffer << getX() + getVx()*(t-lc);
 
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());

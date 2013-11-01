@@ -907,14 +907,14 @@ void WebServer::Simulation::sendStream(int clientSockFd) {
 			buffer << "];";
 
 		}
-			
+
 		// Subtract the amount of time it has taken to loop through the list so we truly
 		// wait the requested time
 		gettimeofday(&t, NULL);
 		t2 = t.tv_sec*1000*1000 + t.tv_usec;
 
 		if (uSleepTime - (t2-t1) > 0) {
-			usleep(uSleepTime -t2+t1);
+			usleep(uSleepTime - (t2-t1));
 		}
 
 		if ( ! simStopped) {
