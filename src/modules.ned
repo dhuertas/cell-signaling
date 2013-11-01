@@ -75,8 +75,25 @@ simple Manager {
 		// 1 - Only use Cell Lists Method
 		// 2 - Combination of Near-Neighbor Lists and Cell Lists methods
 		int mode = default(2);
-		
-		bool performanceSimulation = default(false);
+
+		// Place the particles following a specific pattern. When left unset 
+		// particles get their position from the ini file. Options are:
+		// - undefined
+		// - random
+		// - cube
+		// - sphere
+		// - twosided
+		// - highdensity
+		string particleDistribution = default("undefined");
+
+		// Refresh rate, in seconds. Tells the manager when to update the position
+		// string of the particles for the tk environment.
+		double refreshRate = default(5);
+
+		// Enable the Manager Web Server in order to visualize a 3D simulation 
+		// space from a web browser (WARNING: enable this option only if your
+		// browser supports WebGL).
+		int enableWebServer = default(0);
 
 	gates:
 	    input in;

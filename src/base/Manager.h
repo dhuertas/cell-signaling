@@ -6,17 +6,17 @@
 #include <cqueue.h>
 #include <omnetpp.h>
 
+#include <cmath>
 #include <vector>
 #include <list>
 
 #include "Particle.h"
+#include "ParticleDistribution.h"
 #include "WebServer.h"
 
 class Manager : public cSimpleModule {
 
 	private:
-
-		bool performanceSimulation;
 
 		// Molecule Dynamics Mode of operation
 		int mode;
@@ -31,9 +31,7 @@ class Manager : public cSimpleModule {
 		int quitFd[2];
 
 		// the simulation space size in each direction
-		double spaceSizeX;
-		double spaceSizeY;
-		double spaceSizeZ;
+		vect_t spaceSize;
 
 		// The space cell size
 		double spaceCellSize;
@@ -43,11 +41,13 @@ class Manager : public cSimpleModule {
 		// update the position of each particle.
 		double tkEnvRefreshRate;
 
+		int enableWebServer;
+
 		pthread_t webServerThread;
 
 		struct arg_struct webServerArgs;
 
-		// Name
+		// Manager Name
 		std::string name;
 
 		// A list of particles contained in the simulation space. Every new
@@ -57,8 +57,6 @@ class Manager : public cSimpleModule {
 		// Space is divided into cells, each of which contains a list of
 		// particles belonging to it.
 		std::vector<std::list<Particle*> > spaceCells;
-
-		
 
 	protected:
 
@@ -94,10 +92,10 @@ class Manager : public cSimpleModule {
 		void stopWebServerThread(void);
 
 		// Gets and sets
-		bool getPerformanceSimulation(void) { return performanceSimulation; };
-		double getSpaceSizeX(void) { return spaceSizeX; };
-		double getSpaceSizeY(void) { return spaceSizeY; };
-		double getSpaceSizeZ(void) { return spaceSizeZ; };
+		vect_t getSpaceSize(void) { return spaceSize; };
+		double getSpaceSizeX(void) { return spaceSize.x; };
+		double getSpaceSizeY(void) { return spaceSize.y; };
+		double getSpaceSizeZ(void) { return spaceSize.z; };
 		double getSpaceCellSize(void) { return spaceCellSize; };
 		int getNumberOfSpaceCellsX(void) { return Nx; };
 		int getNumberOfSpaceCellsY(void) { return Ny; };
@@ -106,10 +104,10 @@ class Manager : public cSimpleModule {
 
 		std::list<Particle *> getSpaceCellParticles(int);
 
-		void setPerformanceSimulation(bool tf) { performanceSimulation = tf; };
-		void setSpaceSizeX(double sx) { spaceSizeX = sx; };
-		void setSpaceSizeY(double sy) { spaceSizeY = sy; };
-		void setSpaceSizeZ(double sz) { spaceSizeZ = sz; };
+		void setSpaceSize(vect_t vsz) { spaceSize = vsz; };
+		void setSpaceSizeX(double sx) { spaceSize.x = sx; };
+		void setSpaceSizeY(double sy) { spaceSize.y = sy; };
+		void setSpaceSizeZ(double sz) { spaceSize.z = sz; };
 		void setSpaceCellSize(double sc) { spaceCellSize = sc; };
 		void setNumberOfSpaceCellsX(int n) { Nx = n; };
 		void setNumberOfSpaceCellsY(int n) { Ny = n; };

@@ -38,7 +38,7 @@ void Molecule::initialize(int stage) {
 		setListRadius(par("listRadius").doubleValue());
 
 		// Subscribe to manager
-		setManager("managerName");
+		setManager("manager");
 		getManager()->subscribe(this);
 
 		// update Molecule position in the tk environment

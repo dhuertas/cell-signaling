@@ -35,7 +35,7 @@ Sphere::Sphere(
  * during network initialization.
  */
 void Sphere::initMessages() {
-// Methods called from other modules must have this macro
+	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
 	transferMsg = new TransferMessage("mobility", EV_TRANSFER);
@@ -54,8 +54,7 @@ void Sphere::initMessages() {
  * method is called by the manager in order to initialize the event queue.
  */
 void Sphere::initEvents() {
-
-// Methods called from other modules must have this macro
+	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
 	double transferTime;
@@ -75,7 +74,7 @@ void Sphere::initEvents() {
 
 	minTime = NO_TIME;
 
-// Compute the first collision and the first transfer
+	// Compute the first collision and the first transfer
 	transferTime = SphereMobility::nextTransfer(transferMsg, this);
 
 	if (transferTime != NO_TIME) {
@@ -137,9 +136,9 @@ void Sphere::initEvents() {
 		scheduleAt(wallCollisionTime, collisionMsg);
 
 	} else if (minTime == scheduledCollisionTime) {
-// Leave it as it is scheduled
+		// Leave it as it is scheduled
 	} else {
-// minTime == NO_TIME;
+		// minTime == NO_TIME;
 	}
 }
 
@@ -151,12 +150,12 @@ void Sphere::initEvents() {
  */
 void Sphere::adjustCollision(double newTime, Particle *from) {
 
-// Methods called from other modules must have this macro
+	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
 	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
 
-// Change the event type of the third party sphere to EV_CHECK
+	// Change the event type of the third party sphere to EV_CHECK
 	if (collisionMsg->getPartner() != NULL) {
 
 		if (from->getParticleId() != collisionMsg->getPartner()->getParticleId()) {
@@ -192,11 +191,11 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 	collisionTime = NO_TIME;
 	wallCollisionTime = NO_TIME;
 
-// Step 1. Find the next event in the queue.
+	// Step 1. Find the next event in the queue.
 
 	int kind = msg->getKind();
 
-// Step 2. Handle the event.
+	// Step 2. Handle the event.
 
 	if (kind == EV_TRANSFER) {
 
@@ -234,8 +233,8 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 	}
 
-// Step 3. Compute the next transfer time for the particle corresponding to the
-// event.
+	// Step 3. Compute the next transfer time for the particle corresponding to the
+	// event.
 
 	if (transferMsg->isScheduled()) cancelEvent(transferMsg);
 
@@ -243,15 +242,15 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 	scheduleAt(transferTime, transferMsg);
 
-// Step 4. Compute the next collision time with particles in appropriate 
-// neighboring cells.
+	// Step 4. Compute the next collision time with particles in appropriate 
+	// neighboring cells.
 
 	collisionTime = SphereMobility::nextCollision(collisionMsg, this);
 	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
 
-// Step 5. Adjust the position of the event and its new partner’s event in the 
-// event queue. Since a wall collision changes the path of a particle, we only 
-// keep either a particle collision or a wall collision for each particle.
+	// Step 5. Adjust the position of the event and its new partner’s event in the 
+	// event queue. Since a wall collision changes the path of a particle, we only 
+	// keep either a particle collision or a wall collision for each particle.
 
 	if (collisionMsg->isScheduled()) {
 
@@ -296,7 +295,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 	}
 
-// Step 6. Return to Step 1.
+	// Step 6. Return to Step 1.
 
 }
 
@@ -337,7 +336,7 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	tc = msg->getCollisionTime();
 	p = msg->getPartner();
 
-// Find the center position of the spheres
+	// Find the center position of the spheres
 	c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
 	c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
 	c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
@@ -349,15 +348,15 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	m1 = this->getMass();
 	m2 = p->getMass();
 
-// Log the collision
+	// Log the collision
 	collisionVector.recordWithTimestamp(simTime().dbl(), this->getParticleId());
 
-// Change frame of reference of the system to one of the spheres
+	// Change frame of reference of the system to one of the spheres
 	v1.x = this->getVx() - p->getVx();
 	v1.y = this->getVy() - p->getVy();
 	v1.z = this->getVz() - p->getVz();
 
-// Find the normal vector of the plane of collision
+	// Find the normal vector of the plane of collision
 	n.x = c2.x - c1.x;
 	n.y = c2.y - c1.y;
 	n.z = c2.z - c1.z;
@@ -368,29 +367,30 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	n.y /= tmp;
 	n.z /= tmp;
 
-// Find e1 as the perpendicular vector to both n and v, and then e2 as the one
-// perpendicular to n and e1
+	// Find e1 as the perpendicular vector to both n and v, and then e2 as the 
+	// one perpendicular to n and e1
 	e1.x = n.y*v1.z - n.z*v1.y;
 	e1.y = n.z*v1.x - n.x*v1.z;
 	e1.z = n.x*v1.y - n.y*v1.x;
 
-// Normalize the vector found, e1
+	// Normalize the vector found, e1
 	tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
 
 	e1.x /= tmp;
 	e1.y /= tmp;
 	e1.z /= tmp;
 
-// Find the velocity vectors in the new basis and if ...
+	// Find the velocity vectors in the new basis and if ...
 	v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
 
 	if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
-// n and v are parallel, we can solve directly
+	// n and v are parallel, we can solve directly
 		tmp = (m1 - m2)*v1n/(m1 + m2);
 		v2n = 2*m1*v1n/(m1 + m2);
 		v1n = tmp;
 
-// Revert the frame of reference, the velocity vectors and set the new velocity
+		// Revert the frame of reference, the velocity vectors and set the new 
+		// velocity
 		setVx(v1n*n.x + p->getVx());
 		setVy(v1n*n.y + p->getVy());
 		setVz(v1n*n.z + p->getVz());
@@ -405,7 +405,7 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 		e2.y = e1.z*n.x - e1.x*n.z;
 		e2.z = e1.x*n.y - e1.y*n.x;
 
-// Find the rest of the components
+		// Find the rest of the components
 		v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
 		v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
 
@@ -413,13 +413,14 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 		v2e1 = 0.0;
 		v2e2 = 0.0;
 
-// Find the new velocity in the normal component (remember that v2n initially
-// is 0.0)
+		// Find the new velocity in the normal component (remember that v2n 
+		// initially is 0.0)
 		tmp = (m1 - m2)*v1n/(m1 + m2);
 		v2n = 2*m1*v1n/(m1 + m2);
 		v1n = tmp;
 
-// Revert the frame of reference, the velocity vectors and set the new velocity
+		// Revert the frame of reference, the velocity vectors and set the new 
+		// velocity
 		setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
 		setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
 		setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
@@ -430,7 +431,7 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 
 	}
 
-// Update the particles position
+	// Update the particles position
 	setX(c1.x);
 	setY(c1.y);
 	setZ(c1.z);
@@ -439,7 +440,7 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	p->setY(c2.y);
 	p->setZ(c2.z);
 
-// Update the last collision times
+	// Update the last collision times
 	setLastCollisionTime(tc);
 	p->setLastCollisionTime(tc);
 
@@ -519,7 +520,7 @@ void Sphere::createNearNeighborList() {
 
 	sTime = simTime().dbl();
 
-// i, j and k are the indexes of the space cell for each axis
+	// i, j and k are the indexes of the space cell for each axis
 	i = n / (Nz*Ny);
 	j = (n % (Nz*Ny)) / Nz;
 	k = (n % (Nz*Ny)) % Nz;
@@ -528,7 +529,7 @@ void Sphere::createNearNeighborList() {
 	for (b = -1; b <= 1; b++)
 	for (c = -1; c <= 1; c++) {
 
-// The neighbor cell must be contained in the simulation space
+		// The neighbor cell must be contained in the simulation space
 		if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
 
 			N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
@@ -538,8 +539,8 @@ void Sphere::createNearNeighborList() {
 
 				if ((*pa) == this) continue;
 
-// Two particles are said to be neighbor when the sum of their listRadius is 
-// greater than the distance between their centroids.
+				// Two particles are said to be neighbor when the sum of their listRadius is 
+				// greater than the distance between their centroids.
 				dx = getX() + getVx()*(sTime - lastCollisionTime) - 
 					((*pa)->getX() + (*pa)->getVx()*(sTime - (*pa)->getLastCollisionTime()));
 				dy = getY() + getVy()*(sTime - lastCollisionTime) - 
@@ -565,10 +566,10 @@ void Sphere::createNearNeighborList() {
  */
 void Sphere::updateNearNeighborList() {
 
-// Empty previous list
+	// Empty previous list
 	neighborParticles.clear();
 
-// Look for the particles closer than listRadius
+	// Look for the particles closer than listRadius
 	this->createNearNeighborList();
 
 }
@@ -602,8 +603,8 @@ void Sphere::tkEnvDrawShape() {
 
 	std::stringstream buffer;
 
-// We will use the shape drawing tool to draw a circle around the particle
-// center instead of using
+	// We will use the shape drawing tool to draw a circle around the particle
+	// center instead of using
 	buffer << 2*getRadius();
 	getDisplayString().setTagArg("b", 0, buffer.str().c_str());
 	getDisplayString().setTagArg("b", 1, buffer.str().c_str());
@@ -622,7 +623,7 @@ void Sphere::tkEnvUpdatePosition() {
 
 	std::stringstream buffer;
 
-// Set position string for tkenv
+	// Set position string for tkenv
 	buffer << getY();
 
 	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
@@ -633,7 +634,7 @@ void Sphere::tkEnvUpdatePosition() {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-	EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
+	// EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
 
 }
 
@@ -649,7 +650,7 @@ void Sphere::tkEnvUpdatePosition(double t) {
 
 	double lc = getLastCollisionTime();
 
-// Set position string for tkenv
+	// Set position string for tkenv
 	buffer << getY() + getVy()*(t-getLastCollisionTime());
 
 	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
@@ -660,9 +661,9 @@ void Sphere::tkEnvUpdatePosition(double t) {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-	EV << "x: " << getX() + getVx()*(t - lc) <<
-		", y: " << getY() + getVy()*(t - lc) <<
-		", z: " << getZ() + getVz()*(t - lc) << "\n";
+	// EV << "x: " << getX() + getVx()*(t - lc) <<
+	// 	", y: " << getY() + getVy()*(t - lc) <<
+	// 	", z: " << getZ() + getVz()*(t - lc) << "\n";
 
 }
 
@@ -671,18 +672,12 @@ void Sphere::tkEnvUpdatePosition(double t) {
  * 
  * @param {string} param: the name of the manager module.
  */
-void Sphere::setManager(string param) {
-
-	cPar *managerName;
+void Sphere::setManager(std::string param) {
 
 	try {
-
-		managerName = & simulation.getSystemModule()->par(param.c_str());
-		manager = (Manager *)simulation.getSystemModule()
-			->getSubmodule(managerName->stringValue());
-
+		manager = (Manager *)simulation.getSystemModule()->getSubmodule(param.c_str());
 	} catch (cException *e) {
-// TODO stop simulation
+		EV << "setManager error" << "\n";
 	}
 
 }

@@ -20,10 +20,10 @@ class Particle {
 
 		int mode;
 
-// Cell List attributes
+		// Cell List attributes
 		int spaceCell;
 
-// Near Neighbor List attributes
+		// Near Neighbor List attributes
 		std::vector<Particle*> neighborParticles;
 		double listRadius;
 
@@ -32,7 +32,7 @@ class Particle {
 		Particle();
 		Particle(double, double, double, double, double);
 
-// Gets and sets
+		// Gets and sets
 		int getParticleId(void) { return particleId; };
 		double getX(void) { return position.x; };
 		double getY(void) { return position.y; };
@@ -66,12 +66,12 @@ class Particle {
 		virtual void setRadius(double) = 0;
 		void setLastCollisionTime(double tc) { lastCollisionTime = tc; };
 
-// tk Environment methods
+		// tk Environment methods
 		virtual void tkEnvDrawShape(void) = 0;
 		virtual void tkEnvUpdatePosition(void) = 0;
 		virtual void tkEnvUpdatePosition(double) = 0;
 
-// Event related methods
+		// Event related methods
 		virtual void initMessages() = 0;
 		virtual void initEvents() = 0;
 

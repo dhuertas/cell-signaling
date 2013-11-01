@@ -1,5 +1,3 @@
-#include <cmath>
-
 #include "Manager.h"
 
 using namespace std;
@@ -15,10 +13,10 @@ Manager::~Manager() {}
  */
 void Manager::subscribe(Particle * p) {
 
-// Add the particle pointer to the particles vector
+	// Add the particle pointer to the particles vector
 	particles.push_back(p);
 
-// Also add the particle to its corresponding space cell
+	// Also add the particle to its corresponding space cell
 	if (spaceCellSize > 0) {
 		attachParticleToSpaceCell(p, -1);
 	}
@@ -32,10 +30,10 @@ void Manager::subscribe(Particle * p) {
  */
 void Manager::unsubscribe(Particle * p) {
 
-// Remove the particle pointer from the space cell structure
+	// Remove the particle pointer from the space cell structure
 	detachParticleFromSpaceCell(p, -1);
 
-// Remove the particle pointer from the particles vector
+	// Remove the particle pointer from the particles vector
 	particles.remove(p);
 
 }
@@ -47,68 +45,68 @@ void Manager::unsubscribe(Particle * p) {
  */
 void Manager::initialize(int stage) {
 
-	int N, m;
-	int i, j, k;
+	int N;
 
     unsigned int count;
 
 	double diameter;
 
-	// cPar *managerName;
 	cModule *module;
 	std::list<Particle *>::const_iterator p;
+	std::string particleDistribution;
 	std::stringstream buffer;
 
-// Initialize variables
+	// Initialize variables
 	N = 0;
-	m = 0;
 	count = 0;
-
 	diameter = 0.0;
 
-// The manager node should be the first module to be initialized
+	// The manager node should be the first module to be initialized
 	if (stage == 0) {
 
-// Set whether it is a performance simulation
-		setPerformanceSimulation(simulation.getSystemModule()->par("performanceSimulation"));
+		// Set the mode of operation for the molecule dynamics 
+		setMode(par("mode"));
 
-// Set the mode of operation for the molecule dynamics 
-		mode = par("mode");
+		// Set the name of the manager so we can have later access from
+		// the other nodes.
+		setName(par("name").stringValue());
 
-// Set the name of the manager so we can have later access from
-// the other nodes.
-		this->setName(par("name").stringValue());
+		EV << "particle distribution: " << particleDistribution << "\n";
 
-// Get the simulation space size
+		// Get the simulation space size
 		setSpaceSizeX(simulation.getSystemModule()->par("spaceSizeX"));
 		setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));
 		setSpaceSizeZ(simulation.getSystemModule()->par("spaceSizeZ"));
 
-		EV << "space size: X=" << spaceSizeX << ", Y=" << spaceSizeY << ", Z=" << spaceSizeZ << "\n";
+		EV << "space size: ";
+		EV << "X=" << spaceSize.x << ", ";
+		EV << "Y=" << spaceSize.y << ", ";
+		EV << "Z=" << spaceSize.z << "\n";
 
-		tkEnvRefreshRate = simulation.getSystemModule()->par("refreshRate");
+		tkEnvRefreshRate = par("refreshRate");
+		enableWebServer = par("enableWebServer");
 
-// Set network size for tkenv
-		buffer << spaceSizeY;
+		// Set network size for tkenv
+		buffer << spaceSize.y;
 
 		module = simulation.getSystemModule();
 		module->getDisplayString().setTagArg("bgb", 0, buffer.str().c_str());
 		buffer.str(std::string()); // clear buffer
 
-		buffer << spaceSizeX;
+		buffer << spaceSize.x;
 		module->getDisplayString().setTagArg("bgb", 1, buffer.str().c_str());
 		buffer.str(std::string()); // clear buffer
 
-// We must wait to determine the space cell size till all the initial 
-// particles have been subscribed
+		// We must wait to determine the space cell size till all the initial
+		// particles have been subscribed
 		spaceCellSize = 0;
 
 	} else if (stage == 1) {
-// the rest of the modules are being initialized ...
+		// the rest of the modules are being initialized ...
 	} else if (stage == 2) {
 
-// All the particles are in the simulation space now. We can determine the 
-// spaceCellSize
+		// All the particles are in the simulation space now. We can determine 
+		// the spaceCellSize
 		count = 0;
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
@@ -119,10 +117,10 @@ void Manager::initialize(int stage) {
 				spaceCellSize = diameter;
 			}
 
-// Also set the simulation mode (Cell List or Near-Neighbor List)
+			// Also set the simulation mode (Cell List or Near-Neighbor List)
 			(*p)->setMode(mode);
 
-// Initialize particle attributes
+			// Initialize particle attributes
 			(*p)->setParticleId(count);
 			(*p)->setLastCollisionTime(0);
 			(*p)->initMessages();
@@ -131,90 +129,71 @@ void Manager::initialize(int stage) {
 
 		}
 
-// Put every subscribed particle in its corresponding space cell
-		setNumberOfSpaceCellsX(ceil(spaceSizeX/spaceCellSize));
-		setNumberOfSpaceCellsY(ceil(spaceSizeY/spaceCellSize));
-		setNumberOfSpaceCellsZ(ceil(spaceSizeZ/spaceCellSize));
+		// Put every subscribed particle in its corresponding space cell
+		setNumberOfSpaceCellsX(ceil(spaceSize.x/spaceCellSize));
+		setNumberOfSpaceCellsY(ceil(spaceSize.y/spaceCellSize));
+		setNumberOfSpaceCellsZ(ceil(spaceSize.z/spaceCellSize));
 
 		N = Nx*Ny*Nz;
 
 		spaceCells.resize(N);
 
-// Piece of code for the perfomance tests. Set each particle position.
-		count = 0;
-		m = (int)round(pow(particles.size(), 1/3.0));
-		i = 0; j = 0; k = 0;
+		particleDistribution = par("particleDistribution").stringValue();
 
-		if (performanceSimulation) {
-			
-			for (p = particles.begin(); p != particles.end(); ++p) {
+		if (particleDistribution.compare("undefined") != 0) {
 
-				(*p)->setX((0.5 + i)*spaceSizeX/m);
-				(*p)->setY((0.5 + j)*spaceSizeY/m);
-				(*p)->setZ((0.5 + k)*spaceSizeZ/m);
+			if (particleDistribution.compare("random") == 0) {
+				randomDistribution(spaceSize, &particles);
+			}
 
-				k++;
+			if (particleDistribution.compare("cube") == 0) {
+				cubeDistribution(spaceSize, &particles);
+			}
 
-				if (k%m == 0) {
+			if (particleDistribution.compare("sphere") == 0) {
+				//sphereDistribution(spaceSize, &particles, NULL, 0);
+			}
 
-					k = 0; j++;
+			if (particleDistribution.compare("twosided") == 0) {
+				//twoSidedDistribution(spaceSize, &particles, NULL, NULL);
+			}
 
-					if (j%m == 0) {
-
-						j = 0; i++;
-
-						if (i%m == 0) {
-							i = 0;
-						}
-
-					}
-
-				}
-
+			if (particleDistribution.compare("highdensity") == 0) {
+				//highDensityDistribution(spaceSize, &particles, NULL);
 			}
 
 		}
 
-		switch (mode) {
-
-			case M_NNLIST:
-// To start with, set the listRadius equal to the spaceCellSize
-				for (p = particles.begin(); p != particles.end(); ++p) {
-					(*p)->setListRadius(spaceCellSize);
-					attachParticleToSpaceCell(*p, -1);
-				}
-
-				for (p = particles.begin(); p != particles.end(); ++p) {
-					(*p)->createNearNeighborList();
-				}
-
-				break;
-
-			case M_CELLLIST:
-			default:
-
-				for (p = particles.begin(); p != particles.end(); ++p) {
-					attachParticleToSpaceCell(*p, -1);
-				}
-
-				break;
+		for (p = particles.begin(); p != particles.end(); ++p) {
+			if (mode == M_NNLIST) {
+				(*p)->setListRadius(spaceCellSize);
+			}
+			attachParticleToSpaceCell(*p, -1);
 		}
 
-// Self message to refresh the tk environment
+		if (mode == M_NNLIST) {
+			for (p = particles.begin(); p != particles.end(); ++p) {
+				(*p)->createNearNeighborList();
+			}
+		}
+
+		// Self message to refresh the tk environment
 		if (tkEnvRefreshRate > 0) {
 			scheduleAt(simTime() + tkEnvRefreshRate, 
 				new cMessage("refresh", EV_TKENVUPDATE));
 		}
 
-// Make that every subscribed particle compute its next event time
+		// Make that every subscribed particle compute its next event time
 		for (p = particles.begin(); p != particles.end(); ++p) {
 			(*p)->initEvents();
 		}
 
 		tkEnvUpdateNetwork();
 
-// Start the web server
-		startWebServerThread();
+		// Start the web server
+		if (enableWebServer == 1) {
+			startWebServerThread();
+		}
 
 	}
 
@@ -291,12 +270,12 @@ void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
  */
 void Manager::transferParticle(Particle *p, int from, int to) {
 
-// Detach particle from its space cell
+	// Detach particle from its space cell
 	detachParticleFromSpaceCell(p, from);
 
-// Obtain the particle position after the transfer event occured
+	// Obtain the particle position after the transfer event occured
 
-// Attach the particle to its new space cell
+	// Attach the particle to its new space cell
 	attachParticleToSpaceCell(p, to);
 
 }
@@ -327,7 +306,7 @@ void Manager::handleMessage(cMessage *msg) {
 
 		tkEnvUpdateNetwork();
 
-// Self message to refresh the tk environment
+		// Self message to refresh the tk environment
 		if (tkEnvRefreshRate > 0) {
 			scheduleAt(simTime() + tkEnvRefreshRate, msg);
 		}
@@ -341,7 +320,9 @@ void Manager::handleMessage(cMessage *msg) {
  */
 void Manager::finish() {
 
-	stopWebServerThread();
+	if (enableWebServer == 1) {
+		stopWebServerThread();
+	}
 
 }
 
@@ -353,11 +334,9 @@ void Manager::tkEnvUpdateNetwork() {
 
 	std::list<Particle *>::const_iterator p;
 
-// Update particle positions
+	// Update particle positions
 	for (p = particles.begin(); p != particles.end(); ++p) {
-
 		(*p)->tkEnvUpdatePosition(simTime().dbl());
-
 	}
 
 }
@@ -375,9 +354,7 @@ void Manager::startWebServerThread() {
 
 	// Gather simulation settings
 	settings.numberOfParticles = particles.size();
-	settings.simSpaceSize.x = spaceSizeX;
-	settings.simSpaceSize.y = spaceSizeY;
-	settings.simSpaceSize.z = spaceSizeZ;
+	settings.simSpaceSize = spaceSize;
 
 	webServerArgs.quitFd = quitFd[READ];
 	webServerArgs.settings = settings;

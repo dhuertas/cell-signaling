@@ -20,7 +20,7 @@ class Sphere : public Circle, public cSimpleModule {
 
 		Manager *manager;
 
-// Self messages
+		// Self messages
 		TransferMessage *transferMsg;
 		CollisionMessage *collisionMsg;
 		OutOfNeighborhoodMessage *outOfNeighborhoodMsg;
@@ -36,7 +36,7 @@ class Sphere : public Circle, public cSimpleModule {
 
 		void initMessages(void);
 
-// Initialize the event queue
+		// Initialize the event queue
 		void initEvents(void);
 
 		void handleMobilityMessage(cMessage *);
@@ -48,16 +48,16 @@ class Sphere : public Circle, public cSimpleModule {
 
 		void adjustCollision(double, Particle *);
 
-// Near-Neighbor List methods
+		// Near-Neighbor List methods
 		void createNearNeighborList(void);
 		void updateNearNeighborList(void);
 
-// tk Environment related methods
+		// tk Environment related methods
 		void tkEnvDrawShape(void);
 		void tkEnvUpdatePosition(void);
 		void tkEnvUpdatePosition(double);
 
-// Gets and sets
+		// Gets and sets
 		Manager * getManager(void) { return manager; }
 		TransferMessage * getTransferMessage(void);
 		CollisionMessage * getCollisionMessage(void);

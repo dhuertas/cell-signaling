@@ -21,27 +21,21 @@ import cellsignaling.src.Molecule;
 
 network test4
 {
-        @display("bgb=400,300");
+	@display("bgb=400,300");
 
-        string managerName = "manager";
+	double spaceSizeX = default(1000);
+	double spaceSizeY = default(1000);
+	double spaceSizeZ = default(1000);
 
-        bool performanceSimulation = default(false);
+	int numberOfInitialMolecules = default(0);
 
-        double spaceSizeX = default(1000);
-        double spaceSizeY = default(1000);
-        double spaceSizeZ = default(1000);
+	submodules:
+		manager: Manager {
+			@display("p=-30,-30;i=block/cogwheel");
+		}
 
-        double refreshRate = default(5);
+		molecule[numberOfInitialMolecules]: Molecule;
 
-        int numberOfInitialMolecules = default(0);
-
-        submodules:
-                manager: Manager {
-                        @display("p=-30,-30;i=block/cogwheel");
-                }
-
-                molecule[numberOfInitialMolecules]: Molecule;
-
-        connections allowunconnected:
+	connections allowunconnected:
 
 }
