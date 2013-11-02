@@ -308,6 +308,9 @@ void Sphere::handleTransfer(TransferMessage *msg) {
 
 	setSpaceCell(nextSpaceCell);
 
+	// Statistics
+	manager->registerTransfer();
+
 }
 
 /*
@@ -340,9 +343,6 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 
 	m1 = this->getMass();
 	m2 = p->getMass();
-
-	// Log the collision
-	collisionVector.recordWithTimestamp(simTime().dbl(), this->getParticleId());
 
 	// Change frame of reference of the system to one of the spheres
 	v1.x = this->getVx() - p->getVx();
@@ -439,6 +439,8 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 
 	SphereMobility::resetCollisionMessage(msg);
 
+	// Statistics
+	manager->registerCollision();
 }
 
 /*
@@ -461,6 +463,8 @@ void Sphere::handleWallCollision(CollisionMessage *msg) {
 
 	SphereMobility::resetCollisionMessage(msg);
 
+	// Statistics
+	manager->registerWallCollision();
 }
 
 /*
@@ -495,7 +499,8 @@ void Sphere::createNearNeighborList() {
 
 	int a, b, c;
 	int i, j, k, n;
-	int Nx, Ny, Nz, N; // Number of space cells (or divisions) in each axis
+	// Number of space cells (or divisions) in each axis
+	int Nx, Ny, Nz, N;
 
 	double dx, dy, dz;
 	double lrs; // listRadiusSquared
@@ -523,7 +528,7 @@ void Sphere::createNearNeighborList() {
 	for (c = -1; c <= 1; c++) {
 
 		// The neighbor cell must be contained in the simulation space
-		if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
+		if (CELL_BELONGS_TO_SIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
 
 			N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
 			particles = manager->getSpaceCellParticles(N);
@@ -544,7 +549,7 @@ void Sphere::createNearNeighborList() {
 				lrs = listRadius + (*pa)->getListRadius();
 				lrs *= lrs;
 
-				if (dx*dx+dy*dy+dz*dz < lrs) {
+				if (dx*dx + dy*dy + dz*dz < lrs) {
 					this->neighborParticles.push_back(*pa);
 				}
 
@@ -555,7 +560,10 @@ void Sphere::createNearNeighborList() {
 }
 
 /*
- * Add nearby spheres to the list
+ * Add nearby spheres to the list.
+ *
+ * TODO: Need to find a way to remove as few particles as possible
+ * instead of rebuilding the neighbor list every time.
  */
 void Sphere::updateNearNeighborList() {
 
@@ -568,7 +576,7 @@ void Sphere::updateNearNeighborList() {
 }
 
 /*
- * Returns the scheduled transfer mobility message
+ * Returns the scheduled transfer mobility message.
  * 
  * @return {TransferMessage *}
  */
@@ -579,7 +587,7 @@ TransferMessage * Sphere::getTransferMessage() {
 }
 
 /*
- * Returns the scheduled collision mobility message
+ * Returns the scheduled collision mobility message.
  * 
  * @return {CollisionMessage *}
  */
@@ -627,7 +635,9 @@ void Sphere::tkEnvUpdatePosition() {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-	// EV << "x: " << getX()*getVx() << ", y: " << getY() << ", z: " << getZ() << "\n";
+	// EV << "x: " << getX() << ", ";
+	// EV << "y: " << getY() << ", ";
+	// EV << "z: " << getZ() << "\n";
 
 }
 
@@ -654,16 +664,16 @@ void Sphere::tkEnvUpdatePosition(double t) {
 	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
 	buffer.str(std::string());
 
-	// EV << "x: " << getX() + getVx()*(t - lc) <<
-	// 	", y: " << getY() + getVy()*(t - lc) <<
-	// 	", z: " << getZ() + getVz()*(t - lc) << "\n";
+	// EV << "x: " << getX() + getVx()*(t - lc) << ", ";
+	// EV << "y: " << getY() + getVy()*(t - lc) << ", ";
+	// EV << "z: " << getZ() + getVz()*(t - lc) << "\n";
 
 }
 
 /*
  * Sets the manager attribute.
  * 
- * @param {string} param: the name of the manager module.
+ * @param {string} param: the name of the manager module
  */
 void Sphere::setManager(std::string param) {
 

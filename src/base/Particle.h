@@ -18,8 +18,6 @@ class Particle {
 
 		int particleId;
 
-		int mode;
-
 		// Cell List attributes
 		int spaceCell;
 
@@ -43,7 +41,6 @@ class Particle {
 		double getVz(void) { return velocity.z; };
 		vect_t getVelocity(void) { return velocity; };
 		double getMass(void) { return mass; };
-		int getMode(void) { return mode; };
 		double getSpaceCell(void) { return spaceCell; };
 		double getListRadius(void) { return listRadius; };
 		virtual double getRadius(void) = 0;
@@ -60,7 +57,6 @@ class Particle {
 		void setVz(double vz) { velocity.z = vz; };
 		void setVelocity(vect_t v) { velocity = v; };
 		void setMass(double m) { mass = m; };
-		void setMode(int m) { mode = m; };
 		void setSpaceCell(int c) { spaceCell = c; };
 		void setListRadius(double r) { listRadius = r; };
 		virtual void setRadius(double) = 0;

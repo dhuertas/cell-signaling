@@ -41,6 +41,9 @@ class Manager : public cSimpleModule {
 		// update the position of each particle.
 		double tkEnvRefreshRate;
 
+		// Update the cOutVectors periodically.
+		double statsRefreshRate;
+
 		int enableWebServer;
 
 		pthread_t webServerThread;
@@ -59,6 +62,13 @@ class Manager : public cSimpleModule {
 		std::vector<std::list<Particle*> > spaceCells;
 
 	protected:
+
+		statistics_t stats;
+
+		cOutVector allCollisionsVector;
+		cOutVector particleCollisionsVector;
+		cOutVector wallCollisionsVector;
+		cOutVector transfersVector;
 
 	public:
 
@@ -113,6 +123,12 @@ class Manager : public cSimpleModule {
 		void setNumberOfSpaceCellsY(int n) { Ny = n; };
 		void setNumberOfSpaceCellsZ(int n) { Nz = n; };
 		void setMode(int m) { mode = m; };
+
+		void clearStatistics(void);
+		void registerCollision(void);
+		void registerWallCollision(void);
+		void registerTransfer(void);
+
 };
 
 #endif

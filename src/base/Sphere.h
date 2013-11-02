@@ -27,8 +27,6 @@ class Sphere : public Circle, public cSimpleModule {
 
 	protected:
 
-		cOutVector collisionVector;
-
 	public:
 
 		Sphere() : Circle() {};

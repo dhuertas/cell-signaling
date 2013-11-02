@@ -72,7 +72,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 		for (b = -1; b <= 1; b++)
 		for (c = -1; c <= 1; c++) {
 
-			if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
+			if (CELL_BELONGS_TO_SIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
 
 				N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
 				spaceCells.push_back(N);

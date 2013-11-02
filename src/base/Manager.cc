@@ -64,6 +64,14 @@ void Manager::initialize(int stage) {
 	// The manager node should be the first module to be initialized
 	if (stage == 0) {
 
+		// Initialize the statistics data structure
+		clearStatistics();
+
+		allCollisionsVector.setName("allCollisions");
+		particleCollisionsVector.setName("particleCollisions");
+		wallCollisionsVector.setName("wallCollisions");
+		transfersVector.setName("transfers");
+
 		// Set the mode of operation for the molecule dynamics 
 		setMode(par("mode"));
 
@@ -84,6 +92,7 @@ void Manager::initialize(int stage) {
 		EV << "Z=" << spaceSize.z << "\n";
 
 		tkEnvRefreshRate = par("refreshRate");
+		statsRefreshRate = par("statsRefreshRate");
 		enableWebServer = par("enableWebServer");
 
 		// Set network size for tkenv
@@ -116,9 +125,6 @@ void Manager::initialize(int stage) {
 			if (spaceCellSize < diameter) {
 				spaceCellSize = diameter;
 			}
-
-			// Also set the simulation mode (Cell List or Near-Neighbor List)
-			(*p)->setMode(mode);
 
 			// Initialize particle attributes
 			(*p)->setParticleId(count);
@@ -179,8 +185,13 @@ void Manager::initialize(int stage) {
 
 		// Self message to refresh the tk environment
 		if (tkEnvRefreshRate > 0) {
-			scheduleAt(simTime() + tkEnvRefreshRate, 
+			scheduleAt(simTime() + tkEnvRefreshRate/1000, 
 				new cMessage("refresh", EV_TKENVUPDATE));
+		}
+
+		if (statsRefreshRate > 0) {
+			scheduleAt(simTime() + statsRefreshRate/1000,
+				new cMessage("refresh", EV_STATSUPDATE));
 		}
 
 		// Make that every subscribed particle compute its next event time
@@ -213,7 +224,7 @@ int Manager::numInitStages() const {
 /*
  * Attach a particle to a space cell. If the value of the second argument is 
  * negative means that the particle has been just subscribed and its space cell
- * must be calculated. 
+ * mustcollisionV be calculated. 
  *
  * @param {Particle *} p
  * @param {integer} to
@@ -273,7 +284,7 @@ void Manager::transferParticle(Particle *p, int from, int to) {
 	// Detach particle from its space cell
 	detachParticleFromSpaceCell(p, from);
 
-	// Obtain the particle position after the transfer event occured
+	// Compute the transfers per simsecond
 
 	// Attach the particle to its new space cell
 	attachParticleToSpaceCell(p, to);
@@ -302,15 +313,31 @@ void Manager::handleMessage(cMessage *msg) {
 
 	int kind = msg->getKind();
 
+	simtime_t st = simTime();
+
 	if (kind == EV_TKENVUPDATE) {
 
 		tkEnvUpdateNetwork();
 
 		// Self message to refresh the tk environment
 		if (tkEnvRefreshRate > 0) {
-			scheduleAt(simTime() + tkEnvRefreshRate, msg);
+			scheduleAt(st + tkEnvRefreshRate/1000, msg);
 		}
 
+	} else if (kind == EV_STATSUPDATE) {
+
+		// Put the statistics logged so far to cout vectors
+		allCollisionsVector.recordWithTimestamp(st, stats.allCollisions);
+		particleCollisionsVector.recordWithTimestamp(st, stats.particleCollisions);
+		wallCollisionsVector.recordWithTimestamp(st, stats.wallCollisions);
+		transfersVector.recordWithTimestamp(st, stats.transfers);
+
+		// Clear the stats data structure
+		clearStatistics();
+
+		if (statsRefreshRate > 0) {
+			scheduleAt(st + statsRefreshRate/1000, msg);
+		}
 	}
 
 }
@@ -382,4 +409,34 @@ void Manager::stopWebServerThread() {
 	close(quitFd[READ]);
 	close(quitFd[WRITE]);
 
+}
+
+/*
+ * Sets the statistics data structure to zero.
+ */
+void Manager::clearStatistics() {
+	memset(&stats, 0, sizeof(stats));
+}
+
+/*
+ * Increment the collisions counter
+ */
+void Manager::registerCollision() {
+	stats.particleCollisions++;
+	stats.allCollisions++;
+}
+
+/*
+ * Increment the wall collisions counter
+ */
+void Manager::registerWallCollision() {
+	stats.wallCollisions++;
+	stats.allCollisions++;
+}
+
+/*
+ * Increment the transfer counter
+ */
+void Manager::registerTransfer() {
+	stats.transfers++;
 }

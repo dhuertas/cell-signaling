@@ -11,6 +11,7 @@
 #define EV_WALLCOLLISION		4
 #define EV_OUTOFNEIGHBORHOOD	5
 #define EV_TKENVUPDATE			6
+#define EV_STATSUPDATE			7
 
 // Methods
 #define M_CELLLIST				1	// Only Cell Lists are used
@@ -20,7 +21,7 @@
 #define READ			0
 #define WRITE			1
 
-#define CELLBELONGSTOSIMSPACE(a,b,c,Nx,Ny,Nz) 0 <= a && a < Nx && 0 <= b && b < Ny && 0 <= c && c < Nz
+#define CELL_BELONGS_TO_SIMSPACE(a,b,c,Nx,Ny,Nz) 0 <= a && a < Nx && 0 <= b && b < Ny && 0 <= c && c < Nz
 
 typedef struct Point {
 	double x;
@@ -33,6 +34,13 @@ typedef struct Vector3D {
 	double y;
 	double z;
 } vect_t;
+
+typedef struct Statistics {
+	long long unsigned allCollisions;
+	long long unsigned particleCollisions;
+	long long unsigned wallCollisions;
+	long long unsigned transfers;
+} statistics_t;
 
 // Space cell side points that allows to obtain the side equation and compute 
 // the transfer time.

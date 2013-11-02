@@ -86,9 +86,12 @@ simple Manager {
 		// - highdensity
 		string particleDistribution = default("undefined");
 
-		// Refresh rate, in seconds. Tells the manager when to update the position
+		// Refresh rate, in milliseconds. Tells the manager when to update the position
 		// string of the particles for the tk environment.
-		double refreshRate = default(5);
+		double refreshRate = default(5000);
+
+		// Statistics refresh rate, in milliseconds.
+		double statsRefreshRate = default(1000);
 
 		// Enable the Manager Web Server in order to visualize a 3D simulation 
 		// space from a web browser (WARNING: enable this option only if your

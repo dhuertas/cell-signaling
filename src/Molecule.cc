@@ -17,9 +17,6 @@ void Molecule::initialize(int stage) {
 		// Manager module initializes during this stage
 	} else if (stage == 1) {
 
-		// Initialize coutVectors
-		collisionVector.setName("collisionVector");
-
 		// Initial position
 		setX(par("xpos").doubleValue());
 		setY(par("ypos").doubleValue());
@@ -69,11 +66,11 @@ int Molecule::numInitStages() const {
  */
 void Molecule::handleMessage(cMessage *msg) {
 
-    if (strcmp(msg->getName(), "mobility") == 0) {
+	if (strcmp(msg->getName(), "mobility") == 0) {
 
-        handleMobilityMessage(msg);
+		handleMobilityMessage(msg);
 
-    }
+	}
 
 }
 
@@ -81,7 +78,7 @@ void Molecule::handleMessage(cMessage *msg) {
  * Clean and close everything.
  */
 void Molecule::finish() {
-	
+
 	// Unsubscribe from the manager
 	getManager()->unsubscribe(this);
 
