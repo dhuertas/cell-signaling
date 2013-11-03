@@ -377,7 +377,7 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
 
 	if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
-	// n and v are parallel, we can solve directly
+		// n and v are parallel, we can solve directly
 		tmp = (m1 - m2)*v1n/(m1 + m2);
 		v2n = 2*m1*v1n/(m1 + m2);
 		v1n = tmp;

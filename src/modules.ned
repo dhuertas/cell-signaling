@@ -76,6 +76,13 @@ simple Manager {
 		// 2 - Combination of Near-Neighbor Lists and Cell Lists methods
 		int mode = default(2);
 
+		// Space Cell Size. Sets the size of the space cells in which the
+		// simulation space will be divided. Note that the space cell size must
+		// be at least as wide as the widest diameter of the particles it 
+		// contains. If set to 0, the manager will adjust the space cell size
+		// by searching the maximum radius of the particles (2*MaxRadius).
+		double spaceCellSize = default(0);
+
 		// Place the particles following a specific pattern. When left unset 
 		// particles get their position from the ini file. Options are:
 		// - undefined

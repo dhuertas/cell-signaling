@@ -48,7 +48,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 	collisionCounter = 0;
 
-// i, j and k are the indexes of the space cell for each axis
+	// i, j and k are the indexes of the space cell for each axis
 	i = n / (Nz*Ny);
 	j = (n % (Nz*Ny)) / Nz;
 	k = (n % (Nz*Ny)) % Nz;
@@ -65,9 +65,9 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 		particles = s->getNeighborParticles();
 
 	} else {
-// M_CELLLIST / default
+		// M_CELLLIST / default
 
-// Get the list of space cell indexes to ask the manager for the particles 
+		// Get the list of space cell indexes to ask the manager for the particles 
 		for (a = -1; a <= 1; a++)
 		for (b = -1; b <= 1; b++)
 		for (c = -1; c <= 1; c++) {
@@ -81,7 +81,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 		}
 
-// Get the particles from each of the listed space cells
+		// Get the particles from each of the listed space cells
 		for (sc = spaceCells.begin(); sc != spaceCells.end(); ++sc) {
 
 			particleList = manager->getSpaceCellParticles(*sc);
@@ -94,9 +94,9 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 	}
 
-// Initialize the collision time. If the collision event is still scheduled
-// it should return the current scheduled collision time. Otherwise it should
-// return NO_TIME.
+	// Initialize the collision time. If the collision event is still scheduled
+	// it should return the current scheduled collision time. Otherwise it should
+	// return NO_TIME.
 	prevCollisionTime = msg->getCollisionTime();
 
 	if (prevCollisionTime != NO_TIME) {
@@ -109,21 +109,21 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 	}
 
-// Loop through the retrieved particles
+	// Loop through the retrieved particles
 	for (p = particles.begin(); p != particles.end(); ++p) {
 
 		if (*p == s) continue;
 
-// Solve particle to particle collision
+		// Solve particle to particle collision
 		temp = solveCollision(s, *p);
 
-// Only keep the collision time if it's smaller than the rest of computed 
-// collision times so far and is also smaller than the partner collision time.
+		// Only keep the collision time if it's smaller than the rest of computed 
+		// collision times so far and is also smaller than the partner collision time.
 		partnerCollisionMsg = ((Sphere *)(*p))->getCollisionMessage();
 		partnerCollisionTime = partnerCollisionMsg->getCollisionTime();
 
 		if (temp != NO_TIME && sTime < temp) {
-// Collision found!
+			// Collision found!
 			if (collisionCounter == 0) {
 
 				if (temp < partnerCollisionTime || partnerCollisionTime == NO_TIME) {
@@ -202,8 +202,8 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 
 	if (vx == 0 && vy == 0 && vz == 0) return wallCollisionTime;
 
-// In the simulation space we have 6 possible sides but since we know the 
-// direction of the particle we need to check only 3 (at most).
+	// In the simulation space we have 6 possible sides but since we know the 
+	// direction of the particle we need to check only 3 (at most).
 	if (vx > 0) sides.push_back(1);
 	else if (vx < 0) sides.push_back(4);
 
@@ -216,7 +216,7 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 	collisionCounter = 0;
 
 	for (side = sides.begin(); side != sides.end(); ++side) {
-// Select 3 points for each side following the previous rules
+		// Select 3 points for each side following the previous rules
 		P.x = sp[0*6 + *side]*Sx;
 		P.y = sp[1*6 + *side]*Sy;
 		P.z = sp[2*6 + *side]*Sz;
@@ -232,17 +232,17 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 		V.x = Q.x - P.x; V.y = Q.y - P.y; V.z = Q.z - P.z;
 		W.x = R.x - P.x; W.y = R.y - P.y; W.z = R.z - P.z;
 
-// Cross product to find the Normal vector
+		// Cross product to find the Normal vector
 		N.x = V.y * W.z - V.z * W.y;
 		N.y = V.z * W.x - V.x * W.z;
 		N.z = V.x * W.y - V.y * W.x;
 
-// This is the plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
-// Substitute for:
-//     x = xi + vx*t + R*vnx, vnx = vx/sqrt(vx2+vy2+vz2), R = radius
-//     y = yi + vy*t + R*vny, vny = vy/sqrt(vx2+vy2+vz2), "
-//     z = zi + vz*t + R*vnz, vnz = vz/sqrt(vx2+vy2+vz2), "
-// and find for t.
+		// This is the plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
+		// Substitute for:
+		//     x = xi + vx*t + R*vnx, vnx = vx/sqrt(vx2+vy2+vz2), R = radius
+		//     y = yi + vy*t + R*vny, vny = vy/sqrt(vx2+vy2+vz2), "
+		//     z = zi + vz*t + R*vnz, vnz = vz/sqrt(vx2+vy2+vz2), "
+		// and find for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 
 		if (temp != 0) {
@@ -260,8 +260,8 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 			else
 				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
 
-// Solution found. "temp" is the amount of time the particle takes to go from its last 
-// event point to the simulation space side.
+			// Solution found. "temp" is the amount of time the particle takes 
+			// to go from its last event point to the simulation space side.
 			if (collisionCounter == 0) {
 
 				wallCollisionTime = temp;
@@ -279,34 +279,33 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 					collisionCounter++;
 
 				} else if (0 < temp && temp == wallCollisionTime) {
-// The particle hit two or more sides at the same time
-
+					// The particle hit two or more sides at the same time
 					wallCollisionTime = temp;
 
 					hits.push_back(*side);
 					collisionCounter++;
 
 				} else {
-// It's greater
+					// It's greater
 				}
 
 			}
 
 		} else {
-// Line and plane doesn't intersect
+			// Line and plane doesn't intersect
 		}
 
 	}
 
-// The future particle position
+	// The future particle position
 	msg->setX(x + vx*wallCollisionTime);
 	msg->setY(y + vy*wallCollisionTime);
 	msg->setZ(z + vz*wallCollisionTime);
 
-// Compute the future time value
+	// Compute the future time value
 	wallCollisionTime += lastCollisionTime;
 
-// Compute the future velocity vector
+	// Compute the future velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
 		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
@@ -327,17 +326,16 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
  * @return {double} the collision time
  */
 double SphereMobility::solveCollision(Particle * pa, Particle * pb) {
-// Distance between centers A and B when t = tc (time of collision):
-//                 ______________________________________________
-//           \    / ( Ax + Avx*(tc-ta) - (Bx + Bvx*(tc-tb) )² +
-//  D(A, B) = \  /  ( Ay + Avy*(tc-ta) - (By + Bvy*(tc-tb) )² +   = Ra + Rb
-//             \/   ( Az + Avz*(tc-ta) - (Bz + Bvz*(tc-tb) )²
-//
-// ta: time when the previous collision took place for particle A
-// tb: same for particle B
+	// Distance between centers A and B when t = tc (time of collision):
+	//                 ______________________________________________
+	//           \    / ( Ax + Avx*(tc-ta) - (Bx + Bvx*(tc-tb) )² +
+	//  D(A, B) = \  /  ( Ay + Avy*(tc-ta) - (By + Bvy*(tc-tb) )² +   = Ra + Rb
+	//             \/   ( Az + Avz*(tc-ta) - (Bz + Bvz*(tc-tb) )²
+	//
+	// ta: time when the previous collision took place for particle A
+	// tb: same for particle B
 
-// (dxi + dvx*tc)² + (dyi + dvy*tc)² + (dyi + dvy*tc)²= (A.r + B.r)²
-
+	// (dxi + dvx*tc)² + (dyi + dvy*tc)² + (dyi + dvy*tc)²= (A.r + B.r)²
 	double ta = pa->getLastCollisionTime();
 	double tb = pb->getLastCollisionTime();
 
@@ -351,7 +349,7 @@ double SphereMobility::solveCollision(Particle * pa, Particle * pb) {
 
 	double radd = pb->getRadius() + pa->getRadius();
 
-// a*t² + b*t + c = 0
+	// a*t² + b*t + c = 0
 	double a = dvx*dvx + dvy*dvy + dvz*dvz;
 	double b = 2*(dxi*dvx + dyi*dvy + dzi*dvz);
 	double c = dxi*dxi + dyi*dyi + dzi*dzi - radd*radd;
@@ -359,7 +357,7 @@ double SphereMobility::solveCollision(Particle * pa, Particle * pb) {
 	double result = -1;
 
 	if (b*b >= 4*a*c) {
-// Return the smaller solution
+	// Return the smaller solution
 		double dtbb = (-b - sqrt(b*b - 4*a*c))/(2*a);
 		result = dtbb;
 

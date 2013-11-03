@@ -72,13 +72,13 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 	y += vy*(sTime - lastCollisionTime);
 	z += vz*(sTime - lastCollisionTime);
 
-// i, j and k are the indexes of the space cell for each axis
+	// i, j and k are the indexes of the space cell for each axis
 	i = n / (Nz*Ny);
 	j = (n % (Nz*Ny)) / Nz;
 	k = (n % (Nz*Ny)) % Nz;
 
-// In a space cell we have 6 possible sides but since we know the direction of
-// the particle we need to check only 3 (at most).
+	// In a space cell we have 6 possible sides but since we know the direction 
+	// of the particle we need to check only 3 (at most).
 	if (vx > 0) sides.push_back(1);
 	else if (vx < 0) sides.push_back(4);
 
@@ -91,7 +91,7 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 	counter = 0;
 
 	for (side = sides.begin(); side != sides.end(); ++side) {
-// Select 3 points for each side following the previous rules (sp[])
+		// Select 3 points for each side following the previous rules (sp[])
 		P.x = (i + sp[0*6 + *side])*spaceCellSize;
 		P.y = (j + sp[1*6 + *side])*spaceCellSize;
 		P.z = (k + sp[2*6 + *side])*spaceCellSize;
@@ -107,38 +107,41 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 		V.x = Q.x - P.x; V.y = Q.y - P.y; V.z = Q.z - P.z;
 		W.x = R.x - P.x; W.y = R.y - P.y; W.z = R.z - P.z;
 
-// Cross product to find the Normal vector
+		// Cross product to find the Normal vector
 		N.x = V.y * W.z - V.z * W.y;
 		N.y = V.z * W.x - V.x * W.z;
 		N.z = V.x * W.y - V.y * W.x;
 
-// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
-// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and solve for t.
+		// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
+		// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and 
+		// solve for t.
 		temp = (N.x*vx + N.y*vy + N.z*vz);
 
 		if (temp != 0) {
 
 			temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
 
-// Solution found. "temp" is the amount of time the centroid of the particle 
-// takes to go from its current position to the space cell side where it is 
-// bounded.
+			// Solution found. "temp" is the amount of time the centroid of the
+			// particle takes to go from its current position to the space cell 
+			// side where it is bounded.
 			if (counter == 0) {
 
 				transferTime = temp;
 				hits.push_back(*side);
 
 				if (temp == 0) {
-// The centroid of the particle is on a space cell side and needs to update its
-// space cell value and recalculate the transfer time.
+					// The centroid of the particle is on a space cell side and
+					// needs to update its space cell value and recalculate the
+					// transfer time.
 					break;
 				}
 
 			} else {
 
 				if (temp == 0) {
-// The centroid of the particle is on a space cell side and needs to update its
-// space cell value and recalculate the transfer time.
+					// The centroid of the particle is on a space cell side and
+					// needs to update its space cell value and recalculate the 
+					// transfer time.
 					transferTime = temp;
 					hits.push_back(*side);
 					break;
@@ -151,7 +154,7 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 					hits.push_back(*side);
 
 				} else if (0 < temp && temp == transferTime) {
-// The particle hit two or more sides at the same time
+					// The particle hit two or more sides at the same time
 					hits.push_back(*side);
 
 				}
@@ -161,7 +164,7 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 			counter++;
 
 		} else {
-// Line and plane doesn't intersect
+			// Line and plane doesn't intersect
 		}
 
 	}
@@ -171,12 +174,13 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 		transferTime += sTime;
 
 	} else if (transferTime == 0) {
-// If transferTime equals the simuation time sTime it means that temp 
-// equals = 0, thus the centroid of the particle belongs to the plane it is 
-// crossing. Set an event transfer at the same simulation time so it will 
-// update the NextSpaceCell value and compute again the next transfer time.
+		// If transferTime equals the simuation time sTime means that temp 
+		// equals 0, thus the centroid of the particle belongs to the plane it 
+		// is crossing. Set an event transfer at the same simulation time so it
+		// will update the NextSpaceCell value and compute again the next 
+		// transfer time.
 	} else {
-// transfer time not found (NO_TIME)
+		// transfer time not found (NO_TIME)
 	}
 
 	msg->setTransferTime(transferTime);

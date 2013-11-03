@@ -49,7 +49,7 @@ void Manager::initialize(int stage) {
 
     unsigned int count;
 
-	double diameter;
+	double diameter, tempSpaceCellSize;
 
 	cModule *module;
 	std::list<Particle *>::const_iterator p;
@@ -60,6 +60,7 @@ void Manager::initialize(int stage) {
 	N = 0;
 	count = 0;
 	diameter = 0.0;
+	tempSpaceCellSize = 0;
 
 	// The manager node should be the first module to be initialized
 	if (stage == 0) {
@@ -86,10 +87,22 @@ void Manager::initialize(int stage) {
 		setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));
 		setSpaceSizeZ(simulation.getSystemModule()->par("spaceSizeZ"));
 
+		// Get the space cell size. If set to 0 we must wait untill all the 
+		// initial particles have been subscribed.
+		setSpaceCellSize(par("spaceCellSize"));
+
 		EV << "space size: ";
 		EV << "X=" << spaceSize.x << ", ";
 		EV << "Y=" << spaceSize.y << ", ";
 		EV << "Z=" << spaceSize.z << "\n";
+
+		EV << "Space cell size: ";
+
+		if (spaceCellSize == 0) {
+			EV << "auto" << "\n";
+		} else {
+			EV << spaceCellSize << "\n";
+		}
 
 		tkEnvRefreshRate = par("refreshRate");
 		statsRefreshRate = par("statsRefreshRate");
@@ -106,27 +119,23 @@ void Manager::initialize(int stage) {
 		module->getDisplayString().setTagArg("bgb", 1, buffer.str().c_str());
 		buffer.str(std::string()); // clear buffer
 
-		// We must wait to determine the space cell size till all the initial
-		// particles have been subscribed
-		spaceCellSize = 0;
-
 	} else if (stage == 1) {
 		// the rest of the modules are being initialized ...
 	} else if (stage == 2) {
 
 		// All the particles are in the simulation space now. We can determine 
-		// the spaceCellSize
+		// the space cell size in case it has been set to 0 (default).
 		count = 0;
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
 
 			diameter = 2*(*p)->getRadius();
 
-			if (spaceCellSize < diameter) {
-				spaceCellSize = diameter;
+			if (tempSpaceCellSize < diameter) {
+				tempSpaceCellSize = diameter;
 			}
 
-			// Initialize particle attributes
+			// Initialize the particle attributes
 			(*p)->setParticleId(count);
 			(*p)->setLastCollisionTime(0);
 			(*p)->initMessages();
@@ -135,11 +144,16 @@ void Manager::initialize(int stage) {
 
 		}
 
+		if (spaceCellSize == 0) {
+			spaceCellSize = tempSpaceCellSize;
+		}
+
 		// Put every subscribed particle in its corresponding space cell
 		setNumberOfSpaceCellsX(ceil(spaceSize.x/spaceCellSize));
 		setNumberOfSpaceCellsY(ceil(spaceSize.y/spaceCellSize));
 		setNumberOfSpaceCellsZ(ceil(spaceSize.z/spaceCellSize));
 
+		// N is the total number of space cells that the simulation space has.
 		N = Nx*Ny*Nz;
 
 		spaceCells.resize(N);
@@ -199,7 +213,9 @@ void Manager::initialize(int stage) {
 			(*p)->initEvents();
 		}
 
-		tkEnvUpdateNetwork();
+		if (ev.isGUI()) {
+			tkEnvUpdateNetwork();
+		}
 
 		// Start the web server
 		if (enableWebServer == 1) {
