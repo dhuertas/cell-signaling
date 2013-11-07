@@ -247,9 +247,9 @@ int Manager::numInitStages() const {
  */
 void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 
-	int n, i, j, k;
+	int i, j, k, n;
 
-	if (to == -1) {
+	if (to < 0) {
 
 		i = floor(p->getX()/spaceCellSize);
 		j = floor(p->getY()/spaceCellSize);
@@ -261,9 +261,7 @@ void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 		spaceCells.at(n).push_back(p);
 
 	} else {
-
 		spaceCells.at(to).push_back(p);
-
 	}
 
 }
@@ -276,14 +274,10 @@ void Manager::attachParticleToSpaceCell(Particle *p, int to) {
  */
 void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
 
-	if (from == -1) {
-
+	if (from < 0) {
 		spaceCells.at(p->getSpaceCell()).remove(p);
-
 	} else {
-
 		spaceCells.at(from).remove(p);
-
 	}
 
 }
@@ -300,8 +294,6 @@ void Manager::transferParticle(Particle *p, int from, int to) {
 	// Detach particle from its space cell
 	detachParticleFromSpaceCell(p, from);
 
-	// Compute the transfers per simsecond
-
 	// Attach the particle to its new space cell
 	attachParticleToSpaceCell(p, to);
 
@@ -311,12 +303,12 @@ void Manager::transferParticle(Particle *p, int from, int to) {
  * Return a list containing the pointers to the particles in a given
  * space cell.
  *
- * @param {Integer} n space cell index
- * @return list of particle pointers
+ * @param {Integer} n n-th space cell index
+ * @return a pointer to a list of particle pointers
  */
-std::list<Particle *> Manager::getSpaceCellParticles(int n) {
+std::list<Particle *> *Manager::getSpaceCellParticles(int n) {
 
-	return spaceCells.at(n);
+	return &spaceCells.at(n);
 
 }
 

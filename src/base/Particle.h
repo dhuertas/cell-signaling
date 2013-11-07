@@ -45,6 +45,7 @@ class Particle {
 		double getListRadius(void) { return listRadius; };
 		virtual double getRadius(void) = 0;
 		double getLastCollisionTime(void) { return lastCollisionTime; };
+
 		std::vector<Particle*> getNeighborParticles(void) { return neighborParticles; };
 		
 		void setParticleId(int id) { particleId = id; };

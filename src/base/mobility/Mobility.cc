@@ -27,13 +27,18 @@ char sp[10*6] = {
 double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	int i, j, k, n;			// Indexes to access the current space cell
-	int Nx, Ny, Nz;			// Number of space cells (or divisions) in each axis
+	int *Nx, *Ny, *Nz;		// Number of space cells (or divisions) in each axis
 
 	int counter;
 
-	double x, y, z, vx, vy, vz;	// Particle position and velocity
+	double x, y, z;
+	double vx, vy, vz;	// Particle position and velocity
 
-	double spaceCellSize, transferTime, sTime, lastCollisionTime, temp;
+	double spaceCellSize;
+	double temp;
+	double transferTime;
+	double sTime;
+	double lastCollisionTime;
 
 	point_t P, Q, R;
 	vect_t V, W, N;
@@ -73,9 +78,9 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 	z += vz*(sTime - lastCollisionTime);
 
 	// i, j and k are the indexes of the space cell for each axis
-	i = n / (Nz*Ny);
-	j = (n % (Nz*Ny)) / Nz;
-	k = (n % (Nz*Ny)) % Nz;
+	i =  n/((*Nz)*(*Ny));
+	j = (n%((*Nz)*(*Ny)))/(*Nz);
+	k = (n%((*Nz)*(*Ny)))%(*Nz);
 
 	// In a space cell we have 6 possible sides but since we know the direction 
 	// of the particle we need to check only 3 (at most).
@@ -188,16 +193,16 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
-		if (*hit == 0) k = (k < Nz-1) ? k+1 : k;
-		else if (*hit == 1) i = (i < Nx-1) ? i+1 : i;
+		if (*hit == 0) k = (k < *Nz-1) ? k+1 : k;
+		else if (*hit == 1) i = (i < *Nx-1) ? i+1 : i;
 		else if (*hit == 2) j = (j > 0) ? j-1 : j;
-		else if (*hit == 3) j = (j < Ny-1) ? j+1 : j;
+		else if (*hit == 3) j = (j < *Ny-1) ? j+1 : j;
 		else if (*hit == 4) i = (i > 0) ? i-1 : i;
 		else k = (k > 0) ? k-1 : k;
 
 	}
 
-	msg->setNextSpaceCell(i*Nz*Ny + j*Nz + k);
+	msg->setNextSpaceCell(i*(*Nz)*(*Ny)+j*(*Nz)+k);
 
 	return transferTime;
 

@@ -102,17 +102,17 @@ class Manager : public cSimpleModule {
 		void stopWebServerThread(void);
 
 		// Gets and sets
-		vect_t getSpaceSize(void) { return spaceSize; };
+		vect_t *getSpaceSize(void) { return &spaceSize; };
 		double getSpaceSizeX(void) { return spaceSize.x; };
 		double getSpaceSizeY(void) { return spaceSize.y; };
 		double getSpaceSizeZ(void) { return spaceSize.z; };
 		double getSpaceCellSize(void) { return spaceCellSize; };
-		int getNumberOfSpaceCellsX(void) { return Nx; };
-		int getNumberOfSpaceCellsY(void) { return Ny; };
-		int getNumberOfSpaceCellsZ(void) { return Nz; };
+		int *getNumberOfSpaceCellsX(void) { return &Nx; };
+		int *getNumberOfSpaceCellsY(void) { return &Ny; };
+		int *getNumberOfSpaceCellsZ(void) { return &Nz; };
 		int getMode(void) { return mode; };
 
-		std::list<Particle *> getSpaceCellParticles(int);
+		std::list<Particle *> *getSpaceCellParticles(int);
 
 		void setSpaceSize(vect_t vsz) { spaceSize = vsz; };
 		void setSpaceSizeX(double sx) { spaceSize.x = sx; };

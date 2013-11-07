@@ -500,14 +500,14 @@ void Sphere::createNearNeighborList() {
 	int a, b, c;
 	int i, j, k, n;
 	// Number of space cells (or divisions) in each axis
-	int Nx, Ny, Nz, N;
+	int *Nx, *Ny, *Nz, N;
 
-	double dx, dy, dz;
+	double dt, dx, dy, dz;
 	double lrs; // listRadiusSquared
 
 	double sTime;
 
-	std::list<Particle *> particles;
+	std::list<Particle *> *particles;
 	std::list<Particle *>::const_iterator pa;
 
 	Nx = manager->getNumberOfSpaceCellsX();
@@ -519,38 +519,38 @@ void Sphere::createNearNeighborList() {
 	sTime = simTime().dbl();
 
 	// i, j and k are the indexes of the space cell for each axis
-	i = n / (Nz*Ny);
-	j = (n % (Nz*Ny)) / Nz;
-	k = (n % (Nz*Ny)) % Nz;
+	i =  n/((*Nz)*(*Ny));
+	j = (n%((*Nz)*(*Ny)))/(*Nz);
+	k = (n%((*Nz)*(*Ny)))%(*Nz);
 
 	for (a = -1; a <= 1; a++)
 	for (b = -1; b <= 1; b++)
 	for (c = -1; c <= 1; c++) {
 
 		// The neighbor cell must be contained in the simulation space
-		if (CELL_BELONGS_TO_SIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
+		if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, *Nx, *Ny, *Nz)) {
 
-			N = (i+a)*Ny*Nz + (j+b)*Nz + (k+c);
+			N = (i+a)*(*Ny)*(*Nz)+(j+b)*(*Nz)+(k+c);
 			particles = manager->getSpaceCellParticles(N);
 
-			for (pa = particles.begin(); pa != particles.end(); ++pa) {
+			for (pa = particles->begin(); pa != particles->end(); ++pa) {
 
 				if ((*pa) == this) continue;
 
+				dt = sTime - (*pa)->getLastCollisionTime();
 				// Two particles are said to be neighbor when the sum of their listRadius is 
 				// greater than the distance between their centroids.
 				dx = getX() + getVx()*(sTime - lastCollisionTime) - 
-					((*pa)->getX() + (*pa)->getVx()*(sTime - (*pa)->getLastCollisionTime()));
+					((*pa)->getX() + (*pa)->getVx()*dt);
 				dy = getY() + getVy()*(sTime - lastCollisionTime) - 
-					((*pa)->getY() + (*pa)->getVy()*(sTime - (*pa)->getLastCollisionTime()));
+					((*pa)->getY() + (*pa)->getVy()*dt);
 				dz = getZ() + getVz()*(sTime - lastCollisionTime) - 
-					((*pa)->getZ() + (*pa)->getVz()*(sTime - (*pa)->getLastCollisionTime()));
+					((*pa)->getZ() + (*pa)->getVz()*dt);
 
 				lrs = listRadius + (*pa)->getListRadius();
-				lrs *= lrs;
 
-				if (dx*dx + dy*dy + dz*dz < lrs) {
-					this->neighborParticles.push_back(*pa);
+				if (dx*dx + dy*dy + dz*dz < lrs*lrs) {
+					neighborParticles.push_back(*pa);
 				}
 
 			}
