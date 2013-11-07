@@ -41,7 +41,8 @@ class Particle {
 		double getVz(void) { return velocity.z; };
 		vect_t getVelocity(void) { return velocity; };
 		double getMass(void) { return mass; };
-		double getSpaceCell(void) { return spaceCell; };
+		int getSpaceCell(void) { return spaceCell; };
+		int getPrevSpaceCell(void) { return prevSpaceCell; };
 		double getListRadius(void) { return listRadius; };
 		virtual double getRadius(void) = 0;
 		double getLastCollisionTime(void) { return lastCollisionTime; };
@@ -59,6 +60,7 @@ class Particle {
 		void setVelocity(vect_t v) { velocity = v; };
 		void setMass(double m) { mass = m; };
 		void setSpaceCell(int c) { spaceCell = c; };
+		void setPrevSpaceCell(int c) {prevSpaceCell = c; };
 		void setListRadius(double r) { listRadius = r; };
 		virtual void setRadius(double) = 0;
 		void setLastCollisionTime(double tc) { lastCollisionTime = tc; };

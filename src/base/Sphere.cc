@@ -85,7 +85,7 @@ void Sphere::initEvents() {
 		this->handleOutOfNeighborhood();
 	}
 
-	collisionTime = SphereMobility::nextCollision(collisionMsg, this);
+	collisionTime = SphereMobility::nextCollision(collisionMsg, 0, this);
 	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
 
 	if (collisionMsg->isScheduled()) {
@@ -238,7 +238,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 	// Step 4. Compute the next collision time with particles in appropriate 
 	// neighboring cells.
 
-	collisionTime = SphereMobility::nextCollision(collisionMsg, this);
+	collisionTime = SphereMobility::nextCollision(collisionMsg, kind, this);
 	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
 
 	// Step 5. Adjust the position of the event and its new partner’s event in the 
@@ -299,14 +299,12 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
  */
 void Sphere::handleTransfer(TransferMessage *msg) {
 
-	int prevSpaceCell, nextSpaceCell;
+	manager->transferParticle(this, 
+		msg->getPrevSpaceCell(), 
+		msg->getNextSpaceCell());
 
-	prevSpaceCell = msg->getPrevSpaceCell();
-	nextSpaceCell = msg->getNextSpaceCell();
-
-	manager->transferParticle(this, prevSpaceCell, nextSpaceCell);
-
-	setSpaceCell(nextSpaceCell);
+	setPrevSpaceCell(msg->getPrevSpaceCell());
+	setSpaceCell(msg->getNextSpaceCell());
 
 	// Statistics
 	manager->registerTransfer();
@@ -425,13 +423,8 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	}
 
 	// Update the particles position
-	setX(c1.x);
-	setY(c1.y);
-	setZ(c1.z);
-
-	p->setX(c2.x);
-	p->setY(c2.y);
-	p->setZ(c2.z);
+	setPosition(c1);
+	p->setPosition(c2);
 
 	// Update the last collision times
 	setLastCollisionTime(tc);
@@ -678,7 +671,8 @@ void Sphere::tkEnvUpdatePosition(double t) {
 void Sphere::setManager(std::string param) {
 
 	try {
-		manager = (Manager *)simulation.getSystemModule()->getSubmodule(param.c_str());
+		manager = (Manager *)simulation.
+			getSystemModule()->getSubmodule(param.c_str());
 	} catch (cException *e) {
 		EV << "setManager error" << "\n";
 	}

@@ -240,7 +240,7 @@ int Manager::numInitStages() const {
 /*
  * Attach a particle to a space cell. If the value of the second argument is 
  * negative means that the particle has been just subscribed and its space cell
- * mustcollisionV be calculated. 
+ * must be calculated. 
  *
  * @param {Particle *} p
  * @param {integer} to
@@ -258,6 +258,8 @@ void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 		n = i*Ny*Nz + j*Nz + k;
 
 		p->setSpaceCell(n);
+		p->setPrevSpaceCell(-1);
+
 		spaceCells.at(n).push_back(p);
 
 	} else {
@@ -304,7 +306,7 @@ void Manager::transferParticle(Particle *p, int from, int to) {
  * space cell.
  *
  * @param {Integer} n n-th space cell index
- * @return a pointer to a list of particle pointers
+ * @return {std::list<Particle *> *} a pointer to a list of particle pointers
  */
 std::list<Particle *> *Manager::getSpaceCellParticles(int n) {
 

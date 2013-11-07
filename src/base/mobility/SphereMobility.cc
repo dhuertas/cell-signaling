@@ -7,13 +7,14 @@ using namespace std;
  * smallest one.
  *
  * @param {CollisionMessage *} msg
+ * @param {integer} kind message kind
  * @param {Sphere *} s
  * @return {double} the smallest computed collision time
  */
-double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
+double SphereMobility::nextCollision(CollisionMessage *msg, int kind, Sphere *s) {
 
 	int a, b, c;			// Nested "for" loops
-	int i, j, k, N, n;		// Indexes to access the current space cell
+	int i, j, k, n;			// Indexes to access the current space cell
 	int *Nx, *Ny, *Nz;		// Number of space cells (or divisions) in each axis
 	int collisionCounter;
 
@@ -64,15 +65,17 @@ double SphereMobility::nextCollision(CollisionMessage *msg, Sphere *s) {
 
 	} else {
 		// M_CELLLIST / default
-		// Get the list of space cell indexes to ask the manager for the particles 
+		// Get the list of space cell indexes to ask the manager for the 
+		// particles
+		
+		// It should be faster to directly compute this here rather than
+		// calling a manager method, so we are not passing vectors around
 		for (a = -1; a <= 1; a++)
 		for (b = -1; b <= 1; b++)
 		for (c = -1; c <= 1; c++) {
 
 			if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, *Nx, *Ny, *Nz)) {
-
-				N = (i+a)*(*Ny)*(*Nz)+(j+b)*(*Nz)+(k+c);
-				spaceCells.push_back(N);
+				spaceCells.push_back((i+a)*(*Ny)*(*Nz)+(j+b)*(*Nz)+(k+c));
 			}
 
 		}

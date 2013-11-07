@@ -18,7 +18,7 @@ class SphereMobility : public Mobility {
 
 	public:
 
-		static double nextCollision(CollisionMessage *, Sphere *);
+		static double nextCollision(CollisionMessage *,int, Sphere *);
 		static double nextWallCollision(CollisionMessage *, Sphere *);
 		static double solveCollision(Particle *, Particle *);
 
