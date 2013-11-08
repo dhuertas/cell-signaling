@@ -6,7 +6,7 @@ CMD="./CellSignaling -u Cmdenv"
 
 OMNET_INI="./omnetpp.ini"
 
-NETWORK="test4"
+NETWORK="test5"
 NETWORKS_FOLDER="./networks"
 
 NETWORK_INI="$NETWORKS_FOLDER/$NETWORK.ini"
@@ -31,11 +31,11 @@ write_ini() {
 	echo "$NETWORK.spaceSizeZ = (\${N}^3*(4/3.0)*$M_PI/$2)^(1/3.0)" >> $NETWORK_INI
 }
 
-VD="0.15"
-for i in {10..80..10}
+VD="0.01"
+for i in {10..30..2}
 do
 	write_ini $i $VD
-	$CMD -u Cmdenv -c test4 -f $OMNET_INI | grep "100%" | awk '{print $6}' >> $OUTPUT_FILE
+	$CMD -u Cmdenv -c $NETWORK -f $OMNET_INI | grep "100%" | awk '{print $6}' >> $OUTPUT_FILE
 done
 
 # for i in {1..50}
