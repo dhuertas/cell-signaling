@@ -24,8 +24,11 @@ void randomDistribution(vect_t, std::list<Particle *> *);
 // Place each particle following a cube pattern.
 void cubeDistribution(vect_t, std::list<Particle *> *);
 
-// Place each particle following a sphere surface.
+// Place each particle randomly on a sphere surface.
 void sphereDistribution(vect_t, std::list<Particle *> *, point_t, double);
+
+// Place each particle equally distributed on a sphere surface
+void sphereEquallyDistributed(int, double);
 
 // Put all the particles in the center of the simulation space one near the other.
 void highDensityDistribution(vect_t, std::list<Particle *> *, point_t);

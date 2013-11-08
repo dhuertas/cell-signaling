@@ -191,6 +191,48 @@ void sphereDistribution(vect_t spaceSize, std::list<Particle *> *particles, poin
 }
 
 /*
+ *
+ */
+void sphereEquallyDistributed(int N, double radius) {
+
+	int m, n;
+	int Ncount;
+	int M_theta;
+	int M_phi;
+
+	double a, d;
+	double theta, phi;
+	double d_theta;
+	double d_phi;
+
+	point_t p;
+
+	Ncount = 0;
+	a = 4*M_PI*radius*radius/N;
+	d = sqrt(a);
+	M_theta = round(M_PI/d);
+	d_theta = M_PI/M_theta;
+	d_phi = a/d_theta;
+
+	for (m = 0; m < M_theta; m++) {
+
+		theta = M_PI*(m + 0.5)/M_theta;
+		M_phi = round(2*M_PI*sin(theta)/d_phi);
+
+		for (n = 0; n < M_phi; n++) {
+			phi = 2*M_PI*n/M_phi;
+
+			p.x = radius*sin(theta)*cos(phi);
+			p.y = radius*sin(theta)*sin(phi);
+			p.z = radius*cos(theta);
+
+			Ncount++;
+		}
+	}
+
+}
+
+/*
  * Put all the particles one near the other at a certain point.
  *
  * @param {vect_t} spaceSize: the simulation space (x, y and z)
