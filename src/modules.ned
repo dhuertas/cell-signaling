@@ -86,7 +86,7 @@ simple Manager {
 		// Place the particles following a specific pattern. When left unset 
 		// particles get their position from the ini file. Options are:
 		// - undefined
-		// - random
+		// - uniform
 		// - cube
 		// - sphere
 		// - twosided

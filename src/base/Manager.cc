@@ -17,9 +17,9 @@ void Manager::subscribe(Particle * p) {
 	particles.push_back(p);
 
 	// Also add the particle to its corresponding space cell
-	if (spaceCellSize > 0) {
-		attachParticleToSpaceCell(p, -1);
-	}
+//	if (spaceCellSize > 0) {
+//		attachParticleToSpaceCell(p, -1);
+//	}
 
 }
 
@@ -162,9 +162,9 @@ void Manager::initialize(int stage) {
 
 		if (particleDistribution.compare("undefined") != 0) {
 
-			if (particleDistribution.compare("random") == 0) {
+			if (particleDistribution.compare("uniform") == 0) {
 
-				randomDistribution(spaceSize, &particles);
+				uniformDistribution(spaceSize, &particles);
 
 			} else if (particleDistribution.compare("cube") == 0) {
 

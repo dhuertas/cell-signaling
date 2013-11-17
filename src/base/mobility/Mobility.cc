@@ -184,6 +184,7 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 		// is crossing. Set an event transfer at the same simulation time so it
 		// will update the NextSpaceCell value and compute again the next 
 		// transfer time.
+		transferTime = sTime;
 	} else {
 		// transfer time not found (NO_TIME)
 	}

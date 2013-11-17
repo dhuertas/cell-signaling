@@ -19,7 +19,7 @@
 // different distributions.
 
 // Place each particle at a random position.
-void randomDistribution(vect_t, std::list<Particle *> *);
+void uniformDistribution(vect_t, std::list<Particle *> *);
 
 // Place each particle following a cube pattern.
 void cubeDistribution(vect_t, std::list<Particle *> *);

@@ -17,6 +17,8 @@ class Molecule : public Sphere {
 
 		Manager *manager;
 
+		double statsRefreshRate;
+
 	protected:
 
 	public:

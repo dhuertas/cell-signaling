@@ -7,7 +7,7 @@ using namespace std;
  * @param {vect_t} spaceSize: the simulation space (x, y and z)
  * @param {std::list<Particle *> *} particles
  */
-void randomDistribution(vect_t spaceSize, std::list<Particle *> *particles) {
+void uniformDistribution(vect_t spaceSize, std::list<Particle *> *particles) {
 
 	bool overlap;
 
