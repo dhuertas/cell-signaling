@@ -16,7 +16,6 @@
 // Methods
 #define M_CELLLIST				1	// Only Cell Lists are used
 #define M_NNLIST				2	// A combination of Near-Neighbor List andCell List methods is used
-#define _CELLLIST_NEW			3
 
 #define BUFFER_LENGTH 	1048576 // 1024*1024
 #define READ			0
