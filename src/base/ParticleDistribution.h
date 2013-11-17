@@ -28,7 +28,7 @@ void cubeDistribution(vect_t, std::list<Particle *> *);
 void sphereDistribution(vect_t, std::list<Particle *> *, point_t, double);
 
 // Place each particle equally distributed on a sphere surface
-void sphereEquallyDistributed(int, double);
+void sphereEquallyDistributed(vect_t, std::list<Particle *> *, point_t, double);
 
 // Put all the particles in the center of the simulation space one near the other.
 void highDensityDistribution(vect_t, std::list<Particle *> *, point_t);

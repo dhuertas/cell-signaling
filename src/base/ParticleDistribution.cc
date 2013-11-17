@@ -153,7 +153,7 @@ void sphereDistribution(vect_t spaceSize, std::list<Particle *> *particles, poin
 	p = particles->begin();
 
 	// WARNING: if the space size is not big enough this function may hang the
-	// simulation
+	// simulation.
 	while (p != particles->end()) {
 
 		overlap = false;
@@ -193,26 +193,59 @@ void sphereDistribution(vect_t spaceSize, std::list<Particle *> *particles, poin
 /*
  *
  */
-void sphereEquallyDistributed(int N, double radius) {
+void sphereEquallyDistributed(vect_t spaceSize, std::list<Particle *> *particles, point_t c, double radius) {
 
 	int m, n;
 	int Ncount;
 	int M_theta;
 	int M_phi;
+	int N;
+
+	double minx, miny, minz;
+	double maxRadius;
 
 	double a, d;
 	double theta, phi;
 	double d_theta;
 	double d_phi;
 
-	point_t p;
+	point_t pos;
 
+	std::list<Particle *>::iterator p, q;
+
+	if (c.x == 0) c.x = spaceSize.x/2;
+	if (c.y == 0) c.y = spaceSize.y/2;
+	if (c.z == 0) c.z = spaceSize.z/2;
+
+	if (radius == 0) {
+		// Use the maximum radius possible given the space size.
+		minx = std::min(spaceSize.x - c.x, c.x - 0);
+		miny = std::min(spaceSize.y - c.y, c.y - 0);
+		minz = std::min(spaceSize.z - c.z, c.z - 0);
+
+		radius = std::min(std::min(minx, miny), minz);
+
+		// Find the max radius from the particles and subtract half of it (and
+		// a little more).
+		for (p = particles->begin(); p != particles->end(); ++p) {
+			maxRadius = std::max((*p)->getRadius(), maxRadius);
+		}
+
+		radius -= maxRadius*(1.0 + 0.0001);
+
+	} else if (radius < 0) {
+		radius = -radius;
+	}
+
+	N = particles->size();
 	Ncount = 0;
 	a = 4*M_PI*radius*radius/N;
 	d = sqrt(a);
 	M_theta = round(M_PI/d);
 	d_theta = M_PI/M_theta;
 	d_phi = a/d_theta;
+
+	p = particles->begin();
 
 	for (m = 0; m < M_theta; m++) {
 
@@ -222,12 +255,20 @@ void sphereEquallyDistributed(int N, double radius) {
 		for (n = 0; n < M_phi; n++) {
 			phi = 2*M_PI*n/M_phi;
 
-			p.x = radius*sin(theta)*cos(phi);
-			p.y = radius*sin(theta)*sin(phi);
-			p.z = radius*cos(theta);
+			pos.x = radius*sin(theta)*cos(phi);
+			pos.y = radius*sin(theta)*sin(phi);
+			pos.z = radius*cos(theta);
+
+			(*p)->setPosition(pos);
+			++p;
 
 			Ncount++;
 		}
+	}
+
+	// Remove the particles that could not made it to the surface-
+	for (q = particles->end(); q != p; --q) {
+		particles->erase(q);
 	}
 
 }
