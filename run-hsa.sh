@@ -220,7 +220,7 @@ rt_vs_space_cell_length_vs_verlet_radius() {
 				echo "hsa.spaceSizeX = (\${N}*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
 				echo "hsa.spaceSizeY = (\${N}*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
 				echo "hsa.spaceSizeZ = (\${N}*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
-				echo "hsa.molecules[*].listRadius = $LR" >> $INI_FILE
+				echo "hsa.molecule[*].listRadius = $LR" >> $INI_FILE
 
 				RUN_TS=`date +%Y%m%d_%H%M%S`
 				echo "output-vector-file = ../\${resultdir}/$RUN_TS-\${configname}-\${runnumber}-$VD-$CS-$LR.vec" >> $INI_FILE
