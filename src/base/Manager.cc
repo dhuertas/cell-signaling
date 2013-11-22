@@ -80,6 +80,10 @@ void Manager::initialize(int stage) {
 		// the other nodes.
 		setName(par("name").stringValue());
 
+		// The global list radius. When set, overwrites the list radius
+		// of the particles (default value is 0).
+		setListRadius(par("listRadius"));
+
 		EV << "particle distribution: " << particleDistribution << "\n";
 
 		// Get the simulation space size
@@ -185,9 +189,12 @@ void Manager::initialize(int stage) {
 		}
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
-			if (mode == M_NNLIST) {
-				(*p)->setListRadius(spaceCellSize);
+			// If the manager has set a list radius, overwrite the list
+			// radius of the particles
+			if (mode == M_NNLIST && listRadius > 0) {
+				(*p)->setListRadius(listRadius);
 			}
+
 			attachParticleToSpaceCell(*p, -1);
 		}
 

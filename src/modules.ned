@@ -83,6 +83,10 @@ simple Manager {
 		// by searching the maximum radius of the particles (2*MaxRadius).
 		double spaceCellSize = default(0);
 
+		// Verlet list radius. When set, overwrites the list radius of the 
+		// particles when using mode 2 (near neighbor lists, or verlet lists).
+		double listRadius = default(0);
+
 		// Place the particles following a specific pattern. When left unset 
 		// particles get their position from the ini file. Options are:
 		// - undefined

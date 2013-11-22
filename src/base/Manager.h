@@ -36,6 +36,9 @@ class Manager : public cSimpleModule {
 		// The space cell size
 		double spaceCellSize;
 
+		// Overwrite particles' list radius.
+		double listRadius;
+
 		// TK environment refresh rate
 		// It allows the manager module to send self-messages in order to
 		// update the position of each particle.
@@ -111,6 +114,7 @@ class Manager : public cSimpleModule {
 		int *getNumberOfSpaceCellsY(void) { return &Ny; };
 		int *getNumberOfSpaceCellsZ(void) { return &Nz; };
 		int getMode(void) { return mode; };
+		double getListRadius(void) { return listRadius; };
 
 		std::list<Particle *> *getSpaceCellParticles(int);
 
@@ -123,6 +127,7 @@ class Manager : public cSimpleModule {
 		void setNumberOfSpaceCellsY(int n) { Ny = n; };
 		void setNumberOfSpaceCellsZ(int n) { Nz = n; };
 		void setMode(int m) { mode = m; };
+		void setListRadius(double lr) { listRadius = lr; };
 
 		void clearStatistics(void);
 		void registerCollision(void);
