@@ -241,5 +241,5 @@ rm $OUTPUT_FILE
 # rt_vs_verlet_list_radius
 # rt_vs_volume_density
 # number_collisions_over_simtime
-# space_position_over_simtime
-rt_vs_space_cell_length_vs_verlet_radius
+space_position_over_simtime
+# rt_vs_space_cell_length_vs_verlet_radius
