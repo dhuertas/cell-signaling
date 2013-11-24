@@ -161,6 +161,29 @@ double SphereMobility::nextCollision(CollisionMessage *msg, int kind, Sphere *s)
 }
 
 /*
+ *
+ */
+double SphereMobility::nextBoundaryCollision(CollisionMessage *msg, Sphere *s) {
+
+	int boundariesMode = s->getBoundariesMode();
+
+	if (boundariesMode == BM_ELASTIC) {
+
+		return SphereMobility::nextWallCollision(msg, s);
+
+	} else if (boundariesMode == BM_EXPIRE) {
+
+		return leaveBoundedSpace(msg, s);
+
+	} else if (boundariesMode == BM_PERIODIC) {
+
+	}
+
+	return NO_TIME;
+
+}
+
+/*
  * Computes the collision time with the simulation space walls and stores the
  * smallest one.
  *
@@ -168,7 +191,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, int kind, Sphere *s)
  * @param {Sphere *} s
  * @return {double} the smallest computed time
  */
-double SphereMobility::nextBoundaryCollision(CollisionMessage * msg, Sphere *s) {
+double SphereMobility::nextWallCollision(CollisionMessage *msg, Sphere *s) {
 
 	int collisionCounter;
 
@@ -256,6 +279,158 @@ double SphereMobility::nextBoundaryCollision(CollisionMessage * msg, Sphere *s) 
 				temp = (N.x*(P.x - (x - rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
 			else
 				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
+
+			// Solution found. "temp" is the amount of time the particle takes 
+			// to go from its last event point to the simulation space side.
+			if (collisionCounter == 0) {
+
+				boundaryCollisionTime = temp;
+				hits.push_back(*side);
+				collisionCounter++;
+
+			} else {
+
+				if (0 < temp && temp < boundaryCollisionTime) {
+
+					boundaryCollisionTime = temp;
+
+					hits.clear();
+					hits.push_back(*side);
+					collisionCounter++;
+
+				} else if (0 < temp && temp == boundaryCollisionTime) {
+					// The particle hit two or more sides at the same time
+					boundaryCollisionTime = temp;
+
+					hits.push_back(*side);
+					collisionCounter++;
+
+				} else {
+					// It's greater
+				}
+
+			}
+
+		} else {
+			// Line and plane doesn't intersect
+		}
+
+	}
+
+	// The future particle position
+	msg->setX(x + vx*boundaryCollisionTime);
+	msg->setY(y + vy*boundaryCollisionTime);
+	msg->setZ(z + vz*boundaryCollisionTime);
+
+	// Compute the future time value
+	boundaryCollisionTime += lastCollisionTime;
+
+	// Compute the future velocity vector
+	for (hit = hits.begin(); hit != hits.end(); ++hit) {
+
+		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
+		msg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
+		msg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
+
+	}
+
+	return boundaryCollisionTime;
+
+}
+
+/*
+ * Instead of using the time when the sphere surface collides with the wall,
+ * return the time when the center of the sphere crosses the boundaries.
+ * @param {CollisionMessage *} msg
+ * @param {Sphere *} s
+ * @return {double} the computed time
+ */
+double SphereMobility::leaveBoundedSpace(CollisionMessage *msg, Sphere *s) {
+
+	int collisionCounter;
+
+	double x, y, z, vx, vy, vz; // Particle radius, position and velocity
+	double boundaryCollisionTime, lastCollisionTime, temp;
+
+	point_t P, Q, R;
+	vect_t V, W, N;
+	vect_t *S;
+
+	vector<int> sides, hits;
+	vector<int>::const_iterator side, hit;
+
+	Manager *manager;
+
+	manager = s->getManager();
+
+	boundaryCollisionTime = NO_TIME;
+	lastCollisionTime = s->getLastCollisionTime();
+
+	S = manager->getSpaceSize();
+
+	x = s->getX(); vx = s->getVx();
+	y = s->getY(); vy = s->getVy();
+	z = s->getZ(); vz = s->getVz();
+
+	if (vx == 0 && vy == 0 && vz == 0) return NO_TIME;
+
+	// In the simulation space we have 6 possible sides but since we know the 
+	// direction of the particle we need to check only 3 (at most).
+	if (vx > 0) sides.push_back(1);
+	else if (vx < 0) sides.push_back(4);
+
+	if (vy > 0) sides.push_back(3);
+	else if (vy < 0) sides.push_back(2);
+
+	if (vz > 0) sides.push_back(0);
+	else if (vz < 0) sides.push_back(5);
+
+	collisionCounter = 0;
+
+	for (side = sides.begin(); side != sides.end(); ++side) {
+		// Select 3 points for each side following the previous rules
+		P.x = sp[0*6 + *side]*S->x;
+		P.y = sp[1*6 + *side]*S->y;
+		P.z = sp[2*6 + *side]*S->z;
+
+		Q.x = sp[3*6 + *side]*S->x;
+		Q.y = sp[4*6 + *side]*S->y;
+		Q.z = sp[5*6 + *side]*S->z;
+
+		R.x = sp[6*6 + *side]*S->x;
+		R.y = sp[7*6 + *side]*S->y;
+		R.z = sp[8*6 + *side]*S->z;
+
+		V.x = Q.x - P.x; V.y = Q.y - P.y; V.z = Q.z - P.z;
+		W.x = R.x - P.x; W.y = R.y - P.y; W.z = R.z - P.z;
+
+		// Cross product to find the Normal vector
+		N.x = V.y * W.z - V.z * W.y;
+		N.y = V.z * W.x - V.x * W.z;
+		N.z = V.x * W.y - V.y * W.x;
+
+		// This is the plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
+		// Substitute for:
+		//     x = xi + vx*t + R*vnx, vnx = vx/sqrt(vx2+vy2+vz2), R = radius
+		//     y = yi + vy*t + R*vny, vny = vy/sqrt(vx2+vy2+vz2), "
+		//     z = zi + vz*t + R*vnz, vnz = vz/sqrt(vx2+vy2+vz2), "
+		// and find for t.
+		temp = (N.x*vx + N.y*vy + N.z*vz);
+
+		if (temp != 0) {
+
+			if (*side == 0)
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+			else if (*side == 1)
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+			else if (*side == 2)
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+			else if (*side == 3)
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+			else if (*side == 4)
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+			else
+				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
 
 			// Solution found. "temp" is the amount of time the particle takes 
 			// to go from its last event point to the simulation space side.

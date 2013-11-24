@@ -20,8 +20,9 @@ class SphereMobility : public Mobility {
 
 		static double nextCollision(CollisionMessage *,int, Sphere *);
 		static double nextBoundaryCollision(CollisionMessage *, Sphere *);
+		static double nextWallCollision(CollisionMessage *, Sphere *);
+		static double leaveBoundedSpace(CollisionMessage *, Sphere *);
 		static double solveCollision(Particle *, Particle *);
-
 };
 
 #endif
