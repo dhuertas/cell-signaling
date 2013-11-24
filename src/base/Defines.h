@@ -1,14 +1,14 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#define NO_TIME             	-1
+#define NO_TIME					-1
 
 // Mobility Event Types
 #define EV_NONE					0
 #define EV_COLLISION			1
 #define EV_CHECK				2
 #define EV_TRANSFER				3
-#define EV_WALLCOLLISION		4
+#define EV_BOUNDARYCOLLISION	4
 #define EV_OUTOFNEIGHBORHOOD	5
 #define EV_TKENVUPDATE			6
 #define EV_STATSUPDATE			7
@@ -16,7 +16,7 @@
 
 // Collision algorithm modes
 #define M_CELLLIST				1	// Only Cell Lists are used
-#define M_NNLIST				2	// A combination of Near-Neighbor List andCell List methods is used
+#define M_NNLIST				2	// A combination of Near-Neighbor List and Cell List methods is used
 
 // Boundary modes
 #define BM_ELASTIC				1
@@ -31,12 +31,12 @@
 	kind == EV_COLLISION ||			\
 	kind == EV_CHECK ||				\
 	kind == EV_TRANSFER ||			\
-	kind == EV_WALLCOLLISION ||		\
+	kind == EV_BOUNDARYCOLLISION ||	\
 	kind == EV_OUTOFNEIGHBORHOOD	\
 
-#define CELLBELONGSTOSIMSPACE(a,b,c,Nx,Ny,Nz) \
-	0 <= a && a < Nx && \
-	0 <= b && b < Ny && \
+#define CELLBELONGSTOSIMSPACE(a,b,c,Nx,Ny,Nz)	\
+	0 <= a && a < Nx &&							\
+	0 <= b && b < Ny &&							\
 	0 <= c && c < Nz
 
 typedef struct Point3D {

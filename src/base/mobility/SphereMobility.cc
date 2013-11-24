@@ -168,12 +168,12 @@ double SphereMobility::nextCollision(CollisionMessage *msg, int kind, Sphere *s)
  * @param {Sphere *} s
  * @return {double} the smallest computed time
  */
-double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
+double SphereMobility::nextBoundaryCollision(CollisionMessage * msg, Sphere *s) {
 
 	int collisionCounter;
 
 	double rad, x, y, z, vx, vy, vz; // Particle radius, position and velocity
-	double wallCollisionTime, lastCollisionTime, temp;
+	double boundaryCollisionTime, lastCollisionTime, temp;
 
 	point_t P, Q, R;
 	vect_t V, W, N;
@@ -186,7 +186,7 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 
 	manager = s->getManager();
 
-	wallCollisionTime = NO_TIME;
+	boundaryCollisionTime = NO_TIME;
 	lastCollisionTime = s->getLastCollisionTime();
 
 	S = manager->getSpaceSize();
@@ -261,23 +261,23 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 			// to go from its last event point to the simulation space side.
 			if (collisionCounter == 0) {
 
-				wallCollisionTime = temp;
+				boundaryCollisionTime = temp;
 				hits.push_back(*side);
 				collisionCounter++;
 
 			} else {
 
-				if (0 < temp && temp < wallCollisionTime) {
+				if (0 < temp && temp < boundaryCollisionTime) {
 
-					wallCollisionTime = temp;
+					boundaryCollisionTime = temp;
 
 					hits.clear();
 					hits.push_back(*side);
 					collisionCounter++;
 
-				} else if (0 < temp && temp == wallCollisionTime) {
+				} else if (0 < temp && temp == boundaryCollisionTime) {
 					// The particle hit two or more sides at the same time
-					wallCollisionTime = temp;
+					boundaryCollisionTime = temp;
 
 					hits.push_back(*side);
 					collisionCounter++;
@@ -295,12 +295,12 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 	}
 
 	// The future particle position
-	msg->setX(x + vx*wallCollisionTime);
-	msg->setY(y + vy*wallCollisionTime);
-	msg->setZ(z + vz*wallCollisionTime);
+	msg->setX(x + vx*boundaryCollisionTime);
+	msg->setY(y + vy*boundaryCollisionTime);
+	msg->setZ(z + vz*boundaryCollisionTime);
 
 	// Compute the future time value
-	wallCollisionTime += lastCollisionTime;
+	boundaryCollisionTime += lastCollisionTime;
 
 	// Compute the future velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
@@ -311,7 +311,7 @@ double SphereMobility::nextWallCollision(CollisionMessage * msg, Sphere *s) {
 
 	}
 
-	return wallCollisionTime;
+	return boundaryCollisionTime;
 
 }
 

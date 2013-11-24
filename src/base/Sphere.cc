@@ -69,7 +69,7 @@ void Sphere::initializeMobility() {
 
 	double transferTime;
 	double collisionTime;
-	double wallCollisionTime;
+	double boundaryCollisionTime;
 	double scheduledCollisionTime;
 
 	double minTime;
@@ -79,7 +79,7 @@ void Sphere::initializeMobility() {
 
 	transferTime = NO_TIME;
 	collisionTime = NO_TIME;
-	wallCollisionTime = NO_TIME;
+	boundaryCollisionTime = NO_TIME;
 	scheduledCollisionTime = NO_TIME;
 
 	minTime = NO_TIME;
@@ -96,7 +96,7 @@ void Sphere::initializeMobility() {
 	}
 
 	collisionTime = SphereMobility::nextCollision(collisionMsg, 0, this);
-	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
+	boundaryCollisionTime = SphereMobility::nextBoundaryCollision(collisionMsg, this);
 
 	if (collisionMsg->isScheduled()) {
 		scheduledCollisionTime = collisionMsg->getCollisionTime();
@@ -107,11 +107,11 @@ void Sphere::initializeMobility() {
 		times.push_back(collisionTime);
 	}
 
-	if (wallCollisionTime != NO_TIME) {
-		times.push_back(wallCollisionTime);
+	if (boundaryCollisionTime != NO_TIME) {
+		times.push_back(boundaryCollisionTime);
 	}
 
-	minTime = wallCollisionTime;
+	minTime = boundaryCollisionTime;
 
 	for (t = times.begin(); t!= times.end(); ++t) {
 		if ((*t) < minTime) minTime = (*t);
@@ -132,7 +132,7 @@ void Sphere::initializeMobility() {
 
 		((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
 
-	} else if (minTime == wallCollisionTime && wallCollisionTime != NO_TIME) {
+	} else if (minTime == boundaryCollisionTime && boundaryCollisionTime != NO_TIME) {
 
 		if (collisionMsg->isScheduled()) {
 			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
@@ -140,10 +140,10 @@ void Sphere::initializeMobility() {
 
 		cancelEvent(collisionMsg);
 
-		collisionMsg->setKind(EV_WALLCOLLISION);
-		collisionMsg->setCollisionTime(wallCollisionTime);
+		collisionMsg->setKind(EV_BOUNDARYCOLLISION);
+		collisionMsg->setCollisionTime(boundaryCollisionTime);
 
-		scheduleAt(wallCollisionTime, collisionMsg);
+		scheduleAt(boundaryCollisionTime, collisionMsg);
 
 	} else if (minTime == scheduledCollisionTime) {
 		// Leave it as it is scheduled
@@ -255,11 +255,11 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 	double transferTime;
 	double collisionTime;
-	double wallCollisionTime;
+	double boundaryCollisionTime;
 
 	transferTime = NO_TIME;
 	collisionTime = NO_TIME;
-	wallCollisionTime = NO_TIME;
+	boundaryCollisionTime = NO_TIME;
 
 	// Step 1. Find the next event in the queue.
 
@@ -281,7 +281,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 		this->handleCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
-	} else if (kind == EV_WALLCOLLISION) {
+	} else if (kind == EV_BOUNDARYCOLLISION) {
 
 		this->handleWallCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
@@ -309,7 +309,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 	// neighboring cells.
 
 	collisionTime = SphereMobility::nextCollision(collisionMsg, kind, this);
-	wallCollisionTime = SphereMobility::nextWallCollision(collisionMsg, this);
+	boundaryCollisionTime = SphereMobility::nextBoundaryCollision(collisionMsg, this);
 
 	// Step 5. Adjust the position of the event and its new partner’s event in the 
 	// event queue. Since a wall collision changes the path of a particle, we only 
@@ -338,7 +338,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 	} else {
 
-		if (collisionTime < wallCollisionTime && collisionTime != NO_TIME) {
+		if (collisionTime < boundaryCollisionTime && collisionTime != NO_TIME) {
 
 			collisionMsg->setKind(EV_COLLISION);
 			collisionMsg->setCollisionTime(collisionTime);
@@ -349,10 +349,10 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 		} else {
 
-			collisionMsg->setKind(EV_WALLCOLLISION);
-			collisionMsg->setCollisionTime(wallCollisionTime);
+			collisionMsg->setKind(EV_BOUNDARYCOLLISION);
+			collisionMsg->setCollisionTime(boundaryCollisionTime);
 
-			scheduleAt(wallCollisionTime, collisionMsg);
+			scheduleAt(boundaryCollisionTime, collisionMsg);
 		
 		}
 
