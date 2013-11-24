@@ -72,6 +72,7 @@ class Manager : public cSimpleModule {
 		cOutVector particleCollisionsVector;
 		cOutVector wallCollisionsVector;
 		cOutVector transfersVector;
+		cOutVector expiresVector;
 
 	public:
 
@@ -133,7 +134,7 @@ class Manager : public cSimpleModule {
 		void registerCollision(void);
 		void registerWallCollision(void);
 		void registerTransfer(void);
-
+		void registerExpire(void);
 };
 
 #endif

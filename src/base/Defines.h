@@ -65,6 +65,7 @@ typedef struct Statistics {
 	unsigned long long particleCollisions;
 	unsigned long long wallCollisions;
 	unsigned long long transfers;
+	unsigned long long expires;
 } statistics_t;
 
 // Space cell side points that allows to obtain the side equation and compute 

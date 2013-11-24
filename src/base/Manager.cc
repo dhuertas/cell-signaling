@@ -72,6 +72,7 @@ void Manager::initialize(int stage) {
 		particleCollisionsVector.setName("particleCollisions");
 		wallCollisionsVector.setName("wallCollisions");
 		transfersVector.setName("transfers");
+		expiresVector.setName("expires");
 
 		// Set the mode of operation for the molecule dynamics 
 		setMode(par("mode"));
@@ -348,6 +349,7 @@ void Manager::handleMessage(cMessage *msg) {
 		particleCollisionsVector.recordWithTimestamp(st, stats.particleCollisions);
 		wallCollisionsVector.recordWithTimestamp(st, stats.wallCollisions);
 		transfersVector.recordWithTimestamp(st, stats.transfers);
+		expiresVector.recordWithTimestamp(st, stats.expires);
 
 		// Clear the stats data structure
 		clearStatistics();
@@ -456,4 +458,11 @@ void Manager::registerWallCollision() {
  */
 void Manager::registerTransfer() {
 	stats.transfers++;
+}
+
+/*
+ * Increment the expires counter
+ */
+void Manager::registerExpire() {
+	stats.expires++;
 }

@@ -120,6 +120,8 @@ void Cell::expire() {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
+	manager->registerExpire();
+
 	// Get out of the simulation space gracefully
 	this->finishMobility();
 

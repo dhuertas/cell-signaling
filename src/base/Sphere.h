@@ -18,14 +18,14 @@ class Sphere : public Circle, public cSimpleModule {
 
 	private:
 
-		Manager *manager;
-
 		// Self messages
 		TransferMessage *transferMsg;
 		CollisionMessage *collisionMsg;
 		OutOfNeighborhoodMessage *outOfNeighborhoodMsg;
 
 	protected:
+
+		Manager *manager;
 
 	public:
 
