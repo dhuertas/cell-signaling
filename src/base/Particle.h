@@ -100,7 +100,8 @@ class Particle {
 
 		// Event related methods
 		virtual void initMobilityMessages() = 0;
-		virtual void initEvents() = 0;
+		virtual void initializeMobility() = 0;
+		virtual void finishMobility() = 0;
 
 		virtual void createNearNeighborList() = 0;
 		virtual void updateNearNeighborList() = 0;

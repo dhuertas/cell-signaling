@@ -36,7 +36,9 @@ class Sphere : public Circle, public cSimpleModule {
 		void deleteMobilityMessages(void);
 
 		// Initialize the event queue
-		void initEvents(void);
+		void initializeMobility(void);
+		void finishMobility(void);
+		void finishMobility(Particle *from);
 
 		void handleMobilityMessage(cMessage *);
 

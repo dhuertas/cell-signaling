@@ -112,7 +112,7 @@ void Molecule::handleMessage(cMessage *msg) {
 		}
 
 	} else if (kind == EV_TTLEXPIRE) {
-
+		expire();
 	}
 
 }
@@ -136,4 +136,21 @@ void Molecule::finish() {
 		delete yPositionVector;
 		delete zPositionVector;
 	}
+}
+
+/*
+ * Molecule must expire. This function gets called when the timeToLive 
+ * parameter is set and the event EV_TTLEXPIRE arrives.
+ */
+void Molecule::expire() {
+	// Methods called from other modules must have this macro
+	Enter_Method_Silent();
+
+	// Get out of the simulation space gracefully
+	this->finishMobility();
+
+	// Call finish method
+	this->callFinish();
+	this->deleteModule();
+
 }

@@ -51,9 +51,9 @@ simple Manager {
 		// - highdensity
 		string particleDistribution = default("undefined");
 
-		// Refresh rate. Tells the manager when to update the position
+		// Tk refresh rate. Tells the manager when to update the position
 		// string of the particles for the tk environment.
-		double refreshRate = default(5000);
+		double tkRefreshRate = default(5000);
 
 		// Statistics refresh rate.
 		double statsRefreshRate = default(0);

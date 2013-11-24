@@ -37,6 +37,8 @@ class Molecule : public Sphere {
 
 		~Molecule();
 
+		void expire();
+
 		// cSimpleModule inheritance
 		virtual void initialize(int);
 		virtual int numInitStages(void) const;

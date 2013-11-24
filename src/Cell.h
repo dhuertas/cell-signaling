@@ -27,6 +27,7 @@ class Cell : public Sphere {
 	public:
 
 		~Cell();
+		void expire();
 
 		// cSimpleModule inheritance
 		virtual void initialize(int);

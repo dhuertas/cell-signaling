@@ -63,7 +63,7 @@ void Sphere::deleteMobilityMessages() {
  * Initialize the event queue by computing the first event for the sphere. This
  * method is called by the manager in order to initialize the event queue.
  */
-void Sphere::initEvents() {
+void Sphere::initializeMobility() {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
@@ -153,6 +153,69 @@ void Sphere::initEvents() {
 }
 
 /*
+ * This method gets called when the sphere must leave the simulation space
+ * (either it has expired, crossed a boundary, etc).
+ */
+void Sphere::finishMobility() {
+	// Methods called from other modules must have this macro
+	Enter_Method_Silent();
+
+	if (collisionMsg->isScheduled()) {
+
+		cancelEvent(collisionMsg);
+
+		// Change the event type of the third party sphere to EV_CHECK
+		if (collisionMsg->getPartner() != NULL) {
+
+			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
+
+		}
+
+	}
+
+	if (transferMsg->isScheduled()) {
+		cancelEvent(transferMsg);
+	}
+
+	if (outOfNeighborhoodMsg->isScheduled()) {
+		cancelEvent(transferMsg);
+	}
+
+}
+
+/*
+ * Method overwrite. Finish mobility when called from another sphere (it has
+ * been absorved by a receiver, combined with another molecule, etc).
+ */
+void Sphere::finishMobility(Particle *from) {
+	// Methods called from other modules must have this macro
+	Enter_Method_Silent();
+
+	if (collisionMsg->isScheduled()) {
+
+		cancelEvent(collisionMsg);
+
+		// Change the event type of the third party sphere to EV_CHECK
+		if (collisionMsg->getPartner() != NULL && 
+		from->getParticleId() != collisionMsg->getPartner()->getParticleId()) {
+
+			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
+
+		}
+
+	}
+
+	if (transferMsg->isScheduled()) {
+		cancelEvent(transferMsg);
+	}
+
+	if (outOfNeighborhoodMsg->isScheduled()) {
+		cancelEvent(transferMsg);
+	}
+
+}
+
+/*
  * This method gets called when the sphere is a partner in a collision event.
  *
  * @param {double} newTime: the collision event time
@@ -166,13 +229,10 @@ void Sphere::adjustCollision(double newTime, Particle *from) {
 	if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
 
 	// Change the event type of the third party sphere to EV_CHECK
-	if (collisionMsg->getPartner() != NULL) {
+	if (collisionMsg->getPartner() != NULL && 
+		from->getParticleId() != collisionMsg->getPartner()->getParticleId()) {
 
-		if (from->getParticleId() != collisionMsg->getPartner()->getParticleId()) {
-
-			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
-
-		}
+		((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
 
 	}
 

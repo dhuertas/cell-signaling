@@ -108,7 +108,7 @@ void Manager::initialize(int stage) {
 			EV << spaceCellSize << "\n";
 		}
 
-		tkEnvRefreshRate = par("refreshRate");
+		tkEnvRefreshRate = par("tkRefreshRate");
 		statsRefreshRate = par("statsRefreshRate");
 		enableWebServer = par("enableWebServer");
 
@@ -217,7 +217,7 @@ void Manager::initialize(int stage) {
 
 		// Make that every subscribed particle compute its next event time
 		for (p = particles.begin(); p != particles.end(); ++p) {
-			(*p)->initEvents();
+			(*p)->initializeMobility();
 		}
 
 		if (ev.isGUI()) {

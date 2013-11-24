@@ -96,7 +96,7 @@ void Cell::handleMessage(cMessage *msg) {
 		}
 
 	} else if (kind == EV_TTLEXPIRE) {
-		
+		expire();
 	}
 
 }
@@ -110,4 +110,21 @@ void Cell::finish() {
 	getManager()->unsubscribe(this);
 
 	// All events related to this cell should be discarded
+}
+
+/*
+ * Cell must expire. This function gets called when the timeToLive 
+ * parameter is set and the event EV_TTLEXPIRE arrives.
+ */
+void Cell::expire() {
+	// Methods called from other modules must have this macro
+	Enter_Method_Silent();
+
+	// Get out of the simulation space gracefully
+	this->finishMobility();
+
+	// Call finish method
+	this->callFinish();
+	this->deleteModule();
+
 }
