@@ -7,19 +7,31 @@
 #include <coutvector.h>
 #include <omnetpp.h>
 #include <string.h>
+
 #include <iostream>
 
 #include "base/Sphere.h"
+#include "messages/TimeToLive_m.h"
 
 class Molecule : public Sphere {
 
 	private:
 
-		Manager *manager;
+		// Amount of time that will pass before it expires.
+		double timeToLive;
 
+		// Update the cOutVectors periodically.
 		double statsRefreshRate;
 
+		// Self messages
+		TimeToLiveMessage *timeToLiveMsg;
+
 	protected:
+
+		// Vectors to track particle position over time.
+		cOutVector *xPositionVector;
+		cOutVector *yPositionVector;
+		cOutVector *zPositionVector;
 
 	public:
 

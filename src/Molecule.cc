@@ -38,6 +38,31 @@ void Molecule::initialize(int stage) {
 		setManager("manager");
 		getManager()->subscribe(this);
 
+		boundariesMode = par("boundariesMode");
+
+		timeToLive = par("timeToLive");
+
+		if (timeToLive > 0) {
+
+			timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+
+			scheduleAt(simTime() + timeToLive, timeToLiveMsg);
+
+		}
+
+		statsRefreshRate = par("statsRefreshRate");
+
+		if (statsRefreshRate > 0) {
+			xPositionVector = new cOutVector("x position");
+			yPositionVector = new cOutVector("y position");
+			zPositionVector = new cOutVector("z position");
+		}
+
+		if (statsRefreshRate > 0) {
+			scheduleAt(simTime() + statsRefreshRate/1000,
+				new cMessage("refresh", EV_STATSUPDATE));
+		}
+
 		// update Molecule position in the tk environment
 		tkEnvUpdatePosition();
 
@@ -66,9 +91,27 @@ int Molecule::numInitStages() const {
  */
 void Molecule::handleMessage(cMessage *msg) {
 
-	if (strcmp(msg->getName(), "mobility") == 0) {
+	int kind = msg->getKind();
+
+	if (ISMOBILITY(kind)) {
 
 		handleMobilityMessage(msg);
+
+	} else if (kind == EV_STATSUPDATE) {
+
+		double st = simTime().dbl();
+		double dt = st - lastCollisionTime;
+
+		// Put the statistics logged so far to cout vectors
+		xPositionVector->recordWithTimestamp(st, position.x + velocity.x * dt);
+		yPositionVector->recordWithTimestamp(st, position.y + velocity.y * dt);
+		zPositionVector->recordWithTimestamp(st, position.z + velocity.z * dt);
+
+		if (statsRefreshRate > 0) {
+			scheduleAt(st + statsRefreshRate/1000, msg);
+		}
+
+	} else if (kind == EV_TTLEXPIRE) {
 
 	}
 
@@ -82,4 +125,15 @@ void Molecule::finish() {
 	// Unsubscribe from the manager
 	getManager()->unsubscribe(this);
 
+	// Delete mobility messages
+	deleteMobilityMessages();
+
+	cancelAndDelete(timeToLiveMsg);
+
+	// Delete cOutvectors
+	if (statsRefreshRate > 0) {
+		delete xPositionVector;
+		delete yPositionVector;
+		delete zPositionVector;
+	}
 }

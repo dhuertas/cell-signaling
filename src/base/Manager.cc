@@ -142,7 +142,7 @@ void Manager::initialize(int stage) {
 			// Initialize the particle attributes
 			(*p)->setParticleId(count);
 			(*p)->setLastCollisionTime(0);
-			(*p)->initMessages();
+			(*p)->initMobilityMessages();
 
 			count++;
 

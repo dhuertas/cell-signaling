@@ -15,52 +15,6 @@
 
 package cellsignaling.src;
 
-simple Cell {
-
-	parameters:
-		double emitEvery;
-		double xpos;			// x coordinate initial position
-		double ypos;			// y coordinate initial position
-		double zpos;			// z coordinate initial position
-
-		double vx = default(0);	// x coordinate initial velocity
-		double vy = default(0);	// y coordinate initial velocity
-		double vz = default(0);	// z coordinate initial Velocity
-
-		double radius;			// Radius of the cell
-
-		double mass;
-
-		double listRadius = default(0);
-
-	gates:
-		input in;
-		output out;
-
-}
-
-simple Molecule {
-
-	parameters:
-		double xpos;			// x coordinate initial position
-		double ypos;			// y coordinate initial position
-		double zpos;			// z coordinate initial position
-
-		double vx;				// x coordinate initial velocity
-		double vy;				// y coordinate initial velocity
-		double vz;				// z coordinate initial Velocity
-
-		double radius;			// Radius of the molecule
-
-		double mass;
-
-		double listRadius = default(0);
-
-	gates:
-		input in;
-		output out;
-}
-
 simple Manager {
 	
 	parameters:
@@ -97,12 +51,12 @@ simple Manager {
 		// - highdensity
 		string particleDistribution = default("undefined");
 
-		// Refresh rate, in milliseconds. Tells the manager when to update the position
+		// Refresh rate. Tells the manager when to update the position
 		// string of the particles for the tk environment.
 		double refreshRate = default(5000);
 
-		// Statistics refresh rate, in milliseconds.
-		double statsRefreshRate = default(1000);
+		// Statistics refresh rate.
+		double statsRefreshRate = default(0);
 
 		// Enable the Manager Web Server in order to visualize a 3D simulation 
 		// space from a web browser (WARNING: enable this option only if your
@@ -110,6 +64,95 @@ simple Manager {
 		int enableWebServer = default(0);
 
 	gates:
-	    input in;
+		input in;
 		output out;
+}
+
+simple Molecule {
+
+	parameters:
+
+		// The position of the particle at the time of the last event
+		double xpos;			// x position
+		double ypos;			// y position
+		double zpos;			// z position
+
+		// The velocity vector of the particle
+		double vx = default(0);	// x component velocity
+		double vy = default(0);	// y component velocity
+		double vz = default(0);	// z component velocity
+
+		// Radius of the particle
+		double radius = default(1);
+
+		// Mass of the particle
+		double mass = default(1);
+
+		// Radius for the near neighbor list when using the Verlet list
+		// algorithm (mode = M_NNLIST).
+		double listRadius = default(0);
+
+		// Amount of time that the particle exists in the simulation space. An
+		// event (EV_TTLEXPIRED) is used to manage when a particle must leave.
+		// Default 0 (does not expire).
+		double timeToLive = default(0);
+
+		// Particle behavior upon collision with a boundary element (cube walls
+		// for now). Possible modes are:
+		// 1 - Elastic wall collision (default). The particle bounces off the
+		//     wall.
+		// 2 - Particle expires. When the particle reaches a boundary it leaves
+		//     the simulation space.
+		// 3 - Periodic boundaries. The particle leaves the simulation space 
+		//     and appears on the opposite boundary, with the same velocity
+		//     vector (not implemented yet). Instead of the particle surface,
+		//     the center of the particle is used to detect the boundary
+		//     transfer.
+		int boundariesMode = default(1);
+
+		// Statistics refresh rate
+		double statsRefreshRate = default(0);
+
+	gates:
+		input in;
+		output out;
+}
+
+simple Cell {
+
+	parameters:
+
+		double emitEvery;
+
+		double xpos;
+		double ypos;
+		double zpos;
+
+		double vx = default(0);
+		double vy = default(0);
+		double vz = default(0);
+
+		// Radius of the cell
+		double radius = default(1);
+
+		// Mass of the cell
+		double mass = default(1);
+
+		// Radius for the near neighbor list when using the Verlet list
+		// algorithm (mode = M_NNLIST).
+		double listRadius = default(0);
+
+		// Amount of time that the cell lives. Default 0 (does not expire).
+		double timeToLive = default(0);
+
+		// Same as the Molecule boundariesMode parameter.
+		int boundariesMode = default(1);
+
+		// Statistics refresh rate
+		double statsRefreshRate = default(0);
+
+	gates:
+		input in;
+		output out;
+
 }

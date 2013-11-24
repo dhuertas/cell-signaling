@@ -40,6 +40,25 @@ void Cell::initialize(int stage) {
 		setManager("manager");
 		getManager()->subscribe(this);
 
+		boundariesMode = par("boundariesMode");
+
+		timeToLive = par("timeToLive");
+
+		if (timeToLive > 0) {
+
+			timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+
+			scheduleAt(simTime() + timeToLive, timeToLiveMsg);
+
+		}
+
+		statsRefreshRate = par("statsRefreshRate");
+
+		if (statsRefreshRate > 0) {
+			scheduleAt(simTime() + statsRefreshRate/1000,
+				new cMessage("refresh", EV_STATSUPDATE));
+		}
+
 		// update Cell position in the tk environment
 		tkEnvUpdatePosition();
 
@@ -64,11 +83,21 @@ int Cell::numInitStages() const {
  */
 void Cell::handleMessage(cMessage *msg) {
 
-    if (strcmp(msg->getName(), "mobility") == 0) {
+	int kind = msg->getKind();
+
+    if (ISMOBILITY(kind)) {
 
         handleMobilityMessage(msg);
 
-    }
+    } else if (kind == EV_STATSUPDATE) {
+
+		if (statsRefreshRate > 0) {
+			scheduleAt(simTime() + statsRefreshRate/1000, msg);
+		}
+
+	} else if (kind == EV_TTLEXPIRE) {
+		
+	}
 
 }
 

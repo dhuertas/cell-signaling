@@ -32,7 +32,8 @@ class Sphere : public Circle, public cSimpleModule {
 		Sphere() : Circle() {};
 		Sphere(double, double, double, double , double, double, double, double);
 
-		void initMessages(void);
+		void initMobilityMessages(void);
+		void deleteMobilityMessages(void);
 
 		// Initialize the event queue
 		void initEvents(void);

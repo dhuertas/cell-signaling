@@ -4,15 +4,23 @@
 #include <string.h>
 #include <iostream>
 
-#include "Manager.h"
 #include "base/Sphere.h"
-
+#include "messages/TimeToLive_m.h"
 class Cell : public Sphere {
 
 	private:
 
 		double emitEvery;   // Dumb var to test simulation
 		int emitCount;
+
+		// Amount of time that will pass before it expires.
+		double timeToLive;
+
+		// Update the cOutVectors periodically.
+		double statsRefreshRate;
+
+		// Self messages
+		TimeToLiveMessage *timeToLiveMsg;
 
 	protected:
 

@@ -34,7 +34,7 @@ Sphere::Sphere(
  * Initialize the self messages. This method is called by the manager module
  * during network initialization.
  */
-void Sphere::initMessages() {
+void Sphere::initMobilityMessages() {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
@@ -47,6 +47,16 @@ void Sphere::initMessages() {
 	transferMsg->setManager(manager);
 	collisionMsg->setManager(manager);
 
+}
+
+void Sphere::deleteMobilityMessages() {
+	// Methods called from other modules must have this macro
+	Enter_Method_Silent();
+
+	cancelAndDelete(transferMsg);
+	cancelAndDelete(collisionMsg);
+	cancelAndDelete(outOfNeighborhoodMsg);
+	
 }
 
 /*

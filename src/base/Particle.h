@@ -25,9 +25,14 @@ class Particle {
 		int prevSpaceCell;
 		index_t prevSpaceCellIdx;
 
-		// Near Neighbor List attributes
+		// Near Neighbor List of particles
 		std::vector<Particle*> neighborParticles;
+
+		// Near Neighbor List radius
 		double listRadius;
+
+		// Boundaries mode. Whether the particle must bounce, expire, etc.
+		int boundariesMode;
 
 	public:
 
@@ -60,7 +65,9 @@ class Particle {
 		double getLastCollisionTime(void) { return lastCollisionTime; };
 
 		std::vector<Particle*> getNeighborParticles(void) { return neighborParticles; };
-		
+
+		int getBoundariesMode(void) { return boundariesMode; };
+
 		void setParticleId(int id) { particleId = id; };
 
 		void setX(double x) { position.x = x; };
@@ -84,13 +91,15 @@ class Particle {
 		virtual void setRadius(double) = 0;
 		void setLastCollisionTime(double tc) { lastCollisionTime = tc; };
 
+		void setBoundariesMode(int bm) { boundariesMode = bm; };
+
 		// tk Environment methods
 		virtual void tkEnvDrawShape(void) = 0;
 		virtual void tkEnvUpdatePosition(void) = 0;
 		virtual void tkEnvUpdatePosition(double) = 0;
 
 		// Event related methods
-		virtual void initMessages() = 0;
+		virtual void initMobilityMessages() = 0;
 		virtual void initEvents() = 0;
 
 		virtual void createNearNeighborList() = 0;

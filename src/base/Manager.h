@@ -11,7 +11,7 @@
 #include <list>
 
 #include "Particle.h"
-#include "ParticleDistribution.h"
+#include "ParticleDistributionHelper.h"
 #include "WebServer.h"
 
 class Manager : public cSimpleModule {
