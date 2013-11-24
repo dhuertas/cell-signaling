@@ -128,14 +128,10 @@ void Molecule::finish() {
 	// Delete mobility messages
 	deleteMobilityMessages();
 
-	cancelAndDelete(timeToLiveMsg);
-
-	// Delete cOutvectors
-	if (statsRefreshRate > 0) {
-		delete xPositionVector;
-		delete yPositionVector;
-		delete zPositionVector;
+	if (timeToLive > 0) {
+		cancelAndDelete(timeToLiveMsg);
 	}
+
 }
 
 /*
@@ -148,11 +144,19 @@ void Molecule::expire() {
 
 	manager->registerExpire();
 
+	// Unsubscribe from the manager
+	getManager()->unsubscribe(this);
+
 	// Get out of the simulation space gracefully
 	this->finishMobility();
 
-	// Call finish method
-	this->callFinish();
+	// Delete mobility messages
+	deleteMobilityMessages();
+
+	if (timeToLive > 0) {
+		cancelAndDelete(timeToLiveMsg);
+	}
+
 	this->deleteModule();
 
 }

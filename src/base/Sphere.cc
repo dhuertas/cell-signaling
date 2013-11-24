@@ -50,13 +50,11 @@ void Sphere::initMobilityMessages() {
 }
 
 void Sphere::deleteMobilityMessages() {
-	// Methods called from other modules must have this macro
-	Enter_Method_Silent();
 
 	cancelAndDelete(transferMsg);
 	cancelAndDelete(collisionMsg);
 	cancelAndDelete(outOfNeighborhoodMsg);
-	
+
 }
 
 /*
@@ -157,8 +155,6 @@ void Sphere::initializeMobility() {
  * (either it has expired, crossed a boundary, etc).
  */
 void Sphere::finishMobility() {
-	// Methods called from other modules must have this macro
-	Enter_Method_Silent();
 
 	if (collisionMsg->isScheduled()) {
 
@@ -283,7 +279,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 	} else if (kind == EV_BOUNDARYCOLLISION) {
 
-		this->handleWallCollision((CollisionMessage *)msg);
+		this->handleBoundaryCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
 	} else if (kind == EV_CHECK) {
@@ -504,6 +500,22 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 
 	// Statistics
 	manager->registerCollision();
+}
+
+void Sphere::handleBoundaryCollision(CollisionMessage *msg) {
+
+	if (boundariesMode == BM_ELASTIC) {
+
+		handleWallCollision(msg);
+
+	} else if (boundariesMode == BM_EXPIRE) {
+
+		expire();
+
+	} else if (boundariesMode == BM_PERIODIC) {
+
+	}
+
 }
 
 /*

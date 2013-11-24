@@ -105,6 +105,8 @@ class Particle {
 
 		virtual void createNearNeighborList() = 0;
 		virtual void updateNearNeighborList() = 0;
+
+		virtual void expire() = 0;
 };
 
 #endif

@@ -109,7 +109,13 @@ void Cell::finish() {
 	// Unsubscribe from the manager
 	getManager()->unsubscribe(this);
 
-	// All events related to this cell should be discarded
+	// Delete mobility messages
+	deleteMobilityMessages();
+
+	if (timeToLive > 0) {
+		cancelAndDelete(timeToLiveMsg);
+	}
+
 }
 
 /*
@@ -117,16 +123,22 @@ void Cell::finish() {
  * parameter is set and the event EV_TTLEXPIRE arrives.
  */
 void Cell::expire() {
-	// Methods called from other modules must have this macro
-	Enter_Method_Silent();
 
 	manager->registerExpire();
+
+	// Unsubscribe from the manager
+	getManager()->unsubscribe(this);
 
 	// Get out of the simulation space gracefully
 	this->finishMobility();
 
-	// Call finish method
-	this->callFinish();
+	// Delete mobility messages
+	deleteMobilityMessages();
+
+	if (timeToLive > 0) {
+		cancelAndDelete(timeToLiveMsg);
+	}
+
 	this->deleteModule();
 
 }
