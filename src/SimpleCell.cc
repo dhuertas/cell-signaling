@@ -1,17 +1,17 @@
-#include "Cell.h"
+#include "SimpleCell.h"
 
 using namespace std;
 
-Define_Module(Cell);
+Define_Module(SimpleCell);
 
-Cell::~Cell() {
+SimpleCell::~SimpleCell() {
 
 }
 
 /*
  * Cell initialization
  */
-void Cell::initialize(int stage) {
+void SimpleCell::initialize(int stage) {
 
 	std::stringstream buffer;
 
@@ -72,7 +72,7 @@ void Cell::initialize(int stage) {
 /*
  *
  */
-int Cell::numInitStages() const {
+int SimpleCell::numInitStages() const {
 	return 2;
 }
 
@@ -81,7 +81,7 @@ int Cell::numInitStages() const {
  *
  * @param msg pointer to a cMessage object
  */
-void Cell::handleMessage(cMessage *msg) {
+void SimpleCell::handleMessage(cMessage *msg) {
 
 	int kind = msg->getKind();
 
@@ -96,7 +96,9 @@ void Cell::handleMessage(cMessage *msg) {
 		}
 
 	} else if (kind == EV_TTLEXPIRE) {
+
 		expire();
+
 	}
 
 }
@@ -104,7 +106,7 @@ void Cell::handleMessage(cMessage *msg) {
 /*
  * Clean and close everything.
  */
-void Cell::finish() {
+void SimpleCell::finish() {
 
 	// Unsubscribe from the manager
 	getManager()->unsubscribe(this);
@@ -122,7 +124,7 @@ void Cell::finish() {
  * Cell must expire. This function gets called when the timeToLive 
  * parameter is set and the event EV_TTLEXPIRE arrives.
  */
-void Cell::expire() {
+void SimpleCell::expire() {
 
 	manager->registerExpire();
 

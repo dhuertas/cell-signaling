@@ -15,7 +15,7 @@
 
 package cellsignaling.networks;
 
-import cellsignaling.src.Cell;
+import cellsignaling.src.SimpleCell;
 import cellsignaling.src.Manager;
 import cellsignaling.src.Molecule;
 
@@ -33,8 +33,8 @@ network test
 		manager: Manager {
 			@display("p=30,30;i=block/cogwheel");
 		}
-		emitter: Cell;
-		receiver: Cell;
+		emitter: SimpleCell;
+		receiver: SimpleCell;
 		molecule: Molecule;
 
 	connections allowunconnected:

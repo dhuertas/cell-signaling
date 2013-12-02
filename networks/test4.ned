@@ -15,7 +15,7 @@
 
 package cellsignaling.networks;
 
-import cellsignaling.src.Cell;
+import cellsignaling.src.SimpleCell;
 import cellsignaling.src.Manager;
 import cellsignaling.src.Molecule;
 

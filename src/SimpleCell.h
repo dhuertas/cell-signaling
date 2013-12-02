@@ -5,13 +5,14 @@
 #include <iostream>
 
 #include "base/Sphere.h"
+#include "emitter/MoleculeEmitter.h"
+#include "receiver/MoleculeReceiver.h"
+
 #include "messages/TimeToLive_m.h"
-class Cell : public Sphere {
+
+class SimpleCell : public Sphere {
 
 	private:
-
-		double emitEvery;   // Dumb var to test simulation
-		int emitCount;
 
 		// Amount of time that will pass before it expires.
 		double timeToLive;
@@ -26,7 +27,7 @@ class Cell : public Sphere {
 
 	public:
 
-		~Cell();
+		~SimpleCell();
 		void expire();
 
 		// cSimpleModule inheritance
@@ -34,7 +35,10 @@ class Cell : public Sphere {
 		virtual int numInitStages() const;
 		virtual void handleMessage(cMessage *);
 		virtual void finish();
-		
+
+	friend class MoleculeEmitter;
+	friend class MoleculeReceiver;
+
 };
 
 #endif

@@ -13,6 +13,8 @@
 #define EV_TKENVUPDATE			6
 #define EV_STATSUPDATE			7
 #define EV_TTLEXPIRE			8
+#define EV_EMIT					9
+#define EV_RECEIVE				10
 
 // Collision algorithm modes
 #define M_CELLLIST				1	// Only Cell Lists are used
@@ -22,6 +24,10 @@
 #define BM_ELASTIC				1
 #define BM_EXPIRE				2
 #define BM_PERIODIC				3
+
+// Status
+#define STATUS_OFF				0
+#define STATUS_ON				1
 
 #define BUFFER_LENGTH 	1048576 // 1024*1024
 #define READ			0
