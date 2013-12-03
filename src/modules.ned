@@ -118,12 +118,37 @@ simple Molecule {
 		output out;
 }
 
-simple Cell {
+simple MoleculeEmitter {
+	
+	parameters:
+
+		string emissionFunction = default("pulse");
+		double emissionStart = default(-1);
+		double emissionDuration = default(0);
+		double emissionRate = default(0);
+
+	gates:
+		input in;
+		output out;
+
+}
+
+simple MoleculeReceiver {
 
 	parameters:
 
-		double emitEvery;
+	gates:
+		input in;
+		output out;
+	
+}
 
+simple SimpleCell {
+	
+	parameters:
+		//
+		// Mobility parameters
+		//
 		double xpos;
 		double ypos;
 		double zpos;
@@ -154,5 +179,21 @@ simple Cell {
 	gates:
 		input in;
 		output out;
+
+}
+
+module Cell {
+
+	gates:
+		input in;
+		output out;
+
+	submodules:
+
+		mobility: SimpleCell;
+		emitter: MoleculeEmitter;
+		receiver: MoleculeReceiver;
+
+	connections allowunconnected:
 
 }

@@ -678,10 +678,12 @@ CollisionMessage * Sphere::getCollisionMessage() {
 void Sphere::tkEnvDrawShape() {
 
 	std::stringstream buffer;
+	cModule *parent = getParentModule();
 
 	// We will use the shape drawing tool to draw a circle around the particle
 	// center instead of using
 	buffer << 2*getRadius();
+
 	getDisplayString().setTagArg("b", 0, buffer.str().c_str());
 	getDisplayString().setTagArg("b", 1, buffer.str().c_str());
 
@@ -689,6 +691,20 @@ void Sphere::tkEnvDrawShape() {
 	getDisplayString().setTagArg("b", 3, "white");
 	getDisplayString().setTagArg("b", 4, "black");
 	getDisplayString().setTagArg("b", 5, 1);
+
+	// If it's a cell also draw the shape of the parent module
+	if (parent != NULL) {
+
+		parent->getDisplayString().setTagArg("b", 0, buffer.str().c_str());
+		parent->getDisplayString().setTagArg("b", 1, buffer.str().c_str());
+
+		parent->getDisplayString().setTagArg("b", 2, "oval");
+		parent->getDisplayString().setTagArg("b", 3, "white");
+		parent->getDisplayString().setTagArg("b", 4, "black");
+		parent->getDisplayString().setTagArg("b", 5, 1);
+
+	}
+
 }
 
 /*
