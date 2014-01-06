@@ -49,6 +49,166 @@ void uniformDistribution(vect_t spaceSize, std::list<Particle *> *particles) {
 
 }
 
+void uniformDistribution2(vect_t spaceSize, std::list<Particle *> *particles) {
+
+	bool overlap;
+
+	int Nx, Ny, Nz;
+	int i, j, k;
+	int a, b, c;
+
+	int count;
+
+	double maxRadius;
+
+	point_t pos;
+	vect_t range;
+
+	std::list<Particle *>::iterator p, q;
+	std::vector<std::list<Particle*> > spaceCellLists;
+	std::vector<int> spaceCells;
+	std::vector<int>::iterator sci;
+
+	count = 0;
+	maxRadius = 0;
+
+	for (p = particles->begin(); p != particles->end(); ++p) {
+		if (maxRadius < (*p)->getRadius()) maxRadius = (*p)->getRadius();
+	}
+
+	Nx = ceil(spaceSize.x/2/maxRadius);
+	Ny = ceil(spaceSize.y/2/maxRadius);
+	Nz = ceil(spaceSize.z/2/maxRadius);
+
+	spaceCellLists.resize(Nx*Ny*Nz);
+
+	p = particles->begin();
+
+	while (p != particles->end()) {
+
+		overlap = false;
+
+		range.x = spaceSize.x - 2*(*p)->getRadius();
+		range.y = spaceSize.y - 2*(*p)->getRadius();
+		range.z = spaceSize.z - 2*(*p)->getRadius();
+
+		// We are using the Omnet internal random number generator dblrand()
+		pos.x = (*p)->getRadius() + range.x*dblrand();
+		pos.y = (*p)->getRadius() + range.y*dblrand();
+		pos.z = (*p)->getRadius() + range.z*dblrand();
+
+		i = floor(pos.x/2/maxRadius);
+		j = floor(pos.y/2/maxRadius);
+		k = floor(pos.z/2/maxRadius);
+
+		for (a = -1; a <= 1; a++)
+		for (b = -1; b <= 1; b++)
+		for (c = -1; c <= 1; c++) {
+			if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, Nx, Ny, Nz)) {
+				spaceCells.push_back((i+a)*Ny*Nz + (j+b)*Nz + k+c);
+			}
+		}
+		
+		for (sci = spaceCells.begin(); sci != spaceCells.end(); ++sci) {
+			for (q = spaceCellLists.at(*sci).begin(); q != spaceCellLists.at(*sci).end(); ++q) {
+				if (checkOverlap(pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
+					overlap = true;
+					break;
+				}
+			}
+
+			if (overlap) break;
+		}
+
+		if (overlap) {
+			continue;
+		} else {
+		    spaceCellLists.at(i*Ny*Nz + j*Nz + k).push_back(*p);
+			(*p)->setPosition(pos);
+			++p;
+			count++;
+			std::cout << "Particles placed: " << count;
+			std::cout << ". Remaining: " << (particles->size()-count) << std::endl;
+		}
+	}
+
+}
+
+void uniformDistribution3(vect_t spaceSize, std::list<Particle *> *particles) {
+
+	unsigned int Nx, Ny, Nz;
+	unsigned int i, j, k;
+	unsigned int idx;
+	int count;
+	unsigned int available;
+	int cell;
+	double maxRadius;
+	double d;
+
+	point_t pos;
+	vect_t offset;
+	std::vector<int> cellIndexes;
+
+	std::list<Particle *>::iterator p;
+
+	count = 0;
+	maxRadius = 0;
+	d = 1.001;
+
+	for (p = particles->begin(); p != particles->end(); ++p) {
+		if (maxRadius < (*p)->getRadius()) maxRadius = (*p)->getRadius();
+	}
+
+	Nx = floor(spaceSize.x/(2*maxRadius*d));
+	Ny = floor(spaceSize.y/(2*maxRadius*d));
+	Nz = floor(spaceSize.z/(2*maxRadius*d));
+
+	std::cout << "Space cells: " << Nx << " " << Ny << " " << Nz << std::endl;
+
+	offset.x = spaceSize.x - Nx*(2*maxRadius*d);
+	offset.y = spaceSize.y - Ny*(2*maxRadius*d);
+	offset.z = spaceSize.z - Nz*(2*maxRadius*d);
+
+	available = Nx*Ny*Nz;
+
+	if (available < particles->size()) {
+		std::cout << "Unable to place particles." << std::endl;
+		exit(-1);
+	}
+
+	for (i = 0; i < available; i++) {
+		cellIndexes.push_back(i);
+	}
+
+	p = particles->begin();
+
+	while (p != particles->end()) {
+
+		cell = intrand(cellIndexes.size());
+		available--;
+
+		idx = cellIndexes.at(cell);
+		cellIndexes.erase(cellIndexes.begin() + cell);
+
+		i = idx/Nz/Ny;
+		j = (idx%(Nz*Ny))/Nz;
+		k = (idx%(Nz*Ny))%Nz;
+
+		pos.x = offset.x/2 + maxRadius*d*(1 + 2*i);
+		pos.y = offset.y/2 + maxRadius*d*(1 + 2*j);
+		pos.z = offset.z/2 + maxRadius*d*(1 + 2*k);
+
+		std::cout << "Particle " << count << "position:";
+		std::cout << " x=" << pos.x;
+		std::cout << " y=" << pos.y;
+		std::cout << " z=" << pos.z << std::endl;
+
+		(*p)->setPosition(pos);
+		++p;
+	}
+
+}
+
 /*
  * Place each particle following a cube pattern.
  *
@@ -282,6 +442,7 @@ void sphereEquallyDistributed(vect_t spaceSize, std::list<Particle *> *particles
  */
 void highDensityDistribution(vect_t spaceSize, std::list<Particle *> *particles, point_t c) {
 
+	// TODO añadir una cuadrícula
 	bool overlap;
 
 	uint8_t overlapCount;
@@ -299,14 +460,17 @@ void highDensityDistribution(vect_t spaceSize, std::list<Particle *> *particles,
 
 		overlap = false;
 
-		pos.x = dblRandNormal(c.x, movingVariance);
-		pos.y = dblRandNormal(c.y, movingVariance);
-		pos.z = dblRandNormal(c.z, movingVariance);
+		pos.x = 0;
+		pos.y = 0;
+		pos.z = 0;
 
-		if (pos.x - (*p)->getRadius() < 0 || pos.x + (*p)->getRadius() > spaceSize.x ||
-			pos.y - (*p)->getRadius() < 0 || pos.y + (*p)->getRadius() > spaceSize.y ||
-			pos.z - (*p)->getRadius() < 0 || pos.z + (*p)->getRadius() > spaceSize.z) {
-			continue;	
+		while (pos.x - (*p)->getRadius() <= 0 || pos.x + (*p)->getRadius() >= spaceSize.x ||
+			pos.y - (*p)->getRadius() <= 0 || pos.y + (*p)->getRadius() >= spaceSize.y ||
+			pos.z - (*p)->getRadius() <= 0 || pos.z + (*p)->getRadius() >= spaceSize.z) {
+			
+			pos.x = dblRandNormal(c.x, movingVariance);
+			pos.y = dblRandNormal(c.y, movingVariance);
+			pos.z = dblRandNormal(c.z, movingVariance);
 		}
 
 		for (q = particles->begin(); q != p; ++q) {
@@ -319,15 +483,147 @@ void highDensityDistribution(vect_t spaceSize, std::list<Particle *> *particles,
 		}
 
 		if ( ! overlap) {
+
 			(*p)->setPosition(pos);
 			++p;
+
 		} else {
+
 			overlapCount--;
 			if (overlapCount == 0) {
 				overlapCount = 100;
+				movingVariance++;
 			}
-			movingVariance++;
+
 		}
+
+	}
+
+}
+
+void densepacked(vect_t spaceSize, std::list<Particle *> *particles, point_t c) {
+
+	//int cx, cy;
+	int plane, row;
+	unsigned int count;
+	//double srt;
+	double r, R;
+	
+	point_t pos;
+	std::list<Particle *>::iterator p;
+
+	//cx = 0; cy = 0;
+	//srt = sqrt(3);
+	count = 0;
+	r = 0;
+
+	for (p = particles->begin(); p != particles->end(); ++p) {
+		if (r < (*p)->getRadius()) r = (*p)->getRadius();
+	}
+
+	r = r*1.01;
+	// R = pow(particles->size()*1.098/0.7404804897, 1.0/3.0)*r; // N = 1000
+	R = pow(particles->size()*1.065/0.7404804897, 1.0/3.0)*r; // N = 10000
+
+	pos.x = r; pos.y = r; pos.z = r;
+
+	p = particles->begin();
+/*
+	while (pos.x + r < spaceSize.x) {
+
+		while (pos.y + r < spaceSize.y) {
+
+			while (pos.z + r < spaceSize.z) {
+
+				if ((c.x-pos.x)*(c.x-pos.x) + (c.y-pos.y)*(c.y-pos.y) + 
+					(c.z-pos.z)*(c.z-pos.z) < R*R) {
+
+					if (count < particles->size()) {
+						std::cout << "Particle " << count << " position: ";
+						std::cout << " x=" << pos.x;
+						std::cout << " y=" << pos.y;
+						std::cout << " z=" << pos.z << std::endl;
+						(*p)->setPosition(pos);
+						++p;
+						count++;
+					}
+
+				}
+
+				pos.z += 2*r;
+
+			}
+
+			cy++;
+
+			pos.y += srt*r;
+
+			pos.z = cy%2 == 0 ? r : 2*r;
+
+			pos.z += cx%2 == 0 ? 0 : ;
+
+		}
+
+		cx++;
+
+		pos.x += srt*r; 
+		pos.y = cx%2 == 0 ? r : 2*r;
+
+	}
+*/
+	plane = 0;
+	row = 0;
+
+	pos.z = r;
+
+	while (pos.z + r < spaceSize.z) {
+
+		if (plane % 2 == 0) { // A plane
+			pos.y = r;
+		} else {
+			pos.y = r + sqrt(3.0)*r/3.0; // B plane
+		}
+
+		while (pos.y + r < spaceSize.y) {
+
+			if (plane % 2 == 0) {
+				pos.x = row % 2 == 0 ? 2*r : r;
+			} else {
+				pos.x = row % 2 == 0 ? r : 2*r;
+			}
+
+			while (pos.x + r < spaceSize.x) {
+
+				if ((c.x-pos.x)*(c.x-pos.x) + (c.y-pos.y)*(c.y-pos.y) + 
+					(c.z-pos.z)*(c.z-pos.z) < R*R) {
+
+					if (count < particles->size()) {
+						std::cout << "Particle " << count << " position: ";
+						std::cout << " x=" << pos.x;
+						std::cout << " y=" << pos.y;
+						std::cout << " z=" << pos.z << std::endl;
+						(*p)->setPosition(pos);
+						++p;
+						count++;
+					}
+
+				}
+
+				pos.x += 2*r;
+
+			}
+
+			row++;
+
+			pos.y += sqrt(3.0)*r;
+
+		}
+
+		// Finished a plane, add z
+		pos.z += 2.0*sqrt(6.0)*r/3.0;
+
+		plane++;
+		row = 0;
 
 	}
 

@@ -185,8 +185,14 @@ space_position_over_simtime() {
 
 	CONFIG="space-position-over-simtime"
 	INI_FILE="$NETWORKS_FOLDER/space-position-over-simtime.ini"
+  VD="0.35"
 
 	echo "[Config $CONFIG]" > $INI_FILE
+	echo "hsa.numberOfInitialMolecules = 10000" >> $INI_FILE
+	echo "hsa.spaceSizeX = (10000*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
+	echo "hsa.spaceSizeY = (10000*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
+	echo "hsa.spaceSizeZ = (10000*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
+  echo "hsa.molecule[499].statsRefreshRate = 100 " >> $INI_FILE
 
 	RUN_TS=`date +%Y%m%d_%H%M%S`
 	echo "output-vector-file = ../\${resultdir}/$RUN_TS-\${configname}-\${runnumber}.vec" >> $INI_FILE
@@ -205,18 +211,20 @@ rt_vs_space_cell_length_vs_verlet_radius() {
 	CONFIG="rt-vs-space-cell-length-vs-verlet-radius"
 	INI_FILE="$NETWORKS_FOLDER/rt-vs-space-cell-length-vs-verlet-radius.ini"
 
-	VDS=( "0.15" "0.35")
+	#VDS=( "0.15" "0.35")
+	VDS=( "0.35" )
 
 	for VD in ${VDS[@]} # Volume density
 	do
-		for CS in {2..10} # Space cell size (particle radius = 1, diameter = 2)
+		for CS in {3..3} # Space cell size (particle radius = 1, diameter = 2)
 		do
-			VLR=( "1.2" "1.4" "1.6" "1.8" "2.0" "2.2" "2.4" "2.6" "2.8" "3.0" ) # Verlet list radius
-			for LR in ${VLR[@]}
+			# VLR=( "1.2" "1.4" "1.6" "1.8" "2.0" "2.2" "2.4" "2.6" "2.8" "3.0" ) # Verlet list radius
+			VLR=( "1.2" "1.4" "1.6" "1.8" "2.0" "2.2" "2.4" "2.6" "2.8" "3.0" "4.0" "5.0" "6.0" "7.0" "8.0" "9.0" "10.0") # Verlet list radius
+      for LR in ${VLR[@]}
 			do
 				echo "[Config $CONFIG]" > $INI_FILE
 				echo "hsa.manager.spaceCellSize = $CS" >> $INI_FILE
-				echo "hsa.numberOfInitialMolecules = \${N=10000}" >> $INI_FILE
+				echo "hsa.numberOfInitialMolecules = \${N=1000}" >> $INI_FILE
 				echo "hsa.spaceSizeX = (\${N}*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
 				echo "hsa.spaceSizeY = (\${N}*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE
 				echo "hsa.spaceSizeZ = (\${N}*(4/3.0)*$M_PI/$VD)^(1/3.0)" >> $INI_FILE

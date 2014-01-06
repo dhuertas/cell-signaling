@@ -122,10 +122,21 @@ simple MoleculeEmitter {
 	
 	parameters:
 
+		bool enabled = default(false);
+
 		string emissionFunction = default("pulse");
+
 		double emissionStart = default(-1);
+
 		double emissionDuration = default(0);
+
 		double emissionRate = default(0);
+
+		double emissionParticleRadius = default(1);
+
+		double emissionParticleMass = default(1);
+
+		double emissionTimeToLive = default(0);
 
 	gates:
 		input in;
@@ -136,6 +147,11 @@ simple MoleculeEmitter {
 simple MoleculeReceiver {
 
 	parameters:
+
+		bool enabled = default(false);
+
+		// Statistics refresh rate
+		double statsRefreshRate = default(0);
 
 	gates:
 		input in;

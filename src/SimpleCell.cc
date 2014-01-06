@@ -19,6 +19,8 @@ void SimpleCell::initialize(int stage) {
 		// Manager module initializes during this stage
 	} else if (stage == 1) {
 
+		setParticleType(T_SIMPLECELL);
+
 		// Initial position
 		setX(par("xpos").doubleValue());
 		setY(par("ypos").doubleValue());
@@ -70,7 +72,7 @@ void SimpleCell::initialize(int stage) {
 }
 
 /*
- *
+ * Returns the number of initialization stages.
  */
 int SimpleCell::numInitStages() const {
 	return 2;

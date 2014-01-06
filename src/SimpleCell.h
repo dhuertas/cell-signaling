@@ -5,8 +5,6 @@
 #include <iostream>
 
 #include "base/Sphere.h"
-#include "emitter/MoleculeEmitter.h"
-#include "receiver/MoleculeReceiver.h"
 
 #include "messages/TimeToLive_m.h"
 
@@ -35,9 +33,6 @@ class SimpleCell : public Sphere {
 		virtual int numInitStages() const;
 		virtual void handleMessage(cMessage *);
 		virtual void finish();
-
-	friend class MoleculeEmitter;
-	friend class MoleculeReceiver;
 
 };
 

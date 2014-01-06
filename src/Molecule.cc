@@ -17,6 +17,8 @@ void Molecule::initialize(int stage) {
 		// Manager module initializes during this stage
 	} else if (stage == 1) {
 
+		setParticleType(T_MOLECULE);
+
 		// Initial position
 		setX(par("xpos").doubleValue());
 		setY(par("ypos").doubleValue());
@@ -158,5 +160,21 @@ void Molecule::expire() {
 	}
 
 	this->deleteModule();
+
+}
+
+void Molecule::scheduleExpire(double time) {
+    // Methods called from other modules must have this macro
+    Enter_Method_Silent();
+
+    if (timeToLive > 0) {
+        if (timeToLiveMsg->isScheduled()) {
+            cancelEvent(timeToLiveMsg);
+        }
+    } else {
+        timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+    }
+
+    scheduleAt(time, timeToLiveMsg);
 
 }

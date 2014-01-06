@@ -16,6 +16,13 @@
 #define EV_EMIT					9
 #define EV_RECEIVE				10
 
+// Particle types
+#define T_MOLECULE				1
+#define T_SIMPLECELL			2
+#define T_EMITTER				3
+#define T_RECEIVER				4
+#define T_EMITTER_RECEIVER		5
+
 // Collision algorithm modes
 #define M_CELLLIST				1	// Only Cell Lists are used
 #define M_NNLIST				2	// A combination of Near-Neighbor List and Cell List methods is used
@@ -67,7 +74,7 @@ typedef struct CellIndex3D {
 } index_t;
 
 typedef struct Statistics {
-	unsigned long long  allCollisions;
+	unsigned long long allCollisions;
 	unsigned long long particleCollisions;
 	unsigned long long wallCollisions;
 	unsigned long long transfers;

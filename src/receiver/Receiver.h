@@ -15,6 +15,8 @@ class Receiver {
 
 	protected:
 
+		bool enabled;
+
 		uint8_t receiverStatus;
 
 		uint8_t receiverType;

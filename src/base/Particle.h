@@ -17,6 +17,7 @@ class Particle {
 		double lastCollisionTime;
 
 		int particleId;
+		int particleType;
 
 		// Cell List attributes
 		int spaceCell;
@@ -41,6 +42,7 @@ class Particle {
 
 		// Gets and sets
 		int getParticleId(void) { return particleId; };
+		int getParticleType(void) { return particleType; };
 
 		double getX(void) { return position.x; };
 		double getY(void) { return position.y; };
@@ -69,6 +71,7 @@ class Particle {
 		int getBoundariesMode(void) { return boundariesMode; };
 
 		void setParticleId(int id) { particleId = id; };
+		void setParticleType(int t) { particleType = t; };
 
 		void setX(double x) { position.x = x; };
 		void setY(double y) { position.y = y; };

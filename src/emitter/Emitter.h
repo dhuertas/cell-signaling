@@ -15,6 +15,8 @@ class Emitter {
 
 	protected:
 
+		bool enabled;
+
 		uint8_t emitterStatus;
 
 		uint64_t emitterCount;

@@ -1,6 +1,8 @@
 #include "Sphere.h"
 #include "mobility/SphereMobility.h"
-
+#include "../Molecule.h"
+#include "../SimpleCell.h"
+#include "../receiver/MoleculeReceiver.h"
 using namespace std;
 
 /*
@@ -299,7 +301,9 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 	transferTime = SphereMobility::nextTransfer(transferMsg, this);
 
-	scheduleAt(transferTime, transferMsg);
+	if (transferTime != NO_TIME) {
+		scheduleAt(transferTime, transferMsg);
+	}
 
 	// Step 4. Compute the next collision time with particles in appropriate 
 	// neighboring cells.
@@ -348,7 +352,9 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 			collisionMsg->setKind(EV_BOUNDARYCOLLISION);
 			collisionMsg->setCollisionTime(boundaryCollisionTime);
 
-			scheduleAt(boundaryCollisionTime, collisionMsg);
+			if (boundaryCollisionTime != NO_TIME) {
+				scheduleAt(boundaryCollisionTime, collisionMsg);
+			}
 		
 		}
 
@@ -385,6 +391,13 @@ void Sphere::handleTransfer(TransferMessage *msg) {
  */
 void Sphere::handleCollision(CollisionMessage *msg) {
 
+	// There are four possible cases:
+	//   1. Molecule to molecule collision
+	//   2. Molecule to cell collision
+	//   3. cell to molecule collision
+	//   4. cell to cell collision
+	int partnerParticleType;
+
 	double tc, m1, m2, tmp;
 	double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
 
@@ -392,114 +405,138 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	vect_t v1, n, e1, e2;
 
 	Particle *p;
-
-	tc = msg->getCollisionTime();
 	p = msg->getPartner();
+	tc = msg->getCollisionTime();
 
-	// Find the center position of the spheres
-	c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
-	c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
-	c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
+	partnerParticleType = p->getParticleType();
 
-	c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
-	c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
-	c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
+	if (particleType == T_MOLECULE && 
+		(partnerParticleType == T_RECEIVER || 
+		partnerParticleType == T_EMITTER_RECEIVER)) {
+		// This is a molecule and the other is a receiver
 
-	m1 = this->getMass();
-	m2 = p->getMass();
+		EV << "Particle expired!" << std::endl;
+		((MoleculeReceiver *)((SimpleCell *)p)->getParentModule()->getSubmodule("receiver"))->registerReception();
+		((Molecule *)this)->expire(); // TODO change this, perhaps using gates
 
-	// Change frame of reference of the system to one of the spheres
-	v1.x = this->getVx() - p->getVx();
-	v1.y = this->getVy() - p->getVy();
-	v1.z = this->getVz() - p->getVz();
+	} else if ((particleType == T_RECEIVER || 
+		particleType == T_EMITTER_RECEIVER) &&
+		partnerParticleType == T_MOLECULE) {
+		// we are a receiver and the other is a molecule
 
-	// Find the normal vector of the plane of collision
-	n.x = c2.x - c1.x;
-	n.y = c2.y - c1.y;
-	n.z = c2.z - c1.z;
+		EV << "Particle expired!" << std::endl;
+		((MoleculeReceiver *)getParentModule()->getSubmodule("receiver"))->registerReception();
+		((Molecule *)p)->scheduleExpire(tc); // TODO change this, perhaps using gates
 
-	tmp = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+	} else { // everything else
 
-	n.x /= tmp;
-	n.y /= tmp;
-	n.z /= tmp;
+		// Find the center position of the spheres
+		c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
+		c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
+		c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
 
-	// Find e1 as the perpendicular vector to both n and v, and then e2 as the 
-	// one perpendicular to n and e1
-	e1.x = n.y*v1.z - n.z*v1.y;
-	e1.y = n.z*v1.x - n.x*v1.z;
-	e1.z = n.x*v1.y - n.y*v1.x;
+		c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
+		c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
+		c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
 
-	// Normalize the vector found, e1
-	tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
+		m1 = this->getMass();
+		m2 = p->getMass();
 
-	e1.x /= tmp;
-	e1.y /= tmp;
-	e1.z /= tmp;
+		// Change frame of reference of the system to one of the spheres
+		v1.x = this->getVx() - p->getVx();
+		v1.y = this->getVy() - p->getVy();
+		v1.z = this->getVz() - p->getVz();
 
-	// Find the velocity vectors in the new basis and if ...
-	v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
+		// Find the normal vector of the plane of collision
+		n.x = c2.x - c1.x;
+		n.y = c2.y - c1.y;
+		n.z = c2.z - c1.z;
 
-	if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
-		// n and v are parallel, we can solve directly
-		tmp = (m1 - m2)*v1n/(m1 + m2);
-		v2n = 2*m1*v1n/(m1 + m2);
-		v1n = tmp;
+		tmp = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
 
-		// Revert the frame of reference, the velocity vectors and set the new 
-		// velocity
-		setVx(v1n*n.x + p->getVx());
-		setVy(v1n*n.y + p->getVy());
-		setVz(v1n*n.z + p->getVz());
+		n.x /= tmp;
+		n.y /= tmp;
+		n.z /= tmp;
 
-		p->setVx(v2n*n.x + p->getVx());
-		p->setVy(v2n*n.y + p->getVy());
-		p->setVz(v2n*n.z + p->getVz());
+		// Find e1 as the perpendicular vector to both n and v, and then e2 as the 
+		// one perpendicular to n and e1
+		e1.x = n.y*v1.z - n.z*v1.y;
+		e1.y = n.z*v1.x - n.x*v1.z;
+		e1.z = n.x*v1.y - n.y*v1.x;
 
-	} else {
+		// Normalize the vector found, e1
+		tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
 
-		e2.x = e1.y*n.z - e1.z*n.y;
-		e2.y = e1.z*n.x - e1.x*n.z;
-		e2.z = e1.x*n.y - e1.y*n.x;
+		e1.x /= tmp;
+		e1.y /= tmp;
+		e1.z /= tmp;
 
-		// Find the rest of the components
-		v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
-		v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
+		// Find the velocity vectors in the new basis and if ...
+		v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
 
-		v2n  = 0.0;
-		v2e1 = 0.0;
-		v2e2 = 0.0;
+		if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
+			// n and v are parallel, we can solve directly
+			tmp = (m1 - m2)*v1n/(m1 + m2);
+			v2n = 2*m1*v1n/(m1 + m2);
+			v1n = tmp;
 
-		// Find the new velocity in the normal component (remember that v2n 
-		// initially is 0.0)
-		tmp = (m1 - m2)*v1n/(m1 + m2);
-		v2n = 2*m1*v1n/(m1 + m2);
-		v1n = tmp;
+			// Revert the frame of reference, the velocity vectors and set the new 
+			// velocity
+			setVx(v1n*n.x + p->getVx());
+			setVy(v1n*n.y + p->getVy());
+			setVz(v1n*n.z + p->getVz());
 
-		// Revert the frame of reference, the velocity vectors and set the new 
-		// velocity
-		setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
-		setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
-		setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
+			p->setVx(v2n*n.x + p->getVx());
+			p->setVy(v2n*n.y + p->getVy());
+			p->setVz(v2n*n.z + p->getVz());
 
-		p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
-		p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
-		p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
+		} else {
+
+			e2.x = e1.y*n.z - e1.z*n.y;
+			e2.y = e1.z*n.x - e1.x*n.z;
+			e2.z = e1.x*n.y - e1.y*n.x;
+
+			// Find the rest of the components
+			v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
+			v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
+
+			v2n  = 0.0;
+			v2e1 = 0.0;
+			v2e2 = 0.0;
+
+			// Find the new velocity in the normal component (remember that v2n 
+			// initially is 0.0)
+			tmp = (m1 - m2)*v1n/(m1 + m2);
+			v2n = 2*m1*v1n/(m1 + m2);
+			v1n = tmp;
+
+			// Revert the frame of reference, the velocity vectors and set the new 
+			// velocity
+			setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
+			setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
+			setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
+
+			p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
+			p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
+			p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
+
+		}
+
+		// Update the particles position
+		setPosition(c1);
+		p->setPosition(c2);
+
+		// Update the last collision times
+		setLastCollisionTime(tc);
+		p->setLastCollisionTime(tc);
+
+		SphereMobility::resetCollisionMessage(msg);
+
+		// Statistics
+		manager->registerCollision();
 
 	}
 
-	// Update the particles position
-	setPosition(c1);
-	p->setPosition(c2);
-
-	// Update the last collision times
-	setLastCollisionTime(tc);
-	p->setLastCollisionTime(tc);
-
-	SphereMobility::resetCollisionMessage(msg);
-
-	// Statistics
-	manager->registerCollision();
 }
 
 void Sphere::handleBoundaryCollision(CollisionMessage *msg) {
@@ -692,9 +729,7 @@ void Sphere::tkEnvDrawShape() {
 	getDisplayString().setTagArg("b", 4, "black");
 	getDisplayString().setTagArg("b", 5, 1);
 
-	// If it's a cell also draw the shape of the parent module
-	if (parent != NULL) {
-
+	if (parent != NULL && strcmp(parent->getName(), "cell") == 0) {
 		parent->getDisplayString().setTagArg("b", 0, buffer.str().c_str());
 		parent->getDisplayString().setTagArg("b", 1, buffer.str().c_str());
 
@@ -702,7 +737,6 @@ void Sphere::tkEnvDrawShape() {
 		parent->getDisplayString().setTagArg("b", 3, "white");
 		parent->getDisplayString().setTagArg("b", 4, "black");
 		parent->getDisplayString().setTagArg("b", 5, 1);
-
 	}
 
 }
@@ -714,21 +748,31 @@ void Sphere::tkEnvDrawShape() {
 void Sphere::tkEnvUpdatePosition() {
 
 	std::stringstream buffer;
+	cModule *parent = getParentModule();
 
-	// Set position string for tkenv
 	buffer << getY();
 
-	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	// Set position string for tkenv
+	if (strcmp(getName(), "molecule") == 0) {
+		getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	}
+
+	if (parent != NULL && strcmp(parent->getName(), "cell") == 0) {
+		parent->getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	}
+
 	buffer.str(std::string()); // clear buffer
 
 	buffer << getX();
+	if (strcmp(getName(), "molecule") == 0) {
+		getDisplayString().setTagArg("p", 1, buffer.str().c_str());
+	}
 
-	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
+	if (parent != NULL && strcmp(parent->getName(), "cell") == 0) {
+		parent->getDisplayString().setTagArg("p", 1, buffer.str().c_str());
+	}
+
 	buffer.str(std::string());
-
-	// EV << "x: " << getX() << ", ";
-	// EV << "y: " << getY() << ", ";
-	// EV << "z: " << getZ() << "\n";
 
 }
 
@@ -741,23 +785,36 @@ void Sphere::tkEnvUpdatePosition() {
 void Sphere::tkEnvUpdatePosition(double t) {
 
 	std::stringstream buffer;
+	cModule *parent = getParentModule();
 
 	double lc = getLastCollisionTime();
 
 	// Set position string for tkenv
 	buffer << getY() + getVy()*(t-lc);
 
-	getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	if (strcmp(getName(), "molecule") == 0) {
+		getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	}
+
+	// Also move the parent's shape
+	if (parent != NULL && strcmp(parent->getName(), "cell") == 0) {
+		parent->getDisplayString().setTagArg("p", 0, buffer.str().c_str());
+	}
+
 	buffer.str(std::string()); // clear buffer
 
 	buffer << getX() + getVx()*(t-lc);
 
-	getDisplayString().setTagArg("p", 1, buffer.str().c_str());
-	buffer.str(std::string());
+	if (strcmp(getName(), "molecule") == 0) {
+		getDisplayString().setTagArg("p", 1, buffer.str().c_str());
+	}
 
-	// EV << "x: " << getX() + getVx()*(t - lc) << ", ";
-	// EV << "y: " << getY() + getVy()*(t - lc) << ", ";
-	// EV << "z: " << getZ() + getVz()*(t - lc) << "\n";
+	// Also move the parent's shape
+	if (parent != NULL && strcmp(parent->getName(), "cell") == 0) {
+		parent->getDisplayString().setTagArg("p", 1, buffer.str().c_str());
+	}
+
+	buffer.str(std::string());
 
 }
 

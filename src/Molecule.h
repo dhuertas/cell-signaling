@@ -38,6 +38,7 @@ class Molecule : public Sphere {
 		~Molecule();
 
 		void expire();
+		void scheduleExpire(double);
 
 		// cSimpleModule inheritance
 		virtual void initialize(int);

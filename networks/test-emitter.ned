@@ -20,7 +20,7 @@ network domain
 			@display("p=-30,-30;i=block/cogwheel");
 		}
 
-		cell: Cell;
+		cell[2]: Cell;
 		molecule[numberOfInitialMolecules]: Molecule;
 
 	connections allowunconnected:

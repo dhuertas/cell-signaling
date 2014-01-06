@@ -35,7 +35,7 @@ VD="0.15"
 for i in {10..80..10}
 do
 	write_ini $i $VD
-	$CMD -u Cmdenv -c test4 -f $OMNET_INI | grep "100%" | awk '{print $6}' >> $OUTPUT_FILE
+	$CMD -u Cmdenv -c test4 -f $OMNET_INI | grep -i "100%\|Error" >> $OUTPUT_FILE
 done
 
 # for i in {1..50}

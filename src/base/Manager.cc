@@ -169,7 +169,7 @@ void Manager::initialize(int stage) {
 
 			if (particleDistribution.compare("uniform") == 0) {
 
-				uniformDistribution(spaceSize, &particles);
+				uniformDistribution3(spaceSize, &particles);
 
 			} else if (particleDistribution.compare("cube") == 0) {
 
@@ -185,8 +185,21 @@ void Manager::initialize(int stage) {
 			    point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
 				highDensityDistribution(spaceSize, &particles, c);
 
+			} else if (particleDistribution.compare("densepacked") == 0) {
+				point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
+				densepacked(spaceSize, &particles, c);
 			}
 
+		}
+
+		count = 0;
+		std::cout << "Particle start position" << std::endl;
+		for (p = particles.begin(); p != particles.end(); ++p) {
+			std::cout << "particle[" << count << "]:";
+			std::cout << " x = " << (*p)->getX();
+			std::cout << " y = " << (*p)->getY();
+			std::cout << " z = " << (*p)->getZ() << std::endl;
+			count++;
 		}
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
@@ -365,6 +378,19 @@ void Manager::handleMessage(cMessage *msg) {
  * Clean and close everything.
  */
 void Manager::finish() {
+
+	unsigned int count;
+	std::list<Particle *>::const_iterator p;
+
+	count = 0;
+	std::cout << "Particle end position" << std::endl;
+	for (p = particles.begin(); p != particles.end(); ++p) {
+		std::cout << "particle[" << count << "]:";
+		std::cout << " x = " << (*p)->getX() + (*p)->getVx()*(100-(*p)->getLastCollisionTime());
+		std::cout << " y = " << (*p)->getY() + (*p)->getVy()*(100-(*p)->getLastCollisionTime());
+		std::cout << " z = " << (*p)->getZ() + (*p)->getVz()*(100-(*p)->getLastCollisionTime()) << std::endl;
+		count++;
+	}
 
 	if (enableWebServer == 1) {
 		stopWebServerThread();
