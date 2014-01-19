@@ -51,6 +51,9 @@ void Sphere::initMobilityMessages() {
 
 }
 
+/*
+ *
+ */
 void Sphere::deleteMobilityMessages() {
 
 	cancelAndDelete(transferMsg);
@@ -148,7 +151,7 @@ void Sphere::initializeMobility() {
 	} else if (minTime == scheduledCollisionTime) {
 		// Leave it as it is scheduled
 	} else {
-		// minTime == NO_TIME;
+		// minTime equals NO_TIME;
 	}
 }
 
@@ -183,6 +186,8 @@ void Sphere::finishMobility() {
 /*
  * Method overwrite. Finish mobility when called from another sphere (it has
  * been absorved by a receiver, combined with another molecule, etc).
+ *
+ * @param {Particle *} from
  */
 void Sphere::finishMobility(Particle *from) {
 	// Methods called from other modules must have this macro
@@ -273,7 +278,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 	} else if (kind == EV_OUTOFNEIGHBORHOOD) {
 
 		// The list will be updated anyway ... 
-		// Remove this "else if" section?
+		// TODO remove this "else if" section?
 
 	} else if (kind == EV_COLLISION) {
 
@@ -392,13 +397,6 @@ void Sphere::handleTransfer(TransferMessage *msg) {
  */
 void Sphere::handleCollision(CollisionMessage *msg) {
 
-	// There are four possible cases:
-	//   1. Molecule to molecule collision
-	//   2. Molecule to cell collision
-	//   3. cell to molecule collision
-	//   4. cell to cell collision
-	//int partnerParticleType;
-
 	double tc, m1, m2, tmp;
 	double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
 
@@ -511,8 +509,6 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	setLastCollisionTime(tc);
 	p->setLastCollisionTime(tc);
 
-	SphereMobility::resetCollisionMessage(msg);
-
 	// Statistics
 	manager->registerCollision();
 
@@ -538,7 +534,7 @@ void Sphere::handleBoundaryCollision(CollisionMessage *msg) {
  * Updates the position, velocity and the last collision time when the particle
  * collides with a wall.
  *
- * @param {WallCollisionMessage *} msg
+ * @param {CollisionMessage *} msg
  */
 void Sphere::handleWallCollision(CollisionMessage *msg) {
 
@@ -551,8 +547,6 @@ void Sphere::handleWallCollision(CollisionMessage *msg) {
 	setVz(msg->getVz());
 
 	setLastCollisionTime(msg->getCollisionTime());
-
-	SphereMobility::resetCollisionMessage(msg);
 
 	// Statistics
 	manager->registerWallCollision();
@@ -647,13 +641,12 @@ void Sphere::createNearNeighborList() {
 			}
 		}
 	}
-
 }
 
 /*
  * Add nearby spheres to the list.
  *
- * TODO: Need to find a way to remove as few particles as possible
+ * TODO need to find a way to remove as few particles as possible
  * instead of rebuilding the neighbor list every time.
  */
 void Sphere::updateNearNeighborList() {
@@ -663,7 +656,6 @@ void Sphere::updateNearNeighborList() {
 
 	// Look for the particles closer than listRadius
 	this->createNearNeighborList();
-
 }
 
 /*
@@ -674,7 +666,6 @@ void Sphere::updateNearNeighborList() {
 TransferMessage * Sphere::getTransferMessage() {
 
 	return this->transferMsg;
-
 }
 
 /*
@@ -685,7 +676,6 @@ TransferMessage * Sphere::getTransferMessage() {
 CollisionMessage * Sphere::getCollisionMessage() {
 
 	return this->collisionMsg;
-
 }
 
 /*
@@ -717,7 +707,6 @@ void Sphere::tkEnvDrawShape() {
 		parent->getDisplayString().setTagArg("b", 4, "black");
 		parent->getDisplayString().setTagArg("b", 5, 1);
 	}
-
 }
 
 /*
@@ -752,7 +741,6 @@ void Sphere::tkEnvUpdatePosition() {
 	}
 
 	buffer.str(std::string());
-
 }
 
 /*
@@ -794,7 +782,6 @@ void Sphere::tkEnvUpdatePosition(double t) {
 	}
 
 	buffer.str(std::string());
-
 }
 
 /*
