@@ -1133,6 +1133,8 @@ void *startServerThread(void *arguments) {
  */
 void endServerThread(int quitFd) {
 
-	write(quitFd, "1", 1);
+	if (write(quitFd, "1", 1) != 1) {
+	    EV << "write error\n";
+	}
 
 }

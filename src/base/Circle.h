@@ -14,8 +14,11 @@ class Circle : public Particle {
 	public:
 
 		Circle() : Particle () {};
+
 		Circle(double, double, double, double, double, double);
-		double getRadius(void) { return radius; };
+
+		inline double getRadius(void) { return radius; };
+
 		void setRadius(double r) { radius = r; };
 
 };

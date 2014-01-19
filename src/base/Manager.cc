@@ -401,7 +401,10 @@ void Manager::startWebServerThread() {
 
 	int res;
 
-	pipe(quitFd);
+	if(pipe(quitFd)) {
+	    EV << "pipe failed\n";
+	    return;
+	}
 
 	settings_t settings;
 
