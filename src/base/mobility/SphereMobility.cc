@@ -98,7 +98,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, int kind, Sphere *s)
 	// return NO_TIME.
 	prevCollisionTime = msg->getCollisionTime();
 
-	if (prevCollisionTime != NO_TIME) {
+	if (prevCollisionTime != NO_TIME && prevCollisionTime > sTime) {
 
 		partner = msg->getPartner();
 		prevPartner = msg->getPartner();

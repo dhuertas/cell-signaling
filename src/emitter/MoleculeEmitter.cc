@@ -76,17 +76,19 @@ void MoleculeEmitter::handleMessage(cMessage *msg) {
 		molecule = createMolecule();
 		molecule->callInitialize();
 		
-		molecule->setParticleId(0); // TODO set id accordingly
-		molecule->setLastCollisionTime(simTime().dbl());
-
-		if (manager->getMode() == M_NNLIST) {
-			molecule->setListRadius(2*10);
-			molecule->createNearNeighborList();
-		}
+		molecule->setParticleId(manager->getNextParticleId());
+		molecule->setParticleType(T_SIGNALING);
+		molecule->setLastCollisionTime(st);
 
 		molecule->initMobilityMessages();
 
 		manager->attachParticleToSpaceCell(molecule, -1);
+
+		if (manager->getMode() == M_NNLIST) {
+			molecule->setListRadius(2*emissionParticleRadius);
+			molecule->createNearNeighborList();
+		}
+
 		molecule->initializeMobility();
 
 		if (st < emissionStart + emissionDuration) {
@@ -232,7 +234,7 @@ void MoleculeEmitter::setManager(std::string param) {
 bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 
 	int a, b, c;			// Nested "for" loops
-	int i, j, k, n;			// Indexes to access the current space cell
+	int i, j, k;			// Indexes to access the current space cell
 	int *Nx, *Ny, *Nz;		// Number of space cells (or divisions) in each axis
 
 	double dx, dy, dz;
@@ -259,8 +261,6 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 	i = floor(ca.x/spaceCellSize);
 	j = floor(ca.y/spaceCellSize);
 	k = floor(ca.z/spaceCellSize);
-
-	n = i*(*Ny)*(*Nz) + j*(*Nz) + k;
 
 	if (manager->getMode() == M_NNLIST) {
 
@@ -298,7 +298,7 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 			dy = ca.y - cb.y;
 			dz = ca.z - cb.z;
 
-			if (sqrt(dx*dx + dy*dy + dz*dz) < ra + rb) {
+			if (sqrt(dx*dx + dy*dy + dz*dz) <= ra + rb) {
 				return true;
 			}
 

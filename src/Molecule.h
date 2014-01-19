@@ -11,6 +11,7 @@
 #include <iostream>
 
 #include "base/Sphere.h"
+#include "receiver/MoleculeReceiver.h"
 #include "messages/TimeToLive_m.h"
 
 class Molecule : public Sphere {
@@ -38,12 +39,22 @@ class Molecule : public Sphere {
 		~Molecule();
 
 		void expire();
+
 		void scheduleExpire(double);
 
+		bool isSignaling(cMessage *msg);
+
+		void handleSignaling(cMessage *msg);
+
+		//
 		// cSimpleModule inheritance
+		//
 		virtual void initialize(int);
+
 		virtual int numInitStages(void) const;
+
 		virtual void handleMessage(cMessage *);
+
 		virtual void finish();
 
 };

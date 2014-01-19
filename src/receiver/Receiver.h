@@ -3,12 +3,6 @@
 
 #include <stdint.h>
 
-#include <csimplemodule.h>
-#include <cmessage.h>
-
-#include "../Molecule.h"
-#include "../base/Defines.h"
-
 class Receiver {
 
 	private:

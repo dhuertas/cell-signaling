@@ -11,6 +11,9 @@
 #include "../SimpleCell.h"
 #include "../base/Manager.h"
 
+// Forward declarations
+class SimpleCell;
+
 class MoleculeReceiver : public Receiver, public cSimpleModule {
 
 	private:
@@ -31,16 +34,23 @@ class MoleculeReceiver : public Receiver, public cSimpleModule {
 	public:
 
 		MoleculeReceiver();
-		~MoleculeReceiver();
 
-		virtual void initialize(int);
-		virtual int numInitStages() const;
-		virtual void handleMessage(cMessage *);
-		virtual void finish();
+		~MoleculeReceiver();
 
 		void setManager(std::string);
 
-		void registerReception();
+		void registerReception(int particleType);
+
+		//
+		// cSimpleModule inheritance
+		//
+		virtual void initialize(int);
+
+		virtual int numInitStages() const;
+
+		virtual void handleMessage(cMessage *);
+
+		virtual void finish();
 };
 
 #endif

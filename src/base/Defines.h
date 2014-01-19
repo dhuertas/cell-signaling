@@ -22,6 +22,7 @@
 #define T_EMITTER				3
 #define T_RECEIVER				4
 #define T_EMITTER_RECEIVER		5
+#define T_SIGNALING				6
 
 // Collision algorithm modes
 #define M_CELLLIST				1	// Only Cell Lists are used

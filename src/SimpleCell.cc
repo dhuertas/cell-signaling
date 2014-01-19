@@ -87,11 +87,15 @@ void SimpleCell::handleMessage(cMessage *msg) {
 
 	int kind = msg->getKind();
 
-    if (ISMOBILITY(kind)) {
+	if (isSignaling(msg)) {
 
-        handleMobilityMessage(msg);
+		handleSignaling(msg);
 
-    } else if (kind == EV_STATSUPDATE) {
+	} else if (ISMOBILITY(kind)) {
+
+		handleMobilityMessage(msg);
+
+	} else if (kind == EV_STATSUPDATE) {
 
 		if (statsRefreshRate > 0) {
 			scheduleAt(simTime() + statsRefreshRate/1000, msg);
@@ -145,4 +149,76 @@ void SimpleCell::expire() {
 
 	this->deleteModule();
 
+}
+
+/*
+ *
+ */
+void SimpleCell::scheduleExpire(double time) {
+		// Methods called from other modules must have this macro
+		Enter_Method_Silent();
+
+		if (timeToLive > 0) {
+			if (timeToLiveMsg->isScheduled()) {
+					cancelEvent(timeToLiveMsg);
+			}
+		} else {
+			timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+		}
+
+		scheduleAt(time, timeToLiveMsg);
+
+}
+
+/*
+ *
+ */
+bool SimpleCell::isSignaling(cMessage *msg) {
+
+	int kind = msg->getKind();
+	CollisionMessage *cmsg;
+
+	cmsg = NULL;
+
+	if (kind == EV_COLLISION) {
+
+		cmsg = (CollisionMessage *)msg;
+
+		if (particleType == T_RECEIVER ||
+			particleType == T_EMITTER_RECEIVER) {
+
+			if (cmsg->getPartner()->getParticleType() == T_SIGNALING) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/*
+ * Handle the signaling process. This is a receiver and the other is a molecule.
+ *
+ * @param {cMessage *} msg
+ */
+void SimpleCell::handleSignaling(cMessage *msg) {
+
+	MoleculeReceiver *receiver;
+	Particle *p;
+
+	CollisionMessage *cmsg;
+
+	cmsg = (CollisionMessage *)msg;
+	p = cmsg->getPartner();
+
+	receiver = ((MoleculeReceiver *)getParentModule()->getSubmodule("receiver"));
+	receiver->registerReception(p->getParticleType());
+
+	// TODO change the following line, perhaps using gates
+	((Molecule *)p)->scheduleExpire(cmsg->getCollisionTime());
+
+	// Change the event type to CHECK so we can find the next event
+	// for the receiver
+	msg->setKind(EV_CHECK);
+	handleMobilityMessage(msg);
 }

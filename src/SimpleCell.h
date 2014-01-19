@@ -5,8 +5,9 @@
 #include <iostream>
 
 #include "base/Sphere.h"
-
+#include "receiver/MoleculeReceiver.h"
 #include "messages/TimeToLive_m.h"
+#include "Molecule.h"
 
 class SimpleCell : public Sphere {
 
@@ -26,12 +27,24 @@ class SimpleCell : public Sphere {
 	public:
 
 		~SimpleCell();
+
 		void expire();
 
+		void scheduleExpire(double time);
+
+		bool isSignaling(cMessage *msg);
+
+		void handleSignaling(cMessage *msg);
+
+		//
 		// cSimpleModule inheritance
+		//
 		virtual void initialize(int);
+
 		virtual int numInitStages() const;
-		virtual void handleMessage(cMessage *);
+
+		virtual void handleMessage(cMessage *msg);
+
 		virtual void finish();
 
 };

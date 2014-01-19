@@ -95,7 +95,11 @@ void Molecule::handleMessage(cMessage *msg) {
 
 	int kind = msg->getKind();
 
-	if (ISMOBILITY(kind)) {
+	if (isSignaling(msg)) {
+
+		handleSignaling(msg);
+
+	} else if (ISMOBILITY(kind)) {
 
 		handleMobilityMessage(msg);
 
@@ -163,18 +167,79 @@ void Molecule::expire() {
 
 }
 
+/*
+ *
+ * @param {double} time: simulation time to schedule the expire message
+ */
 void Molecule::scheduleExpire(double time) {
-    // Methods called from other modules must have this macro
-    Enter_Method_Silent();
+	// Methods called from other modules must have this macro
+	Enter_Method_Silent();
 
-    if (timeToLive > 0) {
-        if (timeToLiveMsg->isScheduled()) {
-            cancelEvent(timeToLiveMsg);
-        }
-    } else {
-        timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
-    }
+	if (timeToLive > 0) {
+		if (timeToLiveMsg->isScheduled()) {
+			cancelEvent(timeToLiveMsg);
+		}
+	} else {
+		timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+	}
 
-    scheduleAt(time, timeToLiveMsg);
+	scheduleAt(time, timeToLiveMsg);
 
+}
+
+/*
+ * Tells whether the molecule has to process a collision as a signaling.
+ *
+ * @param {cMessage *} msg
+ * @return {bool}
+ */
+bool Molecule::isSignaling(cMessage *msg) {
+
+	int partnerParticleType;
+
+	int kind = msg->getKind();
+	CollisionMessage *cmsg;
+
+	cmsg = NULL;
+	partnerParticleType = 0;
+
+	if (kind == EV_COLLISION) {
+
+		cmsg = (CollisionMessage *)msg;
+
+		if (particleType == T_SIGNALING) {
+
+			partnerParticleType = cmsg->getPartner()->getParticleType();
+
+			if (partnerParticleType == T_RECEIVER ||
+				partnerParticleType == T_EMITTER_RECEIVER) {
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/*
+ * Handle the signaling process. This is a molecule and the other is a receiver.
+ *
+ * @param {cMessage *} msg
+ */
+void Molecule::handleSignaling(cMessage *msg) {
+
+	MoleculeReceiver *receiver;
+	Particle *p;
+
+	CollisionMessage *cmsg;
+
+	cmsg = (CollisionMessage *)msg;
+	p = cmsg->getPartner();
+
+	receiver = (MoleculeReceiver *)((SimpleCell *)p)->getParentModule()
+		->getSubmodule("receiver");
+
+	receiver->registerReception(getParticleType());
+
+	expire();
 }

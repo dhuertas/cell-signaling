@@ -198,13 +198,15 @@ void uniformDistribution3(vect_t spaceSize, std::list<Particle *> *particles) {
 		pos.y = offset.y/2 + maxRadius*d*(1 + 2*j);
 		pos.z = offset.z/2 + maxRadius*d*(1 + 2*k);
 
-		std::cout << "Particle " << count << "position:";
+		std::cout << "Particle " << count << " position:";
 		std::cout << " x=" << pos.x;
 		std::cout << " y=" << pos.y;
 		std::cout << " z=" << pos.z << std::endl;
 
 		(*p)->setPosition(pos);
 		++p;
+
+		count++;
 	}
 
 }

@@ -47,8 +47,6 @@ void Manager::initialize(int stage) {
 
 	int N;
 
-    unsigned int count;
-
 	double diameter, tempSpaceCellSize;
 
 	cModule *module;
@@ -58,7 +56,6 @@ void Manager::initialize(int stage) {
 
 	// Initialize variables
 	N = 0;
-	count = 0;
 	diameter = 0.0;
 	tempSpaceCellSize = 0;
 
@@ -130,7 +127,7 @@ void Manager::initialize(int stage) {
 
 		// All the particles are in the simulation space now. We can determine 
 		// the space cell size in case it has been set to 0 (default).
-		count = 0;
+		lastParticleId = 0;
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
 
@@ -141,12 +138,13 @@ void Manager::initialize(int stage) {
 			}
 
 			// Initialize the particle attributes
-			(*p)->setParticleId(count);
+			(*p)->setParticleId(lastParticleId);
+
 			(*p)->setLastCollisionTime(0);
+
 			(*p)->initMobilityMessages();
 
-			count++;
-
+			lastParticleId++;
 		}
 
 		if (spaceCellSize == 0) {
@@ -189,17 +187,6 @@ void Manager::initialize(int stage) {
 				point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
 				densepacked(spaceSize, &particles, c);
 			}
-
-		}
-
-		count = 0;
-		std::cout << "Particle start position" << std::endl;
-		for (p = particles.begin(); p != particles.end(); ++p) {
-			std::cout << "particle[" << count << "]:";
-			std::cout << " x = " << (*p)->getX();
-			std::cout << " y = " << (*p)->getY();
-			std::cout << " z = " << (*p)->getZ() << std::endl;
-			count++;
 		}
 
 		for (p = particles.begin(); p != particles.end(); ++p) {
@@ -242,7 +229,6 @@ void Manager::initialize(int stage) {
 		if (enableWebServer == 1) {
 			startWebServerThread();
 		}
-
 	}
 
 }
@@ -335,6 +321,14 @@ std::list<Particle *> *Manager::getSpaceCellParticles(int n) {
 
 }
 
+unsigned int Manager::getNextParticleId() {
+
+	unsigned int result = lastParticleId;
+
+	lastParticleId++;
+
+	return result;
+}
 /*
  * Handles every message that the manager module receives.
  *
@@ -378,19 +372,6 @@ void Manager::handleMessage(cMessage *msg) {
  * Clean and close everything.
  */
 void Manager::finish() {
-
-	unsigned int count;
-	std::list<Particle *>::const_iterator p;
-
-	count = 0;
-	std::cout << "Particle end position" << std::endl;
-	for (p = particles.begin(); p != particles.end(); ++p) {
-		std::cout << "particle[" << count << "]:";
-		std::cout << " x = " << (*p)->getX() + (*p)->getVx()*(100-(*p)->getLastCollisionTime());
-		std::cout << " y = " << (*p)->getY() + (*p)->getVy()*(100-(*p)->getLastCollisionTime());
-		std::cout << " z = " << (*p)->getZ() + (*p)->getVz()*(100-(*p)->getLastCollisionTime()) << std::endl;
-		count++;
-	}
 
 	if (enableWebServer == 1) {
 		stopWebServerThread();

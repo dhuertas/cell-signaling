@@ -12,6 +12,7 @@ MoleculeReceiver::~MoleculeReceiver() {
 
 /*
  *
+ * @param {integer} stage
  */
 void MoleculeReceiver::initialize(int stage) {
 
@@ -58,6 +59,7 @@ int MoleculeReceiver::numInitStages() const {
 
 /*
  *
+ * @param {cMessage *} msg
  */
 void MoleculeReceiver::handleMessage(cMessage *msg) {
 
@@ -105,6 +107,11 @@ void MoleculeReceiver::setManager(std::string param) {
 
 }
 
-void MoleculeReceiver::registerReception() {
+/*
+ *
+ */
+void MoleculeReceiver::registerReception(int particleType) {
 	received++;
+	EV << "Molecule received with type " << particleType << "\n";
+	// TODO log the received particle type
 }

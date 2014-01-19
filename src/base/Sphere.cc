@@ -42,7 +42,7 @@ void Sphere::initMobilityMessages() {
 
 	transferMsg = new TransferMessage("mobility", EV_TRANSFER);
 	collisionMsg = new CollisionMessage("mobility", EV_NONE);
-	outOfNeighborhoodMsg = new OutOfNeighborhoodMessage("mobility",EV_OUTOFNEIGHBORHOOD);
+	outOfNeighborhoodMsg = new OutOfNeighborhoodMessage("mobility",EV_OUTOFNEIGHBORHOOD);	
 
 	SphereMobility::resetCollisionMessage(collisionMsg);
 
@@ -164,9 +164,8 @@ void Sphere::finishMobility() {
 
 		// Change the event type of the third party sphere to EV_CHECK
 		if (collisionMsg->getPartner() != NULL) {
-
-			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
-
+			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()
+				->setKind(EV_CHECK);
 		}
 
 	}
@@ -176,7 +175,7 @@ void Sphere::finishMobility() {
 	}
 
 	if (outOfNeighborhoodMsg->isScheduled()) {
-		cancelEvent(transferMsg);
+		cancelEvent(outOfNeighborhoodMsg);
 	}
 
 }
@@ -197,7 +196,8 @@ void Sphere::finishMobility(Particle *from) {
 		if (collisionMsg->getPartner() != NULL && 
 		from->getParticleId() != collisionMsg->getPartner()->getParticleId()) {
 
-			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
+			((Sphere *)collisionMsg->getPartner())->getCollisionMessage()
+				->setKind(EV_CHECK);
 
 		}
 
@@ -208,7 +208,7 @@ void Sphere::finishMobility(Particle *from) {
 	}
 
 	if (outOfNeighborhoodMsg->isScheduled()) {
-		cancelEvent(transferMsg);
+		cancelEvent(outOfNeighborhoodMsg);
 	}
 
 }
@@ -230,7 +230,8 @@ void Sphere::adjustCollision(double newTime, Particle *from) {
 	if (collisionMsg->getPartner() != NULL && 
 		from->getParticleId() != collisionMsg->getPartner()->getParticleId()) {
 
-		((Sphere *)collisionMsg->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
+		((Sphere *)collisionMsg->getPartner())->getCollisionMessage()
+			->setKind(EV_CHECK);
 
 	}
 
@@ -396,7 +397,7 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	//   2. Molecule to cell collision
 	//   3. cell to molecule collision
 	//   4. cell to cell collision
-	int partnerParticleType;
+	//int partnerParticleType;
 
 	double tc, m1, m2, tmp;
 	double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
@@ -408,134 +409,112 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	p = msg->getPartner();
 	tc = msg->getCollisionTime();
 
-	partnerParticleType = p->getParticleType();
+	// Find the center position of the spheres
+	c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
+	c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
+	c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
 
-	if (particleType == T_MOLECULE && 
-		(partnerParticleType == T_RECEIVER || 
-		partnerParticleType == T_EMITTER_RECEIVER)) {
-		// This is a molecule and the other is a receiver
+	c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
+	c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
+	c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
 
-		EV << "Particle expired!" << std::endl;
-		((MoleculeReceiver *)((SimpleCell *)p)->getParentModule()->getSubmodule("receiver"))->registerReception();
-		((Molecule *)this)->expire(); // TODO change this, perhaps using gates
+	m1 = this->getMass();
+	m2 = p->getMass();
 
-	} else if ((particleType == T_RECEIVER || 
-		particleType == T_EMITTER_RECEIVER) &&
-		partnerParticleType == T_MOLECULE) {
-		// we are a receiver and the other is a molecule
+	// Change frame of reference of the system to one of the spheres
+	v1.x = this->getVx() - p->getVx();
+	v1.y = this->getVy() - p->getVy();
+	v1.z = this->getVz() - p->getVz();
 
-		EV << "Particle expired!" << std::endl;
-		((MoleculeReceiver *)getParentModule()->getSubmodule("receiver"))->registerReception();
-		((Molecule *)p)->scheduleExpire(tc); // TODO change this, perhaps using gates
+	// Find the normal vector of the plane of collision
+	n.x = c2.x - c1.x;
+	n.y = c2.y - c1.y;
+	n.z = c2.z - c1.z;
 
-	} else { // everything else
+	tmp = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
 
-		// Find the center position of the spheres
-		c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
-		c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
-		c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
+	n.x /= tmp;
+	n.y /= tmp;
+	n.z /= tmp;
 
-		c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
-		c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
-		c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
+	// Find e1 as the perpendicular vector to both n and v, and then e2 as the 
+	// one perpendicular to n and e1
+	e1.x = n.y*v1.z - n.z*v1.y;
+	e1.y = n.z*v1.x - n.x*v1.z;
+	e1.z = n.x*v1.y - n.y*v1.x;
 
-		m1 = this->getMass();
-		m2 = p->getMass();
+	// Normalize the vector found, e1
+	tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
 
-		// Change frame of reference of the system to one of the spheres
-		v1.x = this->getVx() - p->getVx();
-		v1.y = this->getVy() - p->getVy();
-		v1.z = this->getVz() - p->getVz();
+	if (tmp > 0) {
+	    e1.x /= tmp;
+        e1.y /= tmp;
+        e1.z /= tmp;
+	}
 
-		// Find the normal vector of the plane of collision
-		n.x = c2.x - c1.x;
-		n.y = c2.y - c1.y;
-		n.z = c2.z - c1.z;
+	// Find the velocity vectors in the new basis and if ...
+	v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
 
-		tmp = sqrt(n.x*n.x + n.y*n.y + n.z*n.z);
+	if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
+		// n and v are parallel, we can solve directly
+		tmp = (m1 - m2)*v1n/(m1 + m2);
+		v2n = 2*m1*v1n/(m1 + m2);
+		v1n = tmp;
 
-		n.x /= tmp;
-		n.y /= tmp;
-		n.z /= tmp;
+		// Revert the frame of reference, the velocity vectors and set the new 
+		// velocity
+		setVx(v1n*n.x + p->getVx());
+		setVy(v1n*n.y + p->getVy());
+		setVz(v1n*n.z + p->getVz());
 
-		// Find e1 as the perpendicular vector to both n and v, and then e2 as the 
-		// one perpendicular to n and e1
-		e1.x = n.y*v1.z - n.z*v1.y;
-		e1.y = n.z*v1.x - n.x*v1.z;
-		e1.z = n.x*v1.y - n.y*v1.x;
+		p->setVx(v2n*n.x + p->getVx());
+		p->setVy(v2n*n.y + p->getVy());
+		p->setVz(v2n*n.z + p->getVz());
 
-		// Normalize the vector found, e1
-		tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
+	} else {
 
-		e1.x /= tmp;
-		e1.y /= tmp;
-		e1.z /= tmp;
+		e2.x = e1.y*n.z - e1.z*n.y;
+		e2.y = e1.z*n.x - e1.x*n.z;
+		e2.z = e1.x*n.y - e1.y*n.x;
 
-		// Find the velocity vectors in the new basis and if ...
-		v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
+		// Find the rest of the components
+		v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
+		v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
 
-		if (e1.x == 0.0 && e1.y == 0.0 && e1.z == 0.0) {
-			// n and v are parallel, we can solve directly
-			tmp = (m1 - m2)*v1n/(m1 + m2);
-			v2n = 2*m1*v1n/(m1 + m2);
-			v1n = tmp;
+		v2n  = 0.0;
+		v2e1 = 0.0;
+		v2e2 = 0.0;
 
-			// Revert the frame of reference, the velocity vectors and set the new 
-			// velocity
-			setVx(v1n*n.x + p->getVx());
-			setVy(v1n*n.y + p->getVy());
-			setVz(v1n*n.z + p->getVz());
+		// Find the new velocity in the normal component (remember that v2n 
+		// initially is 0.0)
+		tmp = (m1 - m2)*v1n/(m1 + m2);
+		v2n = 2*m1*v1n/(m1 + m2);
+		v1n = tmp;
 
-			p->setVx(v2n*n.x + p->getVx());
-			p->setVy(v2n*n.y + p->getVy());
-			p->setVz(v2n*n.z + p->getVz());
+		// Revert the frame of reference, the velocity vectors and set the new 
+		// velocity
+		setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
+		setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
+		setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
 
-		} else {
-
-			e2.x = e1.y*n.z - e1.z*n.y;
-			e2.y = e1.z*n.x - e1.x*n.z;
-			e2.z = e1.x*n.y - e1.y*n.x;
-
-			// Find the rest of the components
-			v1e1 = v1.x*e1.x + v1.y*e1.y + v1.z*e1.z;
-			v1e2 = v1.x*e2.x + v1.y*e2.y + v1.z*e2.z;
-
-			v2n  = 0.0;
-			v2e1 = 0.0;
-			v2e2 = 0.0;
-
-			// Find the new velocity in the normal component (remember that v2n 
-			// initially is 0.0)
-			tmp = (m1 - m2)*v1n/(m1 + m2);
-			v2n = 2*m1*v1n/(m1 + m2);
-			v1n = tmp;
-
-			// Revert the frame of reference, the velocity vectors and set the new 
-			// velocity
-			setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
-			setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
-			setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
-
-			p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
-			p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
-			p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
-
-		}
-
-		// Update the particles position
-		setPosition(c1);
-		p->setPosition(c2);
-
-		// Update the last collision times
-		setLastCollisionTime(tc);
-		p->setLastCollisionTime(tc);
-
-		SphereMobility::resetCollisionMessage(msg);
-
-		// Statistics
-		manager->registerCollision();
+		p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
+		p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
+		p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
 
 	}
+
+	// Update the particles position
+	setPosition(c1);
+	p->setPosition(c2);
+
+	// Update the last collision times
+	setLastCollisionTime(tc);
+	p->setLastCollisionTime(tc);
+
+	SphereMobility::resetCollisionMessage(msg);
+
+	// Statistics
+	manager->registerCollision();
 
 }
 
@@ -550,7 +529,7 @@ void Sphere::handleBoundaryCollision(CollisionMessage *msg) {
 		expire();
 
 	} else if (boundariesMode == BM_PERIODIC) {
-
+		// TODO complete this
 	}
 
 }
@@ -653,16 +632,16 @@ void Sphere::createNearNeighborList() {
 				// Two particles are said to be neighbor when the sum of their listRadius is 
 				// greater than the distance between their centroids.
 				dx = getX() + getVx()*(sTime - lastCollisionTime) - 
-					((*pa)->getX() + (*pa)->getVx()*dt);
+						((*pa)->getX() + (*pa)->getVx()*dt);
 				dy = getY() + getVy()*(sTime - lastCollisionTime) - 
-					((*pa)->getY() + (*pa)->getVy()*dt);
+						((*pa)->getY() + (*pa)->getVy()*dt);
 				dz = getZ() + getVz()*(sTime - lastCollisionTime) - 
-					((*pa)->getZ() + (*pa)->getVz()*dt);
+						((*pa)->getZ() + (*pa)->getVz()*dt);
 
 				lrs = listRadius + (*pa)->getListRadius();
 
 				if (dx*dx + dy*dy + dz*dz < lrs*lrs) {
-					neighborParticles.push_back(*pa);
+						neighborParticles.push_back(*pa);
 				}
 
 			}

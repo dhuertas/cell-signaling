@@ -3,9 +3,6 @@
 
 #include <stdint.h>
 
-#include "../Molecule.h"
-#include "../base/Defines.h"
-
 #define EM_SQUARE		1
 #define EM_GAUSSIAN		2
 
