@@ -32,6 +32,8 @@ void MoleculeEmitter::initialize(int stage) {
 		emissionParticleRadius = par("emissionParticleRadius");
 		emissionParticleMass = par("emissionParticleMass");
 		emissionTimeToLive = par("emissionTimeToLive");
+		emissionBoundariesMode = par("emissionBoundariesMode");
+		emissionVelocity = par("emissionVelocity");
 
 		mobility = (SimpleCell *)getParentModule()->getSubmodule("mobility");
 
@@ -116,6 +118,9 @@ Molecule * MoleculeEmitter::createMolecule() {
 	vect_t *ss;
 	vect_t v;
 
+	point_t *mpos = NULL;
+	vect_t *mvel = NULL;
+
 	// force enter the first while loop
 	overlap = true;
 
@@ -124,6 +129,9 @@ Molecule * MoleculeEmitter::createMolecule() {
 	r = mobility->getRadius() + epr + e;
 
 	ss = manager->getSpaceSize();
+
+	mpos = mobility->getPosition();
+	mvel = mobility->getVelocity();
 
 	// create
 	cModuleType *moduleType = cModuleType::get("cellsignaling.src.Molecule");
@@ -140,9 +148,13 @@ Molecule * MoleculeEmitter::createMolecule() {
 	pos.y = 0;
 	pos.z = 0;
 
-	c.x = mobility->getX() + mobility->getVx()*dt;
-	c.y = mobility->getY() + mobility->getVy()*dt;
-	c.z = mobility->getZ() + mobility->getVz()*dt;
+//	c.x = mobility->getX() + mobility->getVx()*dt;
+//	c.y = mobility->getY() + mobility->getVy()*dt;
+//	c.z = mobility->getZ() + mobility->getVz()*dt;
+
+	c.x = mpos->x + mvel->x*dt;
+	c.y = mpos->y + mvel->y*dt;
+	c.z = mpos->z + mvel->z*dt;
 
 	while (pos.x - epr <= 0 || pos.x + epr >= ss->x ||
 		pos.y - epr <= 0 || pos.y + epr >= ss->y ||
@@ -173,9 +185,9 @@ Molecule * MoleculeEmitter::createMolecule() {
 
 	vm = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
 
-	v.x = 10*v.x/vm;
-	v.y = 10*v.y/vm;
-	v.z = 10*v.z/vm;
+	v.x = emissionVelocity*v.x/vm;
+	v.y = emissionVelocity*v.y/vm;
+	v.z = emissionVelocity*v.z/vm;
 
 	m->par("vx") = v.x;
 	m->par("vy") = v.y;
@@ -187,7 +199,7 @@ Molecule * MoleculeEmitter::createMolecule() {
 	// m->par("listRadius");
 	m->par("timeToLive") = emissionTimeToLive;
 
-	// m->par("boundariesMode");
+	m->par("boundariesMode") = emissionBoundariesMode;
 	// m->par("statsRefreshRate");
 
 	m->finalizeParameters();
@@ -241,7 +253,8 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 	double rb;
 	double spaceCellSize;
 
-	point_t cb;
+//	point_t cb;
+	point_t *cb = NULL;
 
 	std::vector<Particle *> particles;
 	std::vector<Particle *>::iterator p;
@@ -294,9 +307,13 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 			cb = (*p)->getPosition();
 			rb = (*p)->getRadius();
 
-			dx = ca.x - cb.x;
-			dy = ca.y - cb.y;
-			dz = ca.z - cb.z;
+//			dx = ca.x - cb.x;
+//			dy = ca.y - cb.y;
+//			dz = ca.z - cb.z;
+
+			dx = ca.x - cb->x;
+			dy = ca.y - cb->y;
+			dz = ca.z - cb->z;
 
 			if (sqrt(dx*dx + dy*dy + dz*dz) <= ra + rb) {
 				return true;

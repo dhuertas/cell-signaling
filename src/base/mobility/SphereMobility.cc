@@ -195,12 +195,16 @@ double SphereMobility::nextWallCollision(CollisionMessage *msg, Sphere *s) {
 
 	int collisionCounter;
 
-	double rad, x, y, z, vx, vy, vz; // Particle radius, position and velocity
+//	double rad, x, y, z, vx, vy, vz; // Particle radius, position and velocity
+	double rad;
 	double boundaryCollisionTime, lastCollisionTime, temp;
 
 	point_t P, Q, R;
 	vect_t V, W, N;
 	vect_t *S;
+
+	point_t *pos = NULL;
+	vect_t *vel = NULL;
 
 	vector<int> sides, hits;
 	vector<int>::const_iterator side, hit;
@@ -216,22 +220,35 @@ double SphereMobility::nextWallCollision(CollisionMessage *msg, Sphere *s) {
 
 	rad = s->getRadius();
 
-	x = s->getX(); vx = s->getVx();
-	y = s->getY(); vy = s->getVy();
-	z = s->getZ(); vz = s->getVz();
+//	x = s->getX(); vx = s->getVx();
+//	y = s->getY(); vy = s->getVy();
+//	z = s->getZ(); vz = s->getVz();
 
-	if (vx == 0 && vy == 0 && vz == 0) return NO_TIME;
+	pos = s->getPosition();
+	vel = s->getVelocity();
+
+//	if (vx == 0 && vy == 0 && vz == 0) return NO_TIME;
+	if (vel->x == 0 && vel->y == 0 && vel->z == 0) return NO_TIME;
 
 	// In the simulation space we have 6 possible sides but since we know the 
 	// direction of the particle we need to check only 3 (at most).
-	if (vx > 0) sides.push_back(1);
-	else if (vx < 0) sides.push_back(4);
+//	if (vx > 0) sides.push_back(1);
+//	else if (vx < 0) sides.push_back(4);
 
-	if (vy > 0) sides.push_back(3);
-	else if (vy < 0) sides.push_back(2);
+//	if (vy > 0) sides.push_back(3);
+//	else if (vy < 0) sides.push_back(2);
 
-	if (vz > 0) sides.push_back(0);
-	else if (vz < 0) sides.push_back(5);
+//	if (vz > 0) sides.push_back(0);
+//	else if (vz < 0) sides.push_back(5);
+
+	if (vel->x > 0) sides.push_back(1);
+	else if (vel->x < 0) sides.push_back(4);
+
+	if (vel->y > 0) sides.push_back(3);
+	else if (vel->y < 0) sides.push_back(2);
+
+	if (vel->z > 0) sides.push_back(0);
+	else if (vel->z < 0) sides.push_back(5);
 
 	collisionCounter = 0;
 
@@ -263,22 +280,36 @@ double SphereMobility::nextWallCollision(CollisionMessage *msg, Sphere *s) {
 		//     y = yi + vy*t + R*vny, vny = vy/sqrt(vx2+vy2+vz2), "
 		//     z = zi + vz*t + R*vnz, vnz = vz/sqrt(vx2+vy2+vz2), "
 		// and find for t.
-		temp = (N.x*vx + N.y*vy + N.z*vz);
+//		temp = (N.x*vx + N.y*vy + N.z*vz);
+		temp = (N.x*vel->x + N.y*vel->y + N.z*vel->z);
 
 		if (temp != 0) {
 
+//			if (*side == 0)
+//				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z + rad)))/temp;
+//			else if (*side == 1)
+//				temp = (N.x*(P.x - (x + rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+//			else if (*side == 2)
+//				temp = (N.x*(P.x - x) + N.y*(P.y - (y - rad)) + N.z*(P.z - z))/temp;
+//			else if (*side == 3)
+//				temp = (N.x*(P.x - x) + N.y*(P.y - (y + rad)) + N.z*(P.z - z))/temp;
+//			else if (*side == 4)
+//				temp = (N.x*(P.x - (x - rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+//			else
+//				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
+
 			if (*side == 0)
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z + rad)))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - pos->y) + N.z*(P.z - (pos->z + rad)))/temp;
 			else if (*side == 1)
-				temp = (N.x*(P.x - (x + rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - (pos->x + rad)) + N.y*(P.y - pos->y) + N.z*(P.z - pos->z))/temp;
 			else if (*side == 2)
-				temp = (N.x*(P.x - x) + N.y*(P.y - (y - rad)) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - (pos->y - rad)) + N.z*(P.z - pos->z))/temp;
 			else if (*side == 3)
-				temp = (N.x*(P.x - x) + N.y*(P.y - (y + rad)) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - (pos->y + rad)) + N.z*(P.z - pos->z))/temp;
 			else if (*side == 4)
-				temp = (N.x*(P.x - (x - rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - (pos->x - rad)) + N.y*(P.y - pos->y) + N.z*(P.z - pos->z))/temp;
 			else
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - pos->y) + N.z*(P.z - (pos->z - rad)))/temp;
 
 			// Solution found. "temp" is the amount of time the particle takes 
 			// to go from its last event point to the simulation space side.
@@ -318,9 +349,13 @@ double SphereMobility::nextWallCollision(CollisionMessage *msg, Sphere *s) {
 	}
 
 	// The future particle position
-	msg->setX(x + vx*boundaryCollisionTime);
-	msg->setY(y + vy*boundaryCollisionTime);
-	msg->setZ(z + vz*boundaryCollisionTime);
+//	msg->setX(x + vx*boundaryCollisionTime);
+//	msg->setY(y + vy*boundaryCollisionTime);
+//	msg->setZ(z + vz*boundaryCollisionTime);
+
+	msg->setX(pos->x + vel->x*boundaryCollisionTime);
+	msg->setY(pos->y + vel->y*boundaryCollisionTime);
+	msg->setZ(pos->z + vel->z*boundaryCollisionTime);
 
 	// Compute the future time value
 	boundaryCollisionTime += lastCollisionTime;
@@ -328,9 +363,13 @@ double SphereMobility::nextWallCollision(CollisionMessage *msg, Sphere *s) {
 	// Compute the future velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
-		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
-		msg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
-		msg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
+//		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
+//		msg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
+//		msg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
+
+		msg->setVx((*hit == 1 || *hit == 4) ? -vel->x : vel->x);
+		msg->setVy((*hit == 2 || *hit == 3) ? -vel->y : vel->y);
+		msg->setVz((*hit == 0 || *hit == 5) ? -vel->z : vel->z);
 
 	}
 
@@ -339,8 +378,7 @@ double SphereMobility::nextWallCollision(CollisionMessage *msg, Sphere *s) {
 }
 
 /*
- * Instead of using the time when the sphere surface collides with the wall,
- * return the time when the center of the sphere crosses the boundaries.
+ * Still using the time when the sphere surface collides with the wall.
  * @param {CollisionMessage *} msg
  * @param {Sphere *} s
  * @return {double} the computed time
@@ -349,12 +387,17 @@ double SphereMobility::leaveBoundedSpace(CollisionMessage *msg, Sphere *s) {
 
 	int collisionCounter;
 
-	double x, y, z, vx, vy, vz; // Particle radius, position and velocity
+//	double rad, x, y, z, vx, vy, vz; // Particle radius, position and velocity
+	double rad;
+
 	double boundaryCollisionTime, lastCollisionTime, temp;
 
 	point_t P, Q, R;
 	vect_t V, W, N;
 	vect_t *S;
+
+	point_t *pos = NULL;
+	vect_t *vel = NULL;
 
 	vector<int> sides, hits;
 	vector<int>::const_iterator side, hit;
@@ -368,22 +411,37 @@ double SphereMobility::leaveBoundedSpace(CollisionMessage *msg, Sphere *s) {
 
 	S = manager->getSpaceSize();
 
-	x = s->getX(); vx = s->getVx();
-	y = s->getY(); vy = s->getVy();
-	z = s->getZ(); vz = s->getVz();
+	rad = s->getRadius();
 
-	if (vx == 0 && vy == 0 && vz == 0) return NO_TIME;
+//	x = s->getX(); vx = s->getVx();
+//	y = s->getY(); vy = s->getVy();
+//	z = s->getZ(); vz = s->getVz();
+
+	pos = s->getPosition();
+	vel = s->getVelocity();
+
+//	if (vx == 0 && vy == 0 && vz == 0) return NO_TIME;
+	if (vel->x == 0 && vel->y == 0 && vel->z == 0) return NO_TIME;
 
 	// In the simulation space we have 6 possible sides but since we know the 
 	// direction of the particle we need to check only 3 (at most).
-	if (vx > 0) sides.push_back(1);
-	else if (vx < 0) sides.push_back(4);
+//	if (vx > 0) sides.push_back(1);
+//	else if (vx < 0) sides.push_back(4);
 
-	if (vy > 0) sides.push_back(3);
-	else if (vy < 0) sides.push_back(2);
+//	if (vy > 0) sides.push_back(3);
+//	else if (vy < 0) sides.push_back(2);
 
-	if (vz > 0) sides.push_back(0);
-	else if (vz < 0) sides.push_back(5);
+//	if (vz > 0) sides.push_back(0);
+//	else if (vz < 0) sides.push_back(5);
+
+	if (vel->x > 0) sides.push_back(1);
+	else if (vel->x < 0) sides.push_back(4);
+
+	if (vel->y > 0) sides.push_back(3);
+	else if (vel->y < 0) sides.push_back(2);
+
+	if (vel->z > 0) sides.push_back(0);
+	else if (vel->z < 0) sides.push_back(5);
 
 	collisionCounter = 0;
 
@@ -415,22 +473,36 @@ double SphereMobility::leaveBoundedSpace(CollisionMessage *msg, Sphere *s) {
 		//     y = yi + vy*t + R*vny, vny = vy/sqrt(vx2+vy2+vz2), "
 		//     z = zi + vz*t + R*vnz, vnz = vz/sqrt(vx2+vy2+vz2), "
 		// and find for t.
-		temp = (N.x*vx + N.y*vy + N.z*vz);
+//		temp = (N.x*vx + N.y*vy + N.z*vz);
+		temp = (N.x*vel->x + N.y*vel->y + N.z*vel->z);
 
 		if (temp != 0) {
 
+//			if (*side == 0)
+//				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z + rad)))/temp;
+//			else if (*side == 1)
+//				temp = (N.x*(P.x - (x + rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+//			else if (*side == 2)
+//				temp = (N.x*(P.x - x) + N.y*(P.y - (y - rad)) + N.z*(P.z - z))/temp;
+//			else if (*side == 3)
+//				temp = (N.x*(P.x - x) + N.y*(P.y - (y + rad)) + N.z*(P.z - z))/temp;
+//			else if (*side == 4)
+//				temp = (N.x*(P.x - (x - rad)) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+//			else
+//				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - (z - rad)))/temp;
+
 			if (*side == 0)
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - pos->y) + N.z*(P.z - (pos->z + rad)))/temp;
 			else if (*side == 1)
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - (pos->x + rad)) + N.y*(P.y - pos->y) + N.z*(P.z - pos->z))/temp;
 			else if (*side == 2)
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - (pos->y - rad)) + N.z*(P.z - pos->z))/temp;
 			else if (*side == 3)
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - (pos->y + rad)) + N.z*(P.z - pos->z))/temp;
 			else if (*side == 4)
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - (pos->x - rad)) + N.y*(P.y - pos->y) + N.z*(P.z - pos->z))/temp;
 			else
-				temp = (N.x*(P.x - x) + N.y*(P.y - y) + N.z*(P.z - z))/temp;
+				temp = (N.x*(P.x - pos->x) + N.y*(P.y - pos->y) + N.z*(P.z - (pos->z - rad)))/temp;
 
 			// Solution found. "temp" is the amount of time the particle takes 
 			// to go from its last event point to the simulation space side.
@@ -470,9 +542,13 @@ double SphereMobility::leaveBoundedSpace(CollisionMessage *msg, Sphere *s) {
 	}
 
 	// The future particle position
-	msg->setX(x + vx*boundaryCollisionTime);
-	msg->setY(y + vy*boundaryCollisionTime);
-	msg->setZ(z + vz*boundaryCollisionTime);
+//	msg->setX(x + vx*boundaryCollisionTime);
+//	msg->setY(y + vy*boundaryCollisionTime);
+//	msg->setZ(z + vz*boundaryCollisionTime);
+
+	msg->setX(pos->x + vel->x*boundaryCollisionTime);
+	msg->setY(pos->y + vel->y*boundaryCollisionTime);
+	msg->setZ(pos->z + vel->z*boundaryCollisionTime);
 
 	// Compute the future time value
 	boundaryCollisionTime += lastCollisionTime;
@@ -480,9 +556,13 @@ double SphereMobility::leaveBoundedSpace(CollisionMessage *msg, Sphere *s) {
 	// Compute the future velocity vector
 	for (hit = hits.begin(); hit != hits.end(); ++hit) {
 
-		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
-		msg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
-		msg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
+//		msg->setVx((*hit == 1 || *hit == 4) ? -vx : vx);
+//		msg->setVy((*hit == 2 || *hit == 3) ? -vy : vy);
+//		msg->setVz((*hit == 0 || *hit == 5) ? -vz : vz);
+
+		msg->setVx((*hit == 1 || *hit == 4) ? -vel->x : vel->x);
+		msg->setVy((*hit == 2 || *hit == 3) ? -vel->y : vel->y);
+		msg->setVz((*hit == 0 || *hit == 5) ? -vel->z : vel->z);
 
 	}
 
@@ -511,13 +591,33 @@ double SphereMobility::solveCollision(Particle * pa, Particle * pb) {
 	double ta = pa->getLastCollisionTime();
 	double tb = pb->getLastCollisionTime();
 
-	double dxi = pa->getX() - pb->getX() - pa->getVx()*ta + pb->getVx()*tb;
-	double dyi = pa->getY() - pb->getY() - pa->getVy()*ta + pb->getVy()*tb;
-	double dzi = pa->getZ() - pb->getZ() - pa->getVz()*ta + pb->getVz()*tb;
+	point_t *posa = NULL;
+	point_t *posb = NULL;
 
-	double dvx = pa->getVx() - pb->getVx();
-	double dvy = pa->getVy() - pb->getVy();
-	double dvz = pa->getVz() - pb->getVz();
+	vect_t *vela = NULL;
+	vect_t *velb = NULL;
+
+	posa = pa->getPosition();
+	posb = pb->getPosition();
+
+	vela = pa->getVelocity();
+	velb = pb->getVelocity();
+
+//	double dxi = pa->getX() - pb->getX() - pa->getVx()*ta + pb->getVx()*tb;
+//	double dyi = pa->getY() - pb->getY() - pa->getVy()*ta + pb->getVy()*tb;
+//	double dzi = pa->getZ() - pb->getZ() - pa->getVz()*ta + pb->getVz()*tb;
+
+//	double dvx = pa->getVx() - pb->getVx();
+//	double dvy = pa->getVy() - pb->getVy();
+//	double dvz = pa->getVz() - pb->getVz();
+
+	double dxi = posa->x - posb->x - vela->x*ta + velb->x*tb;
+	double dyi = posa->y - posb->y - vela->y*ta + velb->y*tb;
+	double dzi = posa->z - posb->z - vela->z*ta + velb->z*tb;
+
+	double dvx = vela->x - velb->x;
+	double dvy = vela->y - velb->y;
+	double dvz = vela->z - velb->z;
 
 	double radd = pb->getRadius() + pa->getRadius();
 

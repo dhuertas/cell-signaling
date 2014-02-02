@@ -41,6 +41,10 @@ class MoleculeEmitter : public Emitter, public cSimpleModule {
 
 		uint8_t emissionFunction;
 
+		int emissionBoundariesMode;
+
+		double emissionVelocity;
+
 	public:
 
 		MoleculeEmitter();

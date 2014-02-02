@@ -10,6 +10,8 @@ class Particle {
 
 	protected:
 
+		bool active;
+
 		point_t position;
 
 		vect_t velocity;
@@ -23,7 +25,7 @@ class Particle {
 		int particleType;
 
 		// Cell List attributes
-		int spaceCell;	// TODO remove this and start using spaceCellIdx instead.
+		int spaceCell; // TODO remove this and start using spaceCellIdx instead
 
 		index_t spaceCellIdx;
 
@@ -37,6 +39,9 @@ class Particle {
 		// Near Neighbor List radius
 		double listRadius;
 
+		// Near Neighbor List refresh list radius
+		double refreshListRadius;
+
 		// Boundaries mode. Whether the particle must bounce, expire, etc.
 		int boundariesMode;
 
@@ -47,46 +52,50 @@ class Particle {
 		Particle(double, double, double, double, double);
 
 		// Gets and sets
-		inline int getParticleId(void) { return particleId; };
+		int getParticleId(void) { return particleId; };
 
-		inline int getParticleType(void) { return particleType; };
+		int getParticleType(void) { return particleType; };
 
-		inline double getX(void) { return position.x; };
+		double getX(void) { return position.x; };
 
-		inline double getY(void) { return position.y; };
+		double getY(void) { return position.y; };
 
-		inline double getZ(void) { return position.z; };
+		double getZ(void) { return position.z; };
 
-		inline point_t getPosition(void) { return position; };
+		point_t *getPosition(void) { return &position; };
 
-		inline double getVx(void) { return velocity.x; };
+		double getVx(void) { return velocity.x; };
 
-		inline double getVy(void) { return velocity.y; };
+		double getVy(void) { return velocity.y; };
 
-		inline double getVz(void) { return velocity.z; };
+		double getVz(void) { return velocity.z; };
 
-		inline vect_t getVelocity(void) { return velocity; };
+		vect_t *getVelocity(void) { return &velocity; };
 
-		inline double getMass(void) { return mass; };
+		double getMass(void) { return mass; };
 
-		inline int getSpaceCell(void) { return spaceCell; }; // TODO remove this. Only use spaceCellIdx
+		int getSpaceCell(void) { return spaceCell; }; // TODO remove this. Only use spaceCellIdx
 
-		inline index_t getSpaceCellIdx(void) { return spaceCellIdx; };
+		index_t getSpaceCellIdx(void) { return spaceCellIdx; };
 
-		inline int getPrevSpaceCell(void) { return prevSpaceCell; }; // TODO remove this. Only use prevSpaceCellIdx
+		int getPrevSpaceCell(void) { return prevSpaceCell; }; // TODO remove this. Only use prevSpaceCellIdx
 
-		inline index_t getPrevSpaceCellIdx(void) {return prevSpaceCellIdx; };
+		index_t getPrevSpaceCellIdx(void) {return prevSpaceCellIdx; };
 
-		inline double getListRadius(void) { return listRadius; };
+		double getListRadius(void) { return listRadius; };
+
+		double getRefreshListRadius(void) { return refreshListRadius; };
 
 		virtual double getRadius(void) = 0;
 
-		inline double getLastCollisionTime(void) { return lastCollisionTime; };
+		double getLastCollisionTime(void) { return lastCollisionTime; };
 
-		inline std::vector<Particle*> getNeighborParticles(void) { return neighborParticles; };
+		std::vector<Particle*> getNeighborParticles(void) { return neighborParticles; };
 
-		inline int getBoundariesMode(void) const { return boundariesMode; };
+		int getBoundariesMode(void) const { return boundariesMode; };
 
+		bool isActive (void) { return active; };
+		
 		void setParticleId(int id) { particleId = id; };
 
 		void setParticleType(int t) { particleType = t; };
@@ -117,11 +126,15 @@ class Particle {
 
 		void setListRadius(double r) { listRadius = r; };
 
+		void setRefreshListRadius(double r) { refreshListRadius = r; };
+
 		virtual void setRadius(double) = 0;
 
 		void setLastCollisionTime(double tc) { lastCollisionTime = tc; };
 
 		void setBoundariesMode(int bm) { boundariesMode = bm; };
+
+		void setActive(bool a) { active = a; };
 
 		//
 		// tk Environment methods

@@ -238,7 +238,7 @@ void *WebServer::handler(void *arg) {
 		// ev << "pthread_sigmask error" << endl;
 	}
 
-	while (1) {
+	while ( ! WebServer::quit) {
 
 		// start of mutex area
 		pthread_mutex_lock(&WebServer::mutexSockFd);
@@ -1029,11 +1029,15 @@ void WebServer::run() {
 
 	struct timeval timeout;
 
+	WebServer::quit = false;
+
+	// Initialize() calls pthread_create, which in turn each thread
+	// runs the handler() function. This function has a while loop using
+	// the WebServer::quit variable.
+
 	if (WebServer::initialize() != 0) {
 		// EV << "ERROR: initialize" << std::endl;
 	}
-
-	WebServer::quit = false;
 
 	timeout.tv_sec = QUIT_TIME_OUT;
 	timeout.tv_usec = 0;

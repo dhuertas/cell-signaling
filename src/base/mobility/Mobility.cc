@@ -32,7 +32,10 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 	int counter;
 
 	double x, y, z;
-	double vx, vy, vz;	// Particle position and velocity
+//	double vx, vy, vz;	// Particle position and velocity
+
+	point_t *pos = NULL;
+	vect_t *vel = NULL;
 
 	double spaceCellSize;
 	double temp;
@@ -65,17 +68,24 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	n = p->getSpaceCell();
 
-	x = p->getX();
-	y = p->getY();
-	z = p->getZ();
+//	x = p->getX();
+//	y = p->getY();
+//	z = p->getZ();
 	
-	vx = p->getVx();
-	vy = p->getVy();
-	vz = p->getVz();
+//	vx = p->getVx();
+//	vy = p->getVy();
+//	vz = p->getVz();
 
-	x += vx*(sTime - lastCollisionTime);
-	y += vy*(sTime - lastCollisionTime);
-	z += vz*(sTime - lastCollisionTime);
+	pos = p->getPosition();
+	vel = p->getVelocity();
+
+//	x += vx*(sTime - lastCollisionTime);
+//	y += vy*(sTime - lastCollisionTime);
+//	z += vz*(sTime - lastCollisionTime);
+
+	x = pos->x + vel->x*(sTime - lastCollisionTime);
+	y = pos->y + vel->y*(sTime - lastCollisionTime);
+	z = pos->z + vel->z*(sTime - lastCollisionTime);
 
 	// i, j and k are the indexes of the space cell for each axis
 	i =  n/((*Nz)*(*Ny));
@@ -84,14 +94,23 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	// In a space cell we have 6 possible sides but since we know the direction 
 	// of the particle we need to check only 3 (at most).
-	if (vx > 0) sides.push_back(1);
-	else if (vx < 0) sides.push_back(4);
+//	if (vx > 0) sides.push_back(1);
+//	else if (vx < 0) sides.push_back(4);
 
-	if (vy > 0) sides.push_back(3);
-	else if (vy < 0) sides.push_back(2);
+//	if (vy > 0) sides.push_back(3);
+//	else if (vy < 0) sides.push_back(2);
 
-	if (vz > 0) sides.push_back(0);
-	else if (vz < 0) sides.push_back(5);
+//	if (vz > 0) sides.push_back(0);
+//	else if (vz < 0) sides.push_back(5);
+
+	if (vel->x > 0) sides.push_back(1);
+	else if (vel->x < 0) sides.push_back(4);
+
+	if (vel->y > 0) sides.push_back(3);
+	else if (vel->y < 0) sides.push_back(2);
+
+	if (vel->z > 0) sides.push_back(0);
+	else if (vel->z < 0) sides.push_back(5);
 
 	counter = 0;
 
@@ -120,7 +139,8 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 		// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
 		// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and 
 		// solve for t.
-		temp = (N.x*vx + N.y*vy + N.z*vz);
+//		temp = (N.x*vx + N.y*vy + N.z*vz);
+		temp = (N.x*vel->x + N.y*vel->y + N.z*vel->z);
 
 		if (temp != 0) {
 
@@ -219,26 +239,33 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
  */
 double Mobility::outOfNeighborhoodTime(OutOfNeighborhoodMessage *msg, Particle *p) {
 
-	double vx, vy, vz, vm, lr;
-
+//	double vx, vy, vz, vm, lr, rlr;
+	double vm, lr, rlr;
 	double outOfNeighborhoodTime;
 	double sTime;
 
-	vx = p->getVx();
-	vy = p->getVy(); 
-	vz = p->getVz();
+	vect_t *vel = NULL;
+//	vx = p->getVx();
+//	vy = p->getVy(); 
+//	vz = p->getVz();
+
+	vel = p->getVelocity();
+
+	lr = 0;
+	rlr = 0;
 
 	sTime = simTime().dbl();
 	outOfNeighborhoodTime = NO_TIME;
 
 	lr = p->getListRadius();
+	rlr = p->getRefreshListRadius();
 
-	vm = sqrt(vx*vx + vy*vy + vz*vz);
+	if (rlr > 0) lr = rlr;
+
+	vm = sqrt(vel->x*vel->x + vel->y*vel->y + vel->z*vel->z);
 
 	if (vm != 0) {
-
 		outOfNeighborhoodTime = lr/vm + sTime;
-
 	}
 
     return outOfNeighborhoodTime;

@@ -7,9 +7,9 @@ class Circle : public Particle {
 
 	private:
 
-		double radius;
-
 	protected:
+
+        double radius;
 
 	public:
 

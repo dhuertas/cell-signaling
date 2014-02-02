@@ -17,6 +17,8 @@ void Molecule::initialize(int stage) {
 		// Manager module initializes during this stage
 	} else if (stage == 1) {
 
+		active = true;
+
 		setParticleType(T_MOLECULE);
 
 		// Initial position
@@ -35,6 +37,9 @@ void Molecule::initialize(int stage) {
 
 		// Near-Neighbor List radius
 		setListRadius(par("listRadius").doubleValue());
+
+		// Near Neighbor List refresh list radius
+		setRefreshListRadius(par("refreshListRadius").doubleValue());
 
 		// Subscribe to manager
 		setManager("manager");
@@ -147,6 +152,8 @@ void Molecule::finish() {
 void Molecule::expire() {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
+
+	active = false;
 
 	manager->registerExpire();
 

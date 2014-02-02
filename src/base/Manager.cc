@@ -255,12 +255,15 @@ int Manager::numInitStages() const {
 void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 
 	int i, j, k, n;
+	point_t *pos = NULL;
 
 	if (to < 0) {
 
-		i = floor(p->getX()/spaceCellSize);
-		j = floor(p->getY()/spaceCellSize);
-		k = floor(p->getZ()/spaceCellSize);
+		pos = p->getPosition();
+
+		i = floor(pos->x/spaceCellSize);
+		j = floor(pos->y/spaceCellSize);
+		k = floor(pos->z/spaceCellSize);
 
 		n = i*Ny*Nz + j*Nz + k;
 
@@ -321,9 +324,9 @@ std::list<Particle *> *Manager::getSpaceCellParticles(int n) {
 
 }
 
-unsigned int Manager::getNextParticleId() {
+int Manager::getNextParticleId() {
 
-	unsigned int result = lastParticleId;
+	int result = lastParticleId;
 
 	lastParticleId++;
 
@@ -374,7 +377,7 @@ void Manager::handleMessage(cMessage *msg) {
 void Manager::finish() {
 
 	if (enableWebServer == 1) {
-		stopWebServerThread();
+		// stopWebServerThread(); // TODO the server hangs the tk environment
 	}
 
 }

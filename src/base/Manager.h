@@ -40,7 +40,7 @@ class Manager : public cSimpleModule {
 		double listRadius;
 
 		// Contains the particle Id from the last added particle to the domain.
-		unsigned int lastParticleId;
+		int lastParticleId;
 
 		// TK environment refresh rate
 		// It allows the manager module to send self-messages in order to
@@ -133,7 +133,9 @@ class Manager : public cSimpleModule {
 
 		std::list<Particle *> *getSpaceCellParticles(int);
 
-		unsigned int getNextParticleId(void);
+		int getNextParticleId(void);
+
+		int getLastParticleId(void) { return lastParticleId; };
 
 		void setSpaceSize(vect_t vsz) { spaceSize = vsz; };
 

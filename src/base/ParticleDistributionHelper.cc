@@ -33,7 +33,7 @@ void uniformDistribution(vect_t spaceSize, std::list<Particle *> *particles) {
 
 		for (q = particles->begin(); q != p; ++q) {
 
-			if (checkOverlap(pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
+			if (checkOverlap(&pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
 				overlap = true;
 				break;
 			}
@@ -111,7 +111,7 @@ void uniformDistribution2(vect_t spaceSize, std::list<Particle *> *particles) {
 		
 		for (sci = spaceCells.begin(); sci != spaceCells.end(); ++sci) {
 			for (q = spaceCellLists.at(*sci).begin(); q != spaceCellLists.at(*sci).end(); ++q) {
-				if (checkOverlap(pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
+				if (checkOverlap(&pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
 					overlap = true;
 					break;
 				}
@@ -336,7 +336,7 @@ void sphereDistribution(vect_t spaceSize, std::list<Particle *> *particles, poin
 
 		for (q = particles->begin(); q != p; ++q) {
 
-			if (checkOverlap(pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
+			if (checkOverlap(&pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
 				overlap = true;
 				break;
 			}
@@ -477,7 +477,7 @@ void highDensityDistribution(vect_t spaceSize, std::list<Particle *> *particles,
 
 		for (q = particles->begin(); q != p; ++q) {
 
-			if (checkOverlap(pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
+			if (checkOverlap(&pos, (*p)->getRadius(), (*q)->getPosition(), (*q)->getRadius())) {
 				overlap = true;
 				break;
 			}
@@ -640,11 +640,11 @@ void densepacked(vect_t spaceSize, std::list<Particle *> *particles, point_t c) 
  * @param {double} rb: the radius of the second particle
  * @return {bool}
  */
-bool checkOverlap(point_t ca, double ra, point_t cb, double rb) {
+bool checkOverlap(point_t *ca, double ra, point_t *cb, double rb) {
 
-	double dx = (ca.x-cb.x);
-	double dy = (ca.y-cb.y);
-	double dz = (ca.z-cb.z);
+	double dx = (ca->x-cb->x);
+	double dy = (ca->y-cb->y);
+	double dz = (ca->z-cb->z);
 
 	return  sqrt(dx*dx + dy*dy + dz*dz) < ra + rb ? true : false;
 

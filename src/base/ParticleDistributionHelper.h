@@ -38,7 +38,7 @@ void highDensityDistribution(vect_t, std::list<Particle *> *, point_t);
 void densepacked(vect_t, std::list<Particle *> *, point_t);
 
 // Detect whether two sphere particles are overlaping or not.
-bool checkOverlap(point_t, double, point_t, double);
+bool checkOverlap(point_t*, double, point_t*, double);
 
 double dblRandNormal(double, double);
 

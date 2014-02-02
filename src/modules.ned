@@ -92,6 +92,9 @@ simple Molecule {
 		// algorithm (mode = M_NNLIST).
 		double listRadius = default(0);
 
+		// Radius used to update the neighbor list of the molecule
+		double refreshListRadius = default(0);
+
 		// Amount of time that the particle exists in the simulation space. An
 		// event (EV_TTLEXPIRED) is used to manage when a particle must leave.
 		// Default 0 (does not expire).
@@ -137,6 +140,10 @@ simple MoleculeEmitter {
 		double emissionParticleMass = default(1);
 
 		double emissionTimeToLive = default(0);
+
+		int emissionBoundariesMode = default(1);
+
+		double emissionVelocity = default(1);
 
 	gates:
 		input in;
