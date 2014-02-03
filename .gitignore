@@ -1,1 +1,6 @@
 src/base/messages/*_m.*
+networks/rt-*
+Makefile
+*.out
+*.tsv
+*.tk*
