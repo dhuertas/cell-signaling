@@ -145,6 +145,10 @@ simple MoleculeEmitter {
 
 		double emissionVelocity = default(1);
 
+		double emissionListRadius = default(0);
+
+		double emissionRefreshListRadius = default(0);
+
 	gates:
 		input in;
 		output out;
@@ -189,6 +193,8 @@ simple SimpleCell {
 		// Radius for the near neighbor list when using the Verlet list
 		// algorithm (mode = M_NNLIST).
 		double listRadius = default(0);
+
+		double refreshListRadius = default(0);
 
 		// Amount of time that the cell lives. Default 0 (does not expire).
 		double timeToLive = default(0);

@@ -31,7 +31,6 @@ void MoleculeReceiver::initialize(int stage) {
 		// Second stage manager initialization
 	} else if (stage == 3) {
 		// Particle emitters and receivers initialization
-
 		mobility = (SimpleCell *)getParentModule()->getSubmodule("mobility");
 
 		if (enabled && getParentModule()->getSubmodule("emitter")->par("enabled")) {
@@ -44,7 +43,7 @@ void MoleculeReceiver::initialize(int stage) {
 
 		statsRefreshRate = par("statsRefreshRate");
 
-		// Subscribe to manager
+		// Set the reference to the manager module
 		setManager("manager");
 
 		if (statsRefreshRate > 0) {

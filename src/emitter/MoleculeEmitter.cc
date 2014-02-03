@@ -26,6 +26,7 @@ void MoleculeEmitter::initialize(int stage) {
 	} else if (stage == 3) {
 		// Particle emitters and receivers initialization
 
+		// Emission variables
 		emissionStart = par("emissionStart");
 		emissionDuration = par("emissionDuration");
 		emissionRate = par("emissionRate");
@@ -34,6 +35,8 @@ void MoleculeEmitter::initialize(int stage) {
 		emissionTimeToLive = par("emissionTimeToLive");
 		emissionBoundariesMode = par("emissionBoundariesMode");
 		emissionVelocity = par("emissionVelocity");
+		emissionListRadius = par("emissionListRadius");
+		emissionRefreshListRadius = par("emissionRefreshListRadius");
 
 		mobility = (SimpleCell *)getParentModule()->getSubmodule("mobility");
 
@@ -185,6 +188,7 @@ Molecule * MoleculeEmitter::createMolecule() {
 	v.y = emissionVelocity*v.y/vm;
 	v.z = emissionVelocity*v.z/vm;
 
+	// Particle parameters
 	m->par("vx") = v.x;
 	m->par("vy") = v.y;
 	m->par("vz") = v.z;
@@ -192,8 +196,11 @@ Molecule * MoleculeEmitter::createMolecule() {
 	m->par("mass") = emissionParticleMass;
 	m->par("radius") = emissionParticleRadius;
 
-	// m->par("listRadius");
 	m->par("timeToLive") = emissionTimeToLive;
+
+	// Verlet List parameters
+	m->par("listRadius") = emissionListRadius;
+	m->par("refreshListRadius") = emissionRefreshListRadius;
 
 	m->par("boundariesMode") = emissionBoundariesMode;
 	// m->par("statsRefreshRate");

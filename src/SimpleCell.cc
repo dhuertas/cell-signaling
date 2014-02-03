@@ -9,7 +9,9 @@ SimpleCell::~SimpleCell() {
 }
 
 /*
- * Cell initialization
+ * Cell initialization.
+ *
+ * @param {Integer} stage
  */
 void SimpleCell::initialize(int stage) {
 
@@ -37,6 +39,7 @@ void SimpleCell::initialize(int stage) {
 
 		// Near-Neighbor List radius
 		setListRadius(par("listRadius").doubleValue());
+		setRefreshListRadius(par("refreshListRadius").doubleValue());
 
 		// Subscribe to manager
 		setManager("manager");
@@ -152,26 +155,31 @@ void SimpleCell::expire() {
 }
 
 /*
+ * Schedules a TTL message in the FES for the current cell.
  *
+ * @param {double} time
  */
 void SimpleCell::scheduleExpire(double time) {
-		// Methods called from other modules must have this macro
-		Enter_Method_Silent();
+	// Methods called from other modules must have this macro
+	Enter_Method_Silent();
 
-		if (timeToLive > 0) {
-			if (timeToLiveMsg->isScheduled()) {
-					cancelEvent(timeToLiveMsg);
-			}
-		} else {
-			timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+	if (timeToLive > 0) {
+		if (timeToLiveMsg->isScheduled()) {
+				cancelEvent(timeToLiveMsg);
 		}
+	} else {
+		timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+	}
 
-		scheduleAt(time, timeToLiveMsg);
+	scheduleAt(time, timeToLiveMsg);
 
 }
 
 /*
+ * Returns whether a message comes from a signaling process or not.
  *
+ * @param {cMessage *} msg
+ * @return {boolean} True if it is a signaling message
  */
 bool SimpleCell::isSignaling(cMessage *msg) {
 

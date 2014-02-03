@@ -45,6 +45,10 @@ class MoleculeEmitter : public Emitter, public cSimpleModule {
 
 		double emissionVelocity;
 
+		double emissionListRadius;
+
+		double emissionRefreshListRadius;
+
 	public:
 
 		MoleculeEmitter();

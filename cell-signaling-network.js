@@ -179,6 +179,8 @@ function writeIniFile() {
 		fs.writeSync(fd, "domain.cell[0].mobility.vx = 0\n");
 		fs.writeSync(fd, "domain.cell[0].mobility.vy = 0\n");
 		fs.writeSync(fd, "domain.cell[0].mobility.vz = 0\n");
+		fs.writeSync(fd, "domain.cell[0].mobility.listRadius = "+2*emitter.r+"\n");
+		fs.writeSync(fd, "domain.cell[0].mobility.refreshListRadius = "+2*emitter.r+"\n");
 		fs.writeSync(fd, "domain.cell[0].emitter.enabled = true\n");
 		fs.writeSync(fd, "domain.cell[0].receiver.enabled = false\n");
 		fs.writeSync(fd, "domain.cell[0].emitter.emissionStart = 10\n");
@@ -188,6 +190,8 @@ function writeIniFile() {
 		fs.writeSync(fd, "domain.cell[0].emitter.emissionParticleMass = 1\n");
 		fs.writeSync(fd, "domain.cell[0].emitter.emissionTimeToLive = "+simtime+"\n");
 		fs.writeSync(fd, "domain.cell[0].emitter.emissionBoundariesMode = 2\n");
+		fs.writeSync(fd, "domain.cell[0].emitter.emissionListRadius = 30\n");
+		fs.writeSync(fd, "domain.cell[0].emitter.emissionRefreshListRadius = 60\n");
 		fs.writeSync(fd, "\n");
 
 		fs.writeSync(fd, "domain.cell[1].mobility.radius = "+receiver.r+"\n");
@@ -198,6 +202,8 @@ function writeIniFile() {
 		fs.writeSync(fd, "domain.cell[1].mobility.vx = 0\n");
 		fs.writeSync(fd, "domain.cell[1].mobility.vy = 0\n");
 		fs.writeSync(fd, "domain.cell[1].mobility.vz = 0\n");
+		fs.writeSync(fd, "domain.cell[1].mobility.listRadius = "+2*receiver.r+"\n");
+		fs.writeSync(fd, "domain.cell[1].mobility.refreshListRadius = "+2*receiver.r+"\n");
 		fs.writeSync(fd, "domain.cell[1].receiver.enabled = true\n");
 		fs.writeSync(fd, "domain.cell[1].emitter.enabled = false\n");
 		fs.writeSync(fd, "domain.cell[1].receiver.statsRefreshRate = 1000\n");
@@ -210,6 +216,10 @@ function writeIniFile() {
 		fs.writeSync(fd, "domain.molecule[*].vx = normal(0,1)\n");
 		fs.writeSync(fd, "domain.molecule[*].vy = normal(0,1)\n");
 		fs.writeSync(fd, "domain.molecule[*].vz = normal(0,1)\n");
+		fs.writeSync(fd, "\n");
+
+		fs.writeSync(fd, "domain.molecule[*].listRadius = "+4*particleRadius+"\n");
+		fs.writeSync(fd, "domain.molecule[*].refreshListRadius = "+2*particleRadius+"\n");
 		fs.writeSync(fd, "\n");
 
 		for (var i = 0; i < result.length; i++) {
