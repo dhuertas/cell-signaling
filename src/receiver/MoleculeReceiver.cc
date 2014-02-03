@@ -4,6 +4,8 @@ Define_Module(MoleculeReceiver);
 
 MoleculeReceiver::MoleculeReceiver() : Receiver() {
 
+	received = 0;
+
 }
 
 MoleculeReceiver::~MoleculeReceiver() {
@@ -19,6 +21,9 @@ void MoleculeReceiver::initialize(int stage) {
 	if (stage == 0) {
 		// First stage manager initialization
 		enabled = par("enabled");
+
+		// Initialize statistics
+		received = 0;
 
 	} else if (stage == 1) {
 		// Particles initialization

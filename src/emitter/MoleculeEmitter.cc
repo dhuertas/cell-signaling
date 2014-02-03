@@ -148,10 +148,6 @@ Molecule * MoleculeEmitter::createMolecule() {
 	pos.y = 0;
 	pos.z = 0;
 
-//	c.x = mobility->getX() + mobility->getVx()*dt;
-//	c.y = mobility->getY() + mobility->getVy()*dt;
-//	c.z = mobility->getZ() + mobility->getVz()*dt;
-
 	c.x = mpos->x + mvel->x*dt;
 	c.y = mpos->y + mvel->y*dt;
 	c.z = mpos->z + mvel->z*dt;
@@ -253,7 +249,6 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 	double rb;
 	double spaceCellSize;
 
-//	point_t cb;
 	point_t *cb = NULL;
 
 	std::vector<Particle *> particles;
@@ -306,10 +301,6 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 
 			cb = (*p)->getPosition();
 			rb = (*p)->getRadius();
-
-//			dx = ca.x - cb.x;
-//			dy = ca.y - cb.y;
-//			dz = ca.z - cb.z;
 
 			dx = ca.x - cb->x;
 			dy = ca.y - cb->y;

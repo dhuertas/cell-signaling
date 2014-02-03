@@ -424,16 +424,13 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	double tc, m1, m2, tmp;
 	double v1n, v1e1, v1e2, v2n, v2e1, v2e2;
 
-	point_t *ppos; // partner position pointer
-	vect_t *pvel; // partner velocity pointer
+	point_t *ppos = NULL; // partner position pointer
+	vect_t *pvel = NULL; // partner velocity pointer
 
 	point_t c1, c2;
 	vect_t v1, n, e1, e2;
 
 	Particle *p;
-
-	ppos = NULL;
-	pvel = NULL;
 
 	p = msg->getPartner();
 	tc = msg->getCollisionTime();
@@ -442,14 +439,6 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	pvel = p->getVelocity();
 
 	// Find the center position of the spheres
-//	c1.x = this->getX() + this->getVx()*(tc - this->getLastCollisionTime());
-//	c1.y = this->getY() + this->getVy()*(tc - this->getLastCollisionTime());
-//	c1.z = this->getZ() + this->getVz()*(tc - this->getLastCollisionTime());
-
-//	c2.x = p->getX() + p->getVx()*(tc - p->getLastCollisionTime());
-//	c2.y = p->getY() + p->getVy()*(tc - p->getLastCollisionTime());
-//	c2.z = p->getZ() + p->getVz()*(tc - p->getLastCollisionTime());
-
 	c1.x = position.x + velocity.x*(tc - lastCollisionTime);
 	c1.y = position.y + velocity.y*(tc - lastCollisionTime);
 	c1.z = position.z + velocity.z*(tc - lastCollisionTime);
@@ -462,10 +451,6 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	m2 = p->getMass();
 
 	// Change frame of reference of the system to one of the spheres
-//	v1.x = this->getVx() - p->getVx();
-//	v1.y = this->getVy() - p->getVy();
-//	v1.z = this->getVz() - p->getVz();
-
 	v1.x = velocity.x - pvel->x;
 	v1.y = velocity.y - pvel->y;
 	v1.z = velocity.z - pvel->z;
@@ -505,16 +490,8 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 		v2n = 2*m1*v1n/(m1 + m2);
 		v1n = tmp;
 
-		// Revert the frame of reference, the velocity vectors and set the new 
+		// Revert the frame of reference, the velocity vectors and set the new
 		// velocity
-//		setVx(v1n*n.x + p->getVx());
-//		setVy(v1n*n.y + p->getVy());
-//		setVz(v1n*n.z + p->getVz());
-
-//		p->setVx(v2n*n.x + p->getVx());
-//		p->setVy(v2n*n.y + p->getVy());
-//		p->setVz(v2n*n.z + p->getVz());
-
 		velocity.x = (v1n*n.x + pvel->x);
 		velocity.y = (v1n*n.y + pvel->y);
 		velocity.z = (v1n*n.z + pvel->z);
@@ -545,14 +522,6 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 
 		// Revert the frame of reference, the velocity vectors and set the new 
 		// velocity
-//		setVx(v1n*n.x + v1e1*e1.x + v1e2*e2.x + p->getVx());
-//		setVy(v1n*n.y + v1e1*e1.y + v1e2*e2.y + p->getVy());
-//		setVz(v1n*n.z + v1e1*e1.z + v1e2*e2.z + p->getVz());
-
-//		p->setVx(v2n*n.x + v2e1*e1.x + v2e2*e2.x + p->getVx());
-//		p->setVy(v2n*n.y + v2e1*e1.y + v2e2*e2.y + p->getVy());
-//		p->setVz(v2n*n.z + v2e1*e1.z + v2e2*e2.z + p->getVz());
-
 		velocity.x = (v1n*n.x + v1e1*e1.x + v1e2*e2.x + pvel->x);
 		velocity.y = (v1n*n.y + v1e1*e1.y + v1e2*e2.y + pvel->y);
 		velocity.z = (v1n*n.z + v1e1*e1.z + v1e2*e2.z + pvel->z);
@@ -616,7 +585,7 @@ void Sphere::handleWallCollision(CollisionMessage *msg) {
 	velocity.y = msg->getVy();
 	velocity.z = msg->getVz();
 
-	setLastCollisionTime(msg->getCollisionTime());
+	lastCollisionTime = msg->getCollisionTime();
 
 	// Statistics
 	manager->registerWallCollision();
@@ -665,11 +634,8 @@ void Sphere::createNearNeighborList() {
 	std::list<Particle *> *particles;
 	std::list<Particle *>::const_iterator pa;
 
-	point_t *ppos;
-	vect_t *pvel;
-
-	ppos = NULL;
-	pvel = NULL;
+	point_t *ppos = NULL;
+	vect_t *pvel = NULL;
 
 	Nx = manager->getNumberOfSpaceCellsX();
 	Ny = manager->getNumberOfSpaceCellsY();
@@ -701,13 +667,6 @@ void Sphere::createNearNeighborList() {
 				dt = sTime - (*pa)->getLastCollisionTime();
 				// Two particles are said to be neighbor when the sum of their listRadius is 
 				// greater than the distance between their centroids.
-//				dx = getX() + getVx()*(sTime - lastCollisionTime) - 
-//						((*pa)->getX() + (*pa)->getVx()*dt);
-//				dy = getY() + getVy()*(sTime - lastCollisionTime) - 
-//						((*pa)->getY() + (*pa)->getVy()*dt);
-//				dz = getZ() + getVz()*(sTime - lastCollisionTime) - 
-//						((*pa)->getZ() + (*pa)->getVz()*dt);
-
 				ppos = (*pa)->getPosition();
 				pvel = (*pa)->getVelocity();
 
@@ -782,7 +741,6 @@ void Sphere::tkEnvDrawShape() {
 
 	// We will use the shape drawing tool to draw a circle around the particle
 	// center instead of using
-//	buffer << 2*getRadius();
 	buffer << 2*radius;
 
 	getDisplayString().setTagArg("b", 0, buffer.str().c_str());
@@ -813,7 +771,6 @@ void Sphere::tkEnvUpdatePosition() {
 	std::stringstream buffer;
 	cModule *parent = getParentModule();
 
-//	buffer << getY();
 	buffer << position.y;
 
 	// Set position string for tkenv
@@ -827,7 +784,6 @@ void Sphere::tkEnvUpdatePosition() {
 
 	buffer.str(std::string()); // clear buffer
 
-//	buffer << getX();
 	buffer << position.x;
 
 	if (strcmp(getName(), "molecule") == 0) {
@@ -855,7 +811,6 @@ void Sphere::tkEnvUpdatePosition(double t) {
 	double lc = getLastCollisionTime();
 
 	// Set position string for tkenv
-//	buffer << getY() + getVy()*(t-lc);
 	buffer << position.y + velocity.y*(t-lc);
 
 	if (strcmp(getName(), "molecule") == 0) {
@@ -869,7 +824,6 @@ void Sphere::tkEnvUpdatePosition(double t) {
 
 	buffer.str(std::string()); // clear buffer
 
-//	buffer << getX() + getVx()*(t-lc);
 	buffer << position.x + velocity.x*(t-lc);
 
 	if (strcmp(getName(), "molecule") == 0) {

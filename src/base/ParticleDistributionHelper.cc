@@ -239,21 +239,14 @@ void cubeDistribution(vect_t spaceSize, std::list<Particle *> *particles) {
 		k++;
 
 		if (k%m == 0) {
-
 			k = 0; j++;
-
 			if (j%m == 0) {
-
 				j = 0; i++;
-
 				if (i%m == 0) {
 					i = 0;
 				}
-
 			}
-
 		}
-
 	}
 
 }
@@ -444,7 +437,6 @@ void sphereEquallyDistributed(vect_t spaceSize, std::list<Particle *> *particles
  */
 void highDensityDistribution(vect_t spaceSize, std::list<Particle *> *particles, point_t c) {
 
-	// TODO añadir una cuadrícula
 	bool overlap;
 
 	uint8_t overlapCount;
@@ -530,49 +522,7 @@ void densepacked(vect_t spaceSize, std::list<Particle *> *particles, point_t c) 
 	pos.x = r; pos.y = r; pos.z = r;
 
 	p = particles->begin();
-/*
-	while (pos.x + r < spaceSize.x) {
 
-		while (pos.y + r < spaceSize.y) {
-
-			while (pos.z + r < spaceSize.z) {
-
-				if ((c.x-pos.x)*(c.x-pos.x) + (c.y-pos.y)*(c.y-pos.y) + 
-					(c.z-pos.z)*(c.z-pos.z) < R*R) {
-
-					if (count < particles->size()) {
-						std::cout << "Particle " << count << " position: ";
-						std::cout << " x=" << pos.x;
-						std::cout << " y=" << pos.y;
-						std::cout << " z=" << pos.z << std::endl;
-						(*p)->setPosition(pos);
-						++p;
-						count++;
-					}
-
-				}
-
-				pos.z += 2*r;
-
-			}
-
-			cy++;
-
-			pos.y += srt*r;
-
-			pos.z = cy%2 == 0 ? r : 2*r;
-
-			pos.z += cx%2 == 0 ? 0 : ;
-
-		}
-
-		cx++;
-
-		pos.x += srt*r; 
-		pos.y = cx%2 == 0 ? r : 2*r;
-
-	}
-*/
 	plane = 0;
 	row = 0;
 

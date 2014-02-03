@@ -32,7 +32,6 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 	int counter;
 
 	double x, y, z;
-//	double vx, vy, vz;	// Particle position and velocity
 
 	point_t *pos = NULL;
 	vect_t *vel = NULL;
@@ -68,20 +67,8 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	n = p->getSpaceCell();
 
-//	x = p->getX();
-//	y = p->getY();
-//	z = p->getZ();
-	
-//	vx = p->getVx();
-//	vy = p->getVy();
-//	vz = p->getVz();
-
 	pos = p->getPosition();
 	vel = p->getVelocity();
-
-//	x += vx*(sTime - lastCollisionTime);
-//	y += vy*(sTime - lastCollisionTime);
-//	z += vz*(sTime - lastCollisionTime);
 
 	x = pos->x + vel->x*(sTime - lastCollisionTime);
 	y = pos->y + vel->y*(sTime - lastCollisionTime);
@@ -94,15 +81,6 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	// In a space cell we have 6 possible sides but since we know the direction 
 	// of the particle we need to check only 3 (at most).
-//	if (vx > 0) sides.push_back(1);
-//	else if (vx < 0) sides.push_back(4);
-
-//	if (vy > 0) sides.push_back(3);
-//	else if (vy < 0) sides.push_back(2);
-
-//	if (vz > 0) sides.push_back(0);
-//	else if (vz < 0) sides.push_back(5);
-
 	if (vel->x > 0) sides.push_back(1);
 	else if (vel->x < 0) sides.push_back(4);
 
@@ -139,7 +117,6 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 		// This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
 		// Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and 
 		// solve for t.
-//		temp = (N.x*vx + N.y*vy + N.z*vz);
 		temp = (N.x*vel->x + N.y*vel->y + N.z*vel->z);
 
 		if (temp != 0) {
@@ -245,9 +222,6 @@ double Mobility::outOfNeighborhoodTime(OutOfNeighborhoodMessage *msg, Particle *
 	double sTime;
 
 	vect_t *vel = NULL;
-//	vx = p->getVx();
-//	vy = p->getVy(); 
-//	vz = p->getVz();
 
 	vel = p->getVelocity();
 
