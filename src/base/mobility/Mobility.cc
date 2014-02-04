@@ -128,14 +128,20 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 			// side where it is bounded.
 			if (counter == 0) {
 
-				transferTime = temp;
-				hits.push_back(*side);
-
 				if (temp == 0) {
 					// The centroid of the particle is on a space cell side and
 					// needs to update its space cell value and recalculate the
 					// transfer time.
+				    transferTime = temp;
+				    hits.push_back(*side);
+				    counter++;
 					break;
+				} else if (0 < temp) {
+				    transferTime = temp;
+				    hits.push_back(*side);
+				    counter++;
+				} else {
+				    // We don't want it
 				}
 
 			} else {
@@ -146,6 +152,7 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 					// transfer time.
 					transferTime = temp;
 					hits.push_back(*side);
+					counter++;
 					break;
 
 				} else if (0 < temp && temp < transferTime) {
@@ -154,16 +161,16 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 					hits.clear();
 					hits.push_back(*side);
+					counter++;
 
 				} else if (0 < temp && temp == transferTime) {
 					// The particle hit two or more sides at the same time
 					hits.push_back(*side);
+					counter++;
 
 				}
 
 			}
-
-			counter++;
 
 		} else {
 			// Line and plane doesn't intersect
