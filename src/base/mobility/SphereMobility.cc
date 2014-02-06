@@ -84,11 +84,7 @@ double SphereMobility::nextCollision(CollisionMessage *msg, int kind, Sphere *s)
 		for (sc = spaceCells.begin(); sc != spaceCells.end(); ++sc) {
 
 			particleList = manager->getSpaceCellParticles(*sc);
-
-			for (pl = particleList->begin(); pl != particleList->end(); ++pl) {
-				particles.push_back(*pl);
-			}
-
+			particles.insert(particles.end(), particleList->begin(), particleList->end());
 		}
 
 	}
