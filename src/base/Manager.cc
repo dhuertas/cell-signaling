@@ -184,8 +184,10 @@ void Manager::initialize(int stage) {
 				highDensityDistribution(spaceSize, &particles, c);
 
 			} else if (particleDistribution.compare("densepacked") == 0) {
+
 				point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
 				densepacked(spaceSize, &particles, c);
+
 			}
 		}
 

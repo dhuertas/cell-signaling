@@ -1,11 +1,11 @@
 
-package cellsignaling.networks;
+package cellsignaling.networks.tests;
 
 import cellsignaling.src.Cell;
 import cellsignaling.src.Manager;
 import cellsignaling.src.Molecule;
 
-network domain
+network CellTest
 {
 	@display("bgb=400,300");
 
@@ -17,11 +17,11 @@ network domain
 
 	submodules:
 		manager: Manager {
-			@display("p=-30,-30;i=block/cogwheel");
+			@display("p=30,30;i=block/cogwheel");
 		}
-
-		cell[2]: Cell;
-		molecule[numberOfInitialMolecules]: Molecule;
+		emitter: Cell;
+		receiver: Cell;
+		molecule[10]: Molecule;
 
 	connections allowunconnected:
 

@@ -1,11 +1,11 @@
 
-package cellsignaling.networks;
+package cellsignaling.networks.tests;
 
-import cellsignaling.src.Cell;
+import cellsignaling.src.SimpleCell;
 import cellsignaling.src.Manager;
 import cellsignaling.src.Molecule;
 
-network hsa
+network SimpleCellTest
 {
 	@display("bgb=400,300");
 
@@ -17,10 +17,11 @@ network hsa
 
 	submodules:
 		manager: Manager {
-			@display("p=-30,-30;i=block/cogwheel");
+			@display("p=30,30;i=block/cogwheel");
 		}
-
-		molecule[numberOfInitialMolecules]: Molecule;
+		emitter: SimpleCell;
+		receiver: SimpleCell;
+		molecule[20]: Molecule;
 
 	connections allowunconnected:
 
