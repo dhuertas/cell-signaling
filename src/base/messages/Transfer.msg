@@ -1,6 +1,6 @@
 cplusplus {{
-	#include "../base/Manager.h"
-	#include "../base/Particle.h"
+	#include "Manager.h"
+	#include "Particle.h"
 
 	typedef Manager *ManagerPtr;
 }}

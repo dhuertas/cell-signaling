@@ -8,8 +8,8 @@
 #include <omnetpp.h>
 
 #include "Receiver.h"
-#include "../SimpleCell.h"
-#include "../base/Manager.h"
+#include "SimpleCell.h"
+#include "Manager.h"
 
 // Forward declarations
 class SimpleCell;

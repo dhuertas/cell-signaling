@@ -12,8 +12,8 @@
 #include <vector>
 
 #include "Emitter.h"
-#include "../SimpleCell.h"
-#include "../base/Manager.h"
+#include "SimpleCell.h"
+#include "Manager.h"
 
 class MoleculeEmitter : public Emitter, public cSimpleModule {
 

@@ -1,5 +1,5 @@
 cplusplus {{
-	#include "../base/Manager.h"
+	#include "Manager.h"
 
 	typedef Manager *ManagerPtr;
 }}
