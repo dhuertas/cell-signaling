@@ -126,27 +126,16 @@ simple MoleculeEmitter {
 	parameters:
 
 		bool enabled = default(false);
-
 		string emissionFunction = default("pulse");
-
 		double emissionStart = default(-1);
-
 		double emissionDuration = default(0);
-
 		double emissionRate = default(0);
-
 		double emissionParticleRadius = default(1);
-
 		double emissionParticleMass = default(1);
-
 		double emissionTimeToLive = default(0);
-
 		int emissionBoundariesMode = default(1);
-
 		double emissionVelocity = default(1);
-
 		double emissionListRadius = default(0);
-
 		double emissionRefreshListRadius = default(0);
 
 	gates:
@@ -222,6 +211,23 @@ module Cell {
 		mobility: SimpleCell;
 		emitter: MoleculeEmitter;
 		receiver: MoleculeReceiver;
+
+	connections allowunconnected:
+
+}
+
+module Probe {
+	
+	paramenters:
+		double xpos;
+		double ypos;
+		double zpos;
+
+		double radius;
+
+	gates:
+		input in;
+		output out;
 
 	connections allowunconnected:
 
