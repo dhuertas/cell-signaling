@@ -219,11 +219,17 @@ module Cell {
 module Probe {
 	
 	paramenters:
+		// Probe name
+		string name = default("probe");
+
 		double xpos;
 		double ypos;
 		double zpos;
 
-		double radius;
+		double radius = default(1);
+
+		// Statistics refresh rate.
+		double statsRefreshRate = default(0);
 
 	gates:
 		input in;

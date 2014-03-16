@@ -56,7 +56,7 @@ class Manager : public cSimpleModule {
 
 		struct arg_struct webServerArgs;
 
-		// Manager Name
+		// Manager name
 		std::string name;
 
 		// A list of particles contained in the simulation space. Every new
