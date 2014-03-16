@@ -4,3 +4,8 @@ Makefile
 *.out
 *.tsv
 *.tk*
+.cproject
+.nedfolders
+.oppbuildspec
+.project
+
