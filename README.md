@@ -6,23 +6,43 @@ To use this code the user must have installed the Omnet++ Simulation Framework a
 
 ## Installation
 
-Download the project on your Omnet++ Workplace directory and run opp_makemake togenerate the Makefile:
+Download the project on your Omnet++ Workplace directory and export the omnet installation path. Then run `opp_makemake` to generate the Makefile:
 
 ```
-opp_makemake -f --deep -O out -I/home/dani/Applications/omnetpp-4.3.1/src/tkenv \
-     -I/usr/include/tcl8.5 \
-     -I/home/dani/Applications/omnetpp-4.3.1/include/platdep \
-     -I/home/dani/Applications/omnetpp-4.3.1/src/common \
-     -I/home/dani/Applications/omnetpp-4.3.1/src/envir \
-     -- /usr/lib/libtcl8.5.so.0
+export OMNET_BASE=/path/to/omnet++/folder
+opp_makemake -f --deep -O out \
+	-I$OMNET_BASE/src/tkenv \
+    -I$OMNET_BASE/include/platdep \
+    -I$OMNET_BASE/src/common \
+    -I$OMNET_BASE/src/envir \
+    -I/usr/include/tcl8.5 \
+    -- /usr/lib/libtcl8.5.so.0
 ```
-Then call `make` to compile the project.
+**Note**: project includes some of the tcl/tk libraries but they are expected to be unnecessary in a near future.
 
-## Issues
+Then call `make` to compile the project:
 
-* Change space cell identifiers to datastructures using unsigned integers instead
+```
+make MODE=release CONFIGNAME=gcc-release all
+```
+
+## Known issues
+
+* Emitter may enter in an infinite loop if molecules are not small enough to be added in the domain
+* Some Manager parameters are not asserted and the simulation might fail if care is not taken
+* Web server does not terminate gracefully when calling modules' finish function
+* Web client visualization is not well oriented
 
 ## Future work
+
+Below follows a list of things that would be nice to have, in no specific order:
+
+* Change space cell identifiers to use datastructures using unsigned integers instead of multiple integers (one integer per direction)
+* Enable the cell list algorithm to use quadtrees
+* Parallelization (particle/domain decomposition)
+* Add ellipsoid molecules
+* Periodic boundaries support
+* Preload signaling molecules during emitter initialization instead.
 
 ## Release
 
