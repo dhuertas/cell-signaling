@@ -116,6 +116,9 @@ simple Molecule {
 		// Statistics refresh rate
 		double statsRefreshRate = default(0);
 
+		// Log collisions
+		int logCollisions = default(0);
+
 	gates:
 		input in;
 		output out;
@@ -194,6 +197,9 @@ simple SimpleCell {
 		// Statistics refresh rate
 		double statsRefreshRate = default(0);
 
+		// Log collision times
+		int logCollisions = default(0);
+
 	gates:
 		input in;
 		output out;
@@ -218,7 +224,7 @@ module Cell {
 
 module Probe {
 	
-	paramenters:
+	parameters:
 		// Probe name
 		string name = default("probe");
 

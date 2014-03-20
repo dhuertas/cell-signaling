@@ -60,9 +60,15 @@ void Molecule::initialize(int stage) {
 		statsRefreshRate = par("statsRefreshRate");
 
 		if (statsRefreshRate > 0) {
-			xPositionVector = new cOutVector("x position");
-			yPositionVector = new cOutVector("y position");
-			zPositionVector = new cOutVector("z position");
+			xPositionVector = new cOutVector("xPosition");
+			yPositionVector = new cOutVector("yPosition");
+			zPositionVector = new cOutVector("zPosition");
+		}
+
+		logCollisions = par("logCollisions");
+
+		if (logCollisions > 0) {
+			collisionTimeVector = new cOutVector("collisionTime");
 		}
 
 		if (statsRefreshRate > 0) {

@@ -27,6 +27,12 @@ class Sphere : public Circle, public cSimpleModule {
 
 		Manager *manager;
 
+		// Log collisions
+		int logCollisions;
+
+		// Track time between collisions
+		cOutVector *collisionTimeVector;
+
 	public:
 
 		Sphere() : Circle() {};
@@ -54,6 +60,14 @@ class Sphere : public Circle, public cSimpleModule {
 		// Near-Neighbor List methods
 		void createNearNeighborList(void);
 		void updateNearNeighborList(void);
+
+		// cOutVector methods
+		void logCollisionTime(double stime) {
+			if (logCollisions && collisionTimeVector != NULL) {
+				double st = simTime().dbl();
+				collisionTimeVector->recordWithTimestamp(st, stime);
+			}
+		}
 
 		// tk Environment related methods
 		void tkEnvDrawShape(void);

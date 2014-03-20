@@ -540,6 +540,9 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	setLastCollisionTime(tc);
 	p->setLastCollisionTime(tc);
 
+	logCollisionTime(tc);
+	((Sphere *)p)->logCollisionTime(tc);
+
 	// Statistics
 	manager->registerCollision();
 
@@ -568,14 +571,6 @@ void Sphere::handleBoundaryCollision(CollisionMessage *msg) {
  * @param {CollisionMessage *} msg
  */
 void Sphere::handleWallCollision(CollisionMessage *msg) {
-
-//	setX(msg->getX());
-//	setY(msg->getY());
-//	setZ(msg->getZ());
-
-//	setVx(msg->getVx());
-//	setVy(msg->getVy());
-//	setVz(msg->getVz());
 
 	position.x = msg->getX();
 	position.y = msg->getY();

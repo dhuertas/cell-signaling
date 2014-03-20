@@ -64,6 +64,12 @@ void SimpleCell::initialize(int stage) {
 				new cMessage("refresh", EV_STATSUPDATE));
 		}
 
+		logCollisions = par("logCollisions");
+
+		if (logCollisions > 0) {
+			collisionTimeVector = new cOutVector("collisionTime");
+		}
+
 		// update Cell position in the tk environment
 		tkEnvUpdatePosition();
 

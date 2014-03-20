@@ -18,10 +18,10 @@ class Molecule : public Sphere {
 
 	private:
 
-		// Amount of time that will pass before it expires.
+		// Amount of time that will pass before it expires
 		double timeToLive;
 
-		// Update the cOutVectors periodically.
+		// Update the cOutVectors periodically
 		double statsRefreshRate;
 
 		// Self messages
@@ -29,7 +29,7 @@ class Molecule : public Sphere {
 
 	protected:
 
-		// Vectors to track particle position over time.
+		// Vectors to track particle position over time
 		cOutVector *xPositionVector;
 		cOutVector *yPositionVector;
 		cOutVector *zPositionVector;
