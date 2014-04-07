@@ -45,6 +45,17 @@ class Particle {
 		// Boundaries mode. Whether the particle must bounce, expire, etc.
 		int boundariesMode;
 
+		//
+		// Brownian motion parameters
+		// 
+		double diffusion;
+
+		double inertia;
+
+		double viscosity;
+
+		double BMStdDev;
+
 	public:
 
 		Particle();
@@ -74,11 +85,21 @@ class Particle {
 
 		inline double getMass(void) { return mass; };
 
-		inline int getSpaceCell(void) { return spaceCell; }; // TODO remove this. Only use spaceCellIdx
+		inline double *getDiffusion(void) { return &diffusion; };
+
+		inline double *getInertia(void) { return &inertia; };
+
+		inline double *getViscosity(void) { return &viscosity; };
+
+		inline double *getBMStdDev(void) { return &BMStdDev; };
+
+		// TODO remove this once the space cells indexes use data structures (spaceCellIdx)
+		inline int getSpaceCell(void) { return spaceCell; };
 
 		inline index_t getSpaceCellIdx(void) { return spaceCellIdx; };
 
-		inline int getPrevSpaceCell(void) { return prevSpaceCell; }; // TODO remove this. Only use prevSpaceCellIdx
+		// TODO remove this once the space cells indexes use data structures (spaceCellIdx)
+		inline int getPrevSpaceCell(void) { return prevSpaceCell; };
 
 		inline index_t getPrevSpaceCellIdx(void) {return prevSpaceCellIdx; };
 
@@ -117,6 +138,14 @@ class Particle {
 		inline void setVelocity(vect_t v) { velocity = v; };
 
 		inline void setMass(double m) { mass = m; };
+
+		inline void setDiffusion(double d) { diffusion = d; };
+
+		inline void setInertia(double i) { inertia = i; };
+
+		inline void setViscosity(double v) { viscosity = v; };
+
+		inline void setBMStdDev(double sd) { BMStdDev = sd; };
 
 		inline void setSpaceCell(int c) { spaceCell = c; };
 

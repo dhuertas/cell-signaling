@@ -13,6 +13,7 @@
 #include "messages/Transfer_m.h"
 #include "messages/Collision_m.h"
 #include "messages/OutOfNeighborhood_m.h"
+#include "messages/BrownianMotion_m.h"
 
 class Sphere : public Circle, public cSimpleModule {
 
@@ -22,6 +23,7 @@ class Sphere : public Circle, public cSimpleModule {
 		TransferMessage *transferMsg;
 		CollisionMessage *collisionMsg;
 		OutOfNeighborhoodMessage *outOfNeighborhoodMsg;
+		BrownianMotionMessage *brownianMotionMsg;
 
 	protected:
 
@@ -52,7 +54,7 @@ class Sphere : public Circle, public cSimpleModule {
 		void handleCollision(CollisionMessage *);
 		void handleBoundaryCollision(CollisionMessage *);
 		void handleWallCollision(CollisionMessage *);
-
+		void handleBrownianMotion(BrownianMotionMessage *);
 		void handleOutOfNeighborhood(void);
 
 		void adjustCollision(double, Particle *);

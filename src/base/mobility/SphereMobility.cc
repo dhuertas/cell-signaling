@@ -544,3 +544,45 @@ double SphereMobility::solveCollision(Particle * pa, Particle * pb) {
 	}
 
 }
+
+/*
+ * Computes the next position of the sphere after a delta time following
+ * the Boltzmann-Maxwell distribution, with parameters:
+ * - D: diffusion
+ * - dt: delta time
+ * Note: delta time is a fixed value for now
+ * @param {Particle *}
+ * @return {double} next delta simulation time
+ */
+double SphereMobility::brownianMotion(BrownianMotionMessage *msg, Particle *p) {
+
+	double nextDeltaTime = NO_TIME;
+	double *BMStdDev = NULL;
+	double dt;
+
+	point_t *pos = NULL;
+	point_t nextPos;
+
+	dt = msg->getManager()->getDeltaTime();
+
+	if (dt > 0) {
+
+		nextDeltaTime = simTime().dbl() + dt;
+
+		pos = p->getPosition();
+		BMStdDev = p->getBMStdDev();
+
+		nextPos.x = normal(pos->x, *BMStdDev);
+		nextPos.y = normal(pos->y, *BMStdDev);
+		nextPos.z = normal(pos->z, *BMStdDev);
+
+		msg->setVx((nextPos.x - pos->x)/dt);
+		msg->setVy((nextPos.y - pos->y)/dt);
+		msg->setVz((nextPos.z - pos->z)/dt);
+
+		msg->setBrownianMotionTime(nextDeltaTime);
+
+	}
+
+	return nextDeltaTime;
+}

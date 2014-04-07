@@ -33,6 +33,9 @@ class Manager : public cSimpleModule {
 		// the simulation space size in each direction
 		vect_t spaceSize;
 
+		// Delta time
+		double deltaTime;
+
 		// The space cell size
 		double spaceCellSize;
 
@@ -129,6 +132,8 @@ class Manager : public cSimpleModule {
 
 		int getMode(void) { return mode; };
 
+		double getDeltaTime(void) { return deltaTime; };
+
 		double getListRadius(void) { return listRadius; };
 
 		std::list<Particle *> *getSpaceCellParticles(int);
@@ -154,6 +159,8 @@ class Manager : public cSimpleModule {
 		void setNumberOfSpaceCellsZ(int n) { Nz = n; };
 
 		void setMode(int m) { mode = m; };
+
+		void setDeltaTime(double dt) { deltaTime = dt; };
 
 		void setListRadius(double lr) { listRadius = lr; };
 

@@ -37,13 +37,25 @@ void SimpleCell::initialize(int stage) {
 		setRadius(par("radius").doubleValue());
 		setMass(par("radius").doubleValue());
 
-		// Near-Neighbor List radius
-		setListRadius(par("listRadius").doubleValue());
-		setRefreshListRadius(par("refreshListRadius").doubleValue());
-
 		// Subscribe to manager
 		setManager("manager");
 		getManager()->subscribe(this);
+
+		// Brownian Motion parameters
+		setDiffusion(par("diffusion").doubleValue());
+		setInertia(par("inertia").doubleValue());
+		setViscosity(par("viscosity").doubleValue());
+
+		// Compute Brownian Motion Standard Deviation
+		//        _____________
+		//  \    /             |
+		//   \  /  4*M_PI*D*dt
+		//    \/
+		setBMStdDev(sqrt(4*M_PI*par("diffusion").doubleValue()*(manager->getDeltaTime())));
+
+		// Near-Neighbor List radius
+		setListRadius(par("listRadius").doubleValue());
+		setRefreshListRadius(par("refreshListRadius").doubleValue());
 
 		boundariesMode = par("boundariesMode");
 

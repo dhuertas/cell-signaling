@@ -84,6 +84,8 @@ void Manager::initialize(int stage) {
 
 		EV << "particle distribution: " << particleDistribution << "\n";
 
+		setDeltaTime(par("deltaTime").doubleValue());
+
 		// Get the simulation space size
 		setSpaceSizeX(simulation.getSystemModule()->par("spaceSizeX"));
 		setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));

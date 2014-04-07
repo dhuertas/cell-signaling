@@ -13,6 +13,7 @@
 #include "../messages/Transfer_m.h"
 #include "../messages/Collision_m.h"
 #include "../messages/OutOfNeighborhood_m.h"
+#include "../messages/BrownianMotion_m.h"
 
 class SphereMobility : public Mobility {
 
@@ -23,6 +24,8 @@ class SphereMobility : public Mobility {
 		static double nextWallCollision(CollisionMessage *, Sphere *);
 		static double leaveBoundedSpace(CollisionMessage *, Sphere *);
 		static double solveCollision(Particle *, Particle *);
+
+		static double brownianMotion(BrownianMotionMessage *, Particle *);
 };
 
 #endif

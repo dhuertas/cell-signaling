@@ -15,6 +15,7 @@
 #define EV_TTLEXPIRE			8
 #define EV_EMIT					9
 #define EV_RECEIVE				10
+#define EV_BROWNIAN				11
 
 // Particle types
 #define T_MOLECULE				1
@@ -46,7 +47,8 @@
 	kind == EV_CHECK ||				\
 	kind == EV_TRANSFER ||			\
 	kind == EV_BOUNDARYCOLLISION ||	\
-	kind == EV_OUTOFNEIGHBORHOOD	\
+	kind == EV_OUTOFNEIGHBORHOOD || \
+	kind == EV_BROWNIAN
 
 #define CELLBELONGSTOSIMSPACE(a,b,c,Nx,Ny,Nz)	\
 	0 <= a && a < Nx &&							\

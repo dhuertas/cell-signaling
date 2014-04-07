@@ -16,7 +16,7 @@
 package cellsignaling.src;
 
 simple Manager {
-	
+
 	parameters:
 		// The C++ class for Manager has spaceSizeX, spaceSizeY and spaceSizeZ
 		// attributes. Nevertheless this attributes are retrieved from the 
@@ -50,6 +50,9 @@ simple Manager {
 		// - twosided
 		// - highdensity
 		string particleDistribution = default("undefined");
+
+		// Delta time for Brownian Motion
+		double deltaTime = default(0);
 
 		// Tk refresh rate. Tells the manager when to update the position
 		// string of the particles for the tk environment.
@@ -87,6 +90,15 @@ simple Molecule {
 
 		// Mass of the particle
 		double mass = default(1);
+
+		// Diffusion
+		double diffusion = default(0);
+
+		// Inertia
+		double inertia = default(0);
+
+		// Viscosity 
+		double viscosity = default(0);
 
 		// Radius for the near neighbor list when using the Verlet list
 		// algorithm (mode = M_NNLIST).
@@ -159,7 +171,7 @@ simple MoleculeReceiver {
 	gates:
 		input in;
 		output out;
-	
+
 }
 
 simple SimpleCell {
@@ -181,6 +193,15 @@ simple SimpleCell {
 
 		// Mass of the cell
 		double mass = default(1);
+
+		// Diffusion
+		double diffusion = default(0);
+
+		// Inertia
+		double inertia = default(0);
+
+		// Viscosity 
+		double viscosity = default(0);
 
 		// Radius for the near neighbor list when using the Verlet list
 		// algorithm (mode = M_NNLIST).

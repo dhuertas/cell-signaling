@@ -41,14 +41,21 @@ void Sphere::initMobilityMessages() {
 	Enter_Method_Silent();
 
 	transferMsg = new TransferMessage("mobility", EV_TRANSFER);
-	collisionMsg = new CollisionMessage("mobility", EV_NONE);
-	outOfNeighborhoodMsg = new OutOfNeighborhoodMessage("mobility",EV_OUTOFNEIGHBORHOOD);	
-
-	SphereMobility::resetCollisionMessage(collisionMsg);
-
 	transferMsg->setManager(manager);
 
+	collisionMsg = new CollisionMessage("mobility", EV_NONE);
 	collisionMsg->setManager(manager);
+
+	if (manager->getMode() == M_NNLIST) {
+		outOfNeighborhoodMsg = new OutOfNeighborhoodMessage("mobility", EV_OUTOFNEIGHBORHOOD);	
+	}
+
+	if (manager->getDeltaTime() > 0) {
+		brownianMotionMsg = new BrownianMotionMessage("mobility", EV_BROWNIAN);
+		brownianMotionMsg->setManager(manager);
+	}
+
+	SphereMobility::resetCollisionMessage(collisionMsg);
 
 }
 
@@ -59,11 +66,19 @@ void Sphere::deleteMobilityMessages() {
 
 	cancelAndDelete(transferMsg);
 	cancelAndDelete(collisionMsg);
-	cancelAndDelete(outOfNeighborhoodMsg);
 
 	transferMsg = NULL;
 	collisionMsg = NULL;
-	outOfNeighborhoodMsg = NULL;
+
+	if (manager->getMode() == M_NNLIST) {
+		cancelAndDelete(outOfNeighborhoodMsg);
+		outOfNeighborhoodMsg = NULL;
+	}
+
+	if (manager->getDeltaTime() > 0) {
+		cancelAndDelete(brownianMotionMsg);
+		brownianMotionMsg = NULL;
+	}
 
 }
 
@@ -75,22 +90,16 @@ void Sphere::initializeMobility() {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
-	double transferTime;
-	double collisionTime;
-	double boundaryCollisionTime;
-	double scheduledCollisionTime;
+	double transferTime = NO_TIME;
+	double collisionTime = NO_TIME;
+	double boundaryCollisionTime = NO_TIME;
+	double brownianMotionTime = NO_TIME;
+	double scheduledCollisionTime = NO_TIME;
 
-	double minTime;
+	double minTime = NO_TIME;
 
 	vector<double> times;
 	vector<double>::const_iterator t;
-
-	transferTime = NO_TIME;
-	collisionTime = NO_TIME;
-	boundaryCollisionTime = NO_TIME;
-	scheduledCollisionTime = NO_TIME;
-
-	minTime = NO_TIME;
 
 	// Compute the first collision and the first transfer
 	transferTime = SphereMobility::nextTransfer(transferMsg, this);
@@ -105,6 +114,7 @@ void Sphere::initializeMobility() {
 
 	collisionTime = SphereMobility::nextCollision(collisionMsg, 0, this);
 	boundaryCollisionTime = SphereMobility::nextBoundaryCollision(collisionMsg, this);
+	brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
 
 	if (collisionMsg->isScheduled()) {
 		scheduledCollisionTime = collisionMsg->getCollisionTime();
@@ -117,6 +127,10 @@ void Sphere::initializeMobility() {
 
 	if (boundaryCollisionTime != NO_TIME) {
 		times.push_back(boundaryCollisionTime);
+	}
+
+	if (brownianMotionTime != NO_TIME) {
+		times.push_back(brownianMotionTime);
 	}
 
 	minTime = boundaryCollisionTime;
@@ -155,11 +169,23 @@ void Sphere::initializeMobility() {
 
 		scheduleAt(boundaryCollisionTime, collisionMsg);
 
+	} else if (minTime == brownianMotionTime) {
+
+		if (collisionMsg->isScheduled()) {
+			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
+			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setPartner(NULL);
+		}
+
+		cancelEvent(collisionMsg);
+
+		scheduleAt(brownianMotionTime, brownianMotionMsg);
+
 	} else if (minTime == scheduledCollisionTime) {
 		// Leave it as it is scheduled
 	} else {
 		// minTime equals NO_TIME;
 	}
+
 }
 
 /*
@@ -186,8 +212,16 @@ void Sphere::finishMobility() {
 		cancelEvent(transferMsg);
 	}
 
-	if (outOfNeighborhoodMsg->isScheduled()) {
-		cancelEvent(outOfNeighborhoodMsg);
+	if (outOfNeighborhoodMsg != NULL) {
+		if (outOfNeighborhoodMsg->isScheduled()) {
+			cancelEvent(outOfNeighborhoodMsg);
+		}
+	}
+
+	if (brownianMotionMsg != NULL) {
+		if (brownianMotionMsg->isScheduled()) {
+			cancelEvent(brownianMotionMsg);
+		}
 	}
 
 	active = false;
@@ -224,9 +258,19 @@ void Sphere::finishMobility(Particle *from) {
 		cancelEvent(transferMsg);
 	}
 
-	if (outOfNeighborhoodMsg->isScheduled()) {
-		cancelEvent(outOfNeighborhoodMsg);
+	if (outOfNeighborhoodMsg != NULL) {
+		if (outOfNeighborhoodMsg->isScheduled()) {
+			cancelEvent(outOfNeighborhoodMsg);
+		}
 	}
+
+	if (brownianMotionMsg != NULL) {
+		if (brownianMotionMsg->isScheduled()) {
+			cancelEvent(brownianMotionMsg);
+		}
+	}
+
+	active = false;
 
 }
 
@@ -269,6 +313,7 @@ void Sphere::adjustCollision(double newTime, Particle *from) {
 	collisionMsg->setPartner(from);
 
 	scheduleAt(newTime, collisionMsg);
+
 }
 
 /*
@@ -278,13 +323,10 @@ void Sphere::adjustCollision(double newTime, Particle *from) {
  */
 void Sphere::handleMobilityMessage(cMessage *msg) {
 
-	double transferTime;
-	double collisionTime;
-	double boundaryCollisionTime;
-
-	transferTime = NO_TIME;
-	collisionTime = NO_TIME;
-	boundaryCollisionTime = NO_TIME;
+	double transferTime = NO_TIME;
+	double collisionTime = NO_TIME;
+	double boundaryCollisionTime = NO_TIME;
+	double brownianMotionTime = NO_TIME;
 
 	// Step 1. Find the next event in the queue.
 
@@ -309,6 +351,19 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 	} else if (kind == EV_BOUNDARYCOLLISION) {
 
 		this->handleBoundaryCollision((CollisionMessage *)msg);
+		SphereMobility::resetCollisionMessage(collisionMsg);
+
+	} else if (kind == EV_BROWNIAN) {
+
+		// Update position, velocity and lastCollisionTime
+		this->handleBrownianMotion((BrownianMotionMessage *)msg);
+
+		//  Compute the next velocity with brownian motion
+		brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
+		scheduleAt(brownianMotionTime, brownianMotionMsg);
+
+		// Collisions must be rescheduled
+		if (collisionMsg->isScheduled()) cancelEvent(collisionMsg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
 	} else if (kind == EV_CHECK) {
@@ -347,7 +402,6 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 		if (collisionTime < collisionMsg->getCollisionTime() && collisionTime != NO_TIME) {
 
 			if (collisionMsg->getPrevPartner() != NULL) {
-
 				((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
 				((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setPartner(NULL);
 			}
@@ -359,7 +413,9 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 			scheduleAt(collisionTime, collisionMsg);
 
-			((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
+			if (collisionMsg->getPartner() != NULL) {
+				((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
+			}
 
 		}
 
@@ -372,7 +428,9 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 			scheduleAt(collisionTime, collisionMsg);
 
-			((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
+			if (collisionMsg->getPartner() != NULL) {
+				((Sphere *)collisionMsg->getPartner())->adjustCollision(collisionTime, this);
+			}
 
 		} else {
 
@@ -385,7 +443,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 			if (boundaryCollisionTime != NO_TIME) {
 				scheduleAt(boundaryCollisionTime, collisionMsg);
 			}
-		
+
 		}
 
 	}
@@ -476,9 +534,9 @@ void Sphere::handleCollision(CollisionMessage *msg) {
 	tmp = sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
 
 	if (tmp > 0) {
-	    e1.x /= tmp;
-        e1.y /= tmp;
-        e1.z /= tmp;
+		e1.x /= tmp;
+		e1.y /= tmp;
+		e1.z /= tmp;
 	}
 
 	// Find the velocity vectors in the new basis and if ...
@@ -584,6 +642,28 @@ void Sphere::handleWallCollision(CollisionMessage *msg) {
 
 	// Statistics
 	manager->registerWallCollision();
+}
+
+/*
+ *
+ */
+void Sphere::handleBrownianMotion(BrownianMotionMessage *msg) {
+
+	double dt = manager->getDeltaTime();
+
+	point_t temp = position;
+
+	position.x = velocity.x*dt + temp.x;
+	position.y = velocity.y*dt + temp.y;
+	position.z = velocity.z*dt + temp.z;
+
+	// New velocity for the next brownian motion step
+	velocity.x = msg->getVx();
+	velocity.y = msg->getVy();
+	velocity.z = msg->getVz();
+
+	lastCollisionTime = msg->getBrownianMotionTime();
+
 }
 
 /*

@@ -1,9 +1,9 @@
 #include "WebServer.h"
 
 #include <omnetpp.h>
-#include <tcl.h>
-#include <tk.h>
-#include <tkenv.h>
+//#include <tcl.h>
+//#include <tk.h>
+//#include <tkenv.h>
 
 // Splits a string given a delimiter and returns a vector of substrings
 vectstr_t split(std::string str, char delim) {
@@ -979,7 +979,7 @@ void WebServer::Simulation::performAction(request_t *req) {
 	}
 
 	switch (action) {
-
+/*
 		case 1:
 			if (Tcl_Eval(getTkenv()->getInterp(), "run_normal") == TCL_ERROR) {
 				EV << "Tcl_Eval error" << "\n";
@@ -991,7 +991,7 @@ void WebServer::Simulation::performAction(request_t *req) {
 				EV << "Tcl_Eval error" << "\n";
 			}
 			break;
-
+*/
 		case 0:
 		default:
 			break;
