@@ -348,17 +348,37 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 		this->handleCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
+		// Reset brownian motion
+		if (manager->getDeltaTime() > 0) {
+			if (brownianMotionMsg->isScheduled()) {
+				cancelEvent(brownianMotionMsg);
+			}
+			// Compute the next velocity with brownian motion
+			brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
+			scheduleAt(brownianMotionTime, brownianMotionMsg);
+		}
+
 	} else if (kind == EV_BOUNDARYCOLLISION) {
 
 		this->handleBoundaryCollision((CollisionMessage *)msg);
 		SphereMobility::resetCollisionMessage(collisionMsg);
+
+		// Reset brownian motion
+		if (manager->getDeltaTime() > 0) {
+			if (brownianMotionMsg->isScheduled()) {
+				cancelEvent(brownianMotionMsg);
+			}
+			// Compute the next velocity with brownian motion
+			brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
+			scheduleAt(brownianMotionTime, brownianMotionMsg);
+		}
 
 	} else if (kind == EV_BROWNIAN) {
 
 		// Update position, velocity and lastCollisionTime
 		this->handleBrownianMotion((BrownianMotionMessage *)msg);
 
-		//  Compute the next velocity with brownian motion
+		// Compute the next velocity with brownian motion
 		brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
 		scheduleAt(brownianMotionTime, brownianMotionMsg);
 
@@ -370,6 +390,15 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
 
 		SphereMobility::resetCollisionMessage(collisionMsg);
 
+		// Reset brownian motion
+		if (manager->getDeltaTime() > 0) {
+			if (brownianMotionMsg->isScheduled()) {
+				cancelEvent(brownianMotionMsg);
+			}
+			// Compute the next velocity with brownian motion
+			brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
+			scheduleAt(brownianMotionTime, brownianMotionMsg);
+		}
 	}
 
 	if (manager->getMode() == M_NNLIST) {
