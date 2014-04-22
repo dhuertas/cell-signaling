@@ -45,7 +45,9 @@ void Probe::initialize(int stage) {
  *
  */
 int Probe::numInitStages() const {
+
 	return 2;
+
 }
 
 /*

@@ -37,6 +37,7 @@ void MoleculeEmitter::initialize(int stage) {
 		emissionVelocity = par("emissionVelocity");
 		emissionListRadius = par("emissionListRadius");
 		emissionRefreshListRadius = par("emissionRefreshListRadius");
+		emissionDiffusion = par("emissionDiffusion");
 
 		mobility = (SimpleCell *)getParentModule()->getSubmodule("mobility");
 
@@ -204,6 +205,8 @@ Molecule * MoleculeEmitter::createMolecule() {
 
 	m->par("boundariesMode") = emissionBoundariesMode;
 	// m->par("statsRefreshRate");
+
+	m->par("diffusion") = emissionDiffusion;
 
 	m->finalizeParameters();
 

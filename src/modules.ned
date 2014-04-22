@@ -152,6 +152,7 @@ simple MoleculeEmitter {
 		double emissionVelocity = default(1);
 		double emissionListRadius = default(0);
 		double emissionRefreshListRadius = default(0);
+		double emissionDiffusion = default(0);
 
 	gates:
 		input in;
@@ -215,7 +216,7 @@ simple SimpleCell {
 		// Same as the Molecule boundariesMode parameter.
 		int boundariesMode = default(1);
 
-		// Statistics refresh rate
+		// Statistics refresh rate in, 1/1000 of a time unit
 		double statsRefreshRate = default(0);
 
 		// Log collision times
@@ -243,11 +244,13 @@ module Cell {
 
 }
 
-module Probe {
+simple Probe {
 	
 	parameters:
 		// Probe name
 		string name = default("probe");
+
+		int type = default(6); // T_SIGNALING
 
 		double xpos;
 		double ypos;
@@ -255,13 +258,11 @@ module Probe {
 
 		double radius = default(1);
 
-		// Statistics refresh rate.
+		// Statistics refresh rate in, 1/1000 of a time unit
 		double statsRefreshRate = default(0);
 
 	gates:
 		input in;
 		output out;
-
-	connections allowunconnected:
 
 }

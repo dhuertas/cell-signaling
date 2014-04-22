@@ -115,7 +115,12 @@ double SphereMobility::nextCollision(CollisionMessage *msg, int kind, Sphere *s)
 		// Only keep the collision time if it's smaller than the rest of computed 
 		// collision times so far and is also smaller than the partner collision time.
 		partnerCollisionMsg = ((Sphere *)(*p))->getCollisionMessage();
-		partnerCollisionTime = partnerCollisionMsg->getCollisionTime();
+
+		if (partnerCollisionMsg != NULL) {
+		    partnerCollisionTime = partnerCollisionMsg->getCollisionTime();
+		} else {
+		    partnerCollisionTime = NO_TIME;
+		}
 
 		if (temp != NO_TIME && sTime < temp) {
 			// Collision found!

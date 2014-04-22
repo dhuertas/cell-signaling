@@ -114,7 +114,10 @@ void Sphere::initializeMobility() {
 
 	collisionTime = SphereMobility::nextCollision(collisionMsg, 0, this);
 	boundaryCollisionTime = SphereMobility::nextBoundaryCollision(collisionMsg, this);
-	brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
+
+	if (manager->getDeltaTime() > 0) {
+	    brownianMotionTime = SphereMobility::brownianMotion(brownianMotionMsg, this);
+	}
 
 	if (collisionMsg->isScheduled()) {
 		scheduledCollisionTime = collisionMsg->getCollisionTime();
