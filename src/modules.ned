@@ -131,6 +131,9 @@ simple Molecule {
 		// Log collisions
 		int logCollisions = default(0);
 
+		// Log position
+		int logPosition = default(0);
+
 	gates:
 		input in;
 		output out;

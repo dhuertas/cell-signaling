@@ -32,8 +32,16 @@ class Sphere : public Circle, public cSimpleModule {
 		// Log collisions
 		int logCollisions;
 
+		// Log position
+		int logPosition;
+
 		// Track time between collisions
 		cOutVector *collisionTimeVector;
+
+		// Vectors to get the mean free path
+		cOutVector *xCollisionPositionVector;
+		cOutVector *yCollisionPositionVector;
+		cOutVector *zCollisionPositionVector;
 
 	public:
 
@@ -65,9 +73,19 @@ class Sphere : public Circle, public cSimpleModule {
 
 		// cOutVector methods
 		void logCollisionTime(double stime) {
+		    double st = simTime().dbl();
 			if (logCollisions && collisionTimeVector != NULL) {
-				double st = simTime().dbl();
 				collisionTimeVector->recordWithTimestamp(st, stime);
+			}
+
+			if (logCollisions && 
+				xCollisionPositionVector != NULL &&
+				yCollisionPositionVector != NULL &&
+				zCollisionPositionVector != NULL) {
+
+				xCollisionPositionVector->recordWithTimestamp(st, position.x);
+				yCollisionPositionVector->recordWithTimestamp(st, position.y);
+				zCollisionPositionVector->recordWithTimestamp(st, position.z);
 			}
 		}
 

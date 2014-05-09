@@ -67,19 +67,24 @@ void Molecule::initialize(int stage) {
 			scheduleAt(simTime() + timeToLive, timeToLiveMsg);
 		}
 
-		statsRefreshRate = par("statsRefreshRate");
+		logCollisions = par("logCollisions");
 
-		if (statsRefreshRate > 0) {
+		if (logCollisions > 0) {
+			collisionTimeVector = new cOutVector("collisionTime");
+			xCollisionPositionVector = new cOutVector("xCollisionPosition");
+			yCollisionPositionVector = new cOutVector("yCollisionPosition");
+			zCollisionPositionVector = new cOutVector("zCollisionPosition");
+		}
+
+		logPosition = par("logPosition");
+
+		if (logPosition > 0) {
 			xPositionVector = new cOutVector("xPosition");
 			yPositionVector = new cOutVector("yPosition");
 			zPositionVector = new cOutVector("zPosition");
 		}
 
-		logCollisions = par("logCollisions");
-
-		if (logCollisions > 0) {
-			collisionTimeVector = new cOutVector("collisionTime");
-		}
+		statsRefreshRate = par("statsRefreshRate");
 
 		if (statsRefreshRate > 0) {
 			scheduleAt(simTime() + statsRefreshRate/1000,
