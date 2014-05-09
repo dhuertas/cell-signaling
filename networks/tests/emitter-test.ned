@@ -4,6 +4,7 @@ package cellsignaling.networks.tests;
 import cellsignaling.src.Cell;
 import cellsignaling.src.Manager;
 import cellsignaling.src.Molecule;
+import cellsignaling.src.Probe;
 
 network domain
 {
@@ -20,8 +21,9 @@ network domain
 			@display("p=-30,-30;i=block/cogwheel");
 		}
 
-		cell[2]: Cell;
+		cell[1]: Cell;
 		molecule[numberOfInitialMolecules]: Molecule;
+		probe[10]: Probe;
 
 	connections allowunconnected:
 
