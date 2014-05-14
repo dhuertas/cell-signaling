@@ -52,5 +52,5 @@ Below follows a list of things that would be nice to have, in no specific order:
 
 ## License
 
-TBD
+View LICENSE file.
 
