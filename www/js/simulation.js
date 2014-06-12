@@ -1,4 +1,5 @@
-//  Omnet++ project to simulate cell signaling communications 
+//  This file is part of the Cell-Signaling project. Cell-Signaling is an
+//  Omnet++ project to simulate cell signaling communications.
 //  Copyright (C) 2014  Daniel Huertas
 //
 //  This program is free software: you can redistribute it and/or modify
@@ -29,7 +30,7 @@ var sphereMaterial;
 var r, theta, phi;
 
 var x, y, z;
-
+var lx, ly, lz; // lookAt coordinages
 var max;
 
 var scene, camera;
@@ -70,12 +71,16 @@ function initEnvironment() {
 	camera = new THREE.PerspectiveCamera( 45, view.width / view.height, 0.1, 5*max);
 
 	r = 2*max;
-	theta = 0;
+	theta = Math.PI/2;
 	phi = 0;
 
 	x = spaceSize.x/2 + r*Math.sin(theta)*Math.cos(phi);
 	y = spaceSize.y/2 + r*Math.sin(theta)*Math.sin(phi);
 	z = spaceSize.z/2 + r*Math.cos(theta);
+
+	lx = spaceSize.x/2;
+	ly = spaceSize.y/2;
+	lz = spaceSize.z/2;
 
 	camera.position.x = x;
 	camera.position.y = y;
@@ -271,7 +276,7 @@ function animate() {
 
 function render() {
 
-	camera.lookAt({ x: spaceSize.x/2, y: spaceSize.y/2, z: spaceSize.z/2 });
+	camera.lookAt({ x: lx, y: ly, z: lz });
 
 	updateParticles();
 
@@ -301,15 +306,22 @@ function onMouseMove(event) {
 
 	if (isMouseDown) {
 
+		//dx = event.x - prevClickPos.x > 0 ? 1 : ((event.x - prevClickPos.x < 0) ? -1 : 0);
+		//dy = event.y - prevClickPos.y > 0 ? 1 : ((event.y - prevClickPos.y < 0) ? -1 : 0);
+
 		dx = event.x - prevClickPos.x;
 		dy = event.y - prevClickPos.y;
 
 		theta -= 0.005*dx;
 		phi -= 0.005*dy;
 
-		x = spaceSize.x/2 + r*Math.sin(theta)*Math.cos(phi);
-		y = spaceSize.y/2 + r*Math.sin(theta)*Math.sin(phi);
-		z = spaceSize.z/2 + r*Math.cos(theta);
+		//x = spaceSize.x/2 + r*Math.sin(theta)*Math.cos(phi);
+		//y = spaceSize.y/2 + r*Math.sin(theta)*Math.sin(phi);
+		//z = spaceSize.z/2 + r*Math.cos(theta);
+
+		x = lz + r*Math.sin(theta)*Math.cos(phi);
+		y = ly + r*Math.sin(theta)*Math.sin(phi);
+		z = lz + r*Math.cos(theta);
 
 		camera.position.x = x;
 		camera.position.y = y;
@@ -335,6 +347,30 @@ function onMouseUp(event) {
 function onKeyPress(event) {
 
 	console.log(event);
+
+	switch (event.charCode) {
+
+		case 113: // +x(q)
+			x += 10; lx += 10; break;
+		case 97: // -x(a)
+			x -= 10; lx -= 10; break;
+		case 119: // +y(w)
+			y += 10; ly += 10; break;
+		case 115: // -y(s)
+			y -= 10; ly -= 10; break;
+		case 101: // +z(e)
+			z += 10; lz += 10; break;
+		case 100: // -z(d)
+			z -= 10; lz -= 10; break;
+	}
+
+	camera.position.x = x;
+	camera.position.y = y;
+	camera.position.z = z;
+
+	pointLight.position.x = x;
+	pointLight.position.y = y;
+	pointLight.position.z = z;
 
 }
 
@@ -410,6 +446,31 @@ function resizeHandler(e) {
 
 }
 
+function mouseWheelHandler(e) {
+	
+	var d = ((typeof e.wheelDelta != "undefined")?(-e.wheelDelta):e.detail);
+	d = 100 * ((d>0)?1:-1);
+
+	var cPos = camera.position;
+	if (isNaN(cPos.x) || isNaN(cPos.y) || isNaN(cPos.y))
+		return;
+
+	r += d;
+
+	x = lx + r*Math.sin(theta)*Math.cos(phi);
+	y = ly + r*Math.sin(theta)*Math.sin(phi);
+	z = lz + r*Math.cos(theta);
+
+	camera.position.x = x;
+	camera.position.y = y;
+	camera.position.z = z;
+
+	pointLight.position.x = x;
+	pointLight.position.y = y;
+	pointLight.position.z = z;
+
+}
+
 function loadHandler(e) {
 
 	var heights = { 
@@ -429,8 +490,10 @@ function loadHandler(e) {
 	document.getElementById("view").addEventListener("mousemove", onMouseMove, false);
 	document.getElementById("view").addEventListener("mouseup", onMouseUp, false);
 
-	document.getElementById("start").addEventListener("click", start, false);
-	document.getElementById("stop").addEventListener("click", stop, false);
+	document.getElementById("view").addEventListener('mousewheel', mouseWheelHandler, false);
+	document.getElementById("view").addEventListener('DOMMouseScroll', mouseWheelHandler, false); // firefox
+
+	document.getElementById("reset").addEventListener("click", resetCamera, false);
 
 	requestSettings();
 
@@ -451,15 +514,29 @@ function updateStatistics() {
 
 // Actions ----------------------------------------------------------------- //
 
-function start() {
+function resetCamera() {
 
-	var xhr = new XMLHttpRequest();
 
-	xhr.onreadystatechange = function() {}
+	theta = 0;
+	phi = 0;
 
-	xhr.open("GET", "action?cmd=start", true);
-	xhr.send(null);
+	// Camera lookAt
+	lx = spaceSize.x/2;
+	ly = spaceSize.y/2;
+	lz = spaceSize.z/2;
 
+	// Camera position
+	x = lx + r*Math.sin(theta)*Math.cos(phi);
+	y = ly + r*Math.sin(theta)*Math.sin(phi);
+	z = lz + r*Math.cos(theta);
+
+	camera.position.x = x;
+	camera.position.y = y;
+	camera.position.z = z;
+
+	pointLight.position.x = x;
+	pointLight.position.y = y;
+	pointLight.position.z = z;
 }
 
 function stop() {
