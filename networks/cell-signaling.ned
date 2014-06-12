@@ -1,4 +1,5 @@
-//  Omnet++ project to simulate cell signaling communications 
+//  This file is part of the Cell-Signaling project. Cell-Signaling is an
+//  Omnet++ project to simulate cell signaling communications.
 //  Copyright (C) 2014  Daniel Huertas
 //
 //  This program is free software: you can redistribute it and/or modify

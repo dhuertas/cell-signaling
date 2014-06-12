@@ -1,4 +1,5 @@
-//  Omnet++ project to simulate cell signaling communications 
+//  This file is part of the Cell-Signaling project. Cell-Signaling is an
+//  Omnet++ project to simulate cell signaling communications.
 //  Copyright (C) 2014  Daniel Huertas
 //
 //  This program is free software: you can redistribute it and/or modify
@@ -188,7 +189,7 @@ void Sphere::initializeMobility() {
 
 		scheduleAt(boundaryCollisionTime, collisionMsg);
 
-	} else if (minTime == brownianMotionTime) {
+	} else if (minTime == brownianMotionTime && brownianMotionTime != NO_TIME) {
 
 		if (collisionMsg->isScheduled()) {
 			((Sphere *)collisionMsg->getPrevPartner())->getCollisionMessage()->setKind(EV_CHECK);
