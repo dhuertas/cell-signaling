@@ -12,7 +12,7 @@ To use this code the user must have installed the Omnet++ Simulation Framework a
 
 An article has been published in International Journal of Computer Theory and Engineering (IJCTE), Volume 6, Number 4 (Aug. 2014).
 
-Daniel Huertas González and Alfonso Rojas Espinosa, "Simulation of Cell Signaling Communications Using Event-Driven Algorithms," International Journal of Computer Theory and Engineering vol. 6, no. 4, pp. 307-312, 2014.
+Cite: Daniel Huertas González and Alfonso Rojas Espinosa, "Simulation of Cell Signaling Communications Using Event-Driven Algorithms," International Journal of Computer Theory and Engineering vol. 6, no. 4, pp. 307-312, 2014.
 
 * [Article at IJCTE archive](http://www.ijcte.org/index.php?m=content&c=index&a=show&catid=57&id=1051)
 * [Download article from project](https://github.com/dhuertas/cell-signaling/blob/master/doc/880-F033.pdf?raw=true)
@@ -20,7 +20,7 @@ Daniel Huertas González and Alfonso Rojas Espinosa, "Simulation of Cell Signali
 
 ### UPC COMMONS
 
-
+Final project (to be added).
 
 ## Installation
 
