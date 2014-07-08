@@ -68,8 +68,16 @@ void MoleculeEmitter::initialize(int stage) {
 
 		if (preloadMolecules) {
 			// Compute the number of molecules to be released
+			uint32_t numberOfMolecules = ceil(emissionRate*emissionDuration);
 
 			// Create molecules and save them for later use
+			for (uint32_t i = 0; i < numberOfMolecules; i++) {
+
+				cModuleType *moduleType = cModuleType::get("cellsignaling.src.Molecule");
+				Molecule *m = (Molecule *)moduleType->create("molecule", simulation.getSystemModule());
+
+				preloadedMolecules.push_back(m);
+			}
 		}
 
 		if (emissionStart > 0) {
@@ -162,10 +170,16 @@ Molecule * MoleculeEmitter::createMolecule() {
 	mpos = mobility->getPosition();
 	mvel = mobility->getVelocity();
 
-	// create
-	cModuleType *moduleType = cModuleType::get("cellsignaling.src.Molecule");
-	Molecule *m = (Molecule *)moduleType->create("molecule", simulation.getSystemModule());
-	
+	// Create molecule or get a preloaded one
+	Molecule *m = NULL;
+	if (preloadedMolecules.size() > 0) {
+		m = preloadedMolecules.front();
+		preloadedMolecules.pop_front(); // remove first molecule from the list
+	} else {
+		cModuleType *moduleType = cModuleType::get("cellsignaling.src.Molecule");
+		m = (Molecule *)moduleType->create("molecule", simulation.getSystemModule());	
+	}
+
 	dt = simTime().dbl() - mobility->getLastCollisionTime();
 
 	// set up parameters and gate sizes before we set up its submodules
@@ -251,6 +265,10 @@ Molecule * MoleculeEmitter::createMolecule() {
  */
 void MoleculeEmitter::finish() {
 
+	while (preloadedMolecules.size() > 0) {
+		preloadedMolecules.front()->deleteModule();
+		preloadedMolecules.pop_front();
+	}
 }
 
 /*

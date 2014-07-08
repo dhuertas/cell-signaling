@@ -24,9 +24,11 @@
 #include <coutvector.h>
 #include <omnetpp.h>
 #include <random.h>
+#include <math.h>
 
 #include <list>
 #include <vector>
+
 
 #include "Emitter.h"
 #include "SimpleCell.h"
@@ -41,6 +43,8 @@ class MoleculeEmitter : public Emitter, public cSimpleModule {
 		SimpleCell *mobility;
 
 		bool checkOverlap(point_t, double);
+
+		std::list<Molecule *> preloadedMolecules;
 
 	protected:
 
