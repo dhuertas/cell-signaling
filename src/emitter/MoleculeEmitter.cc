@@ -56,12 +56,20 @@ void MoleculeEmitter::initialize(int stage) {
 		emissionRefreshListRadius = par("emissionRefreshListRadius");
 		emissionDiffusion = par("emissionDiffusion");
 
+		preloadMolecules = par("preloadMolecules");
+
 		mobility = (SimpleCell *)getParentModule()->getSubmodule("mobility");
 
 		if (enabled && getParentModule()->getSubmodule("receiver")->par("enabled")) {
 			mobility->setParticleType(T_EMITTER_RECEIVER);
 		} else if (enabled) {
 			mobility->setParticleType(T_EMITTER);
+		}
+
+		if (preloadMolecules) {
+			// Compute the number of molecules to be released
+
+			// Create molecules and save them for later use
 		}
 
 		if (emissionStart > 0) {

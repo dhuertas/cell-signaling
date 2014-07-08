@@ -145,19 +145,53 @@ simple MoleculeEmitter {
 	
 	parameters:
 
+		// Whether the cell will emit molecules or not
 		bool enabled = default(false);
+
+		// Choose the way molecules must be emitted
+		// TODO implement functions
 		string emissionFunction = default("pulse");
+
+		// The time to start emitting molecules
 		double emissionStart = default(-1);
+
+		// How long the emitter releases molecules
 		double emissionDuration = default(0);
+
+		// How many molecules are released per simulation time unit
 		double emissionRate = default(0);
+
+		// Radius of the emitted molecules
 		double emissionParticleRadius = default(1);
+
+		// Mass of the emitted molecules
 		double emissionParticleMass = default(1);
+
+		// How long the molecules must remain in the simulation before expiring
 		double emissionTimeToLive = default(0);
+
+		// Whether emitted molecules must leave the simulation space or not
 		int emissionBoundariesMode = default(1);
+
+		// Molecule initial velocity
 		double emissionVelocity = default(1);
+
+		// Verlet list radius parameter for the emitted molecules
 		double emissionListRadius = default(0);
+
+		// Verlet refresh list radius for the emitted molecules
 		double emissionRefreshListRadius = default(0);
+
+		// Diffusion coefficient of molecules when using brownian motion
+		// Note: manager module must have a deltaTime value greater than 0
+		// TODO check that manager.deltaTime is set during initialization process
 		double emissionDiffusion = default(0);
+
+		// Create molecule modules during the initialization process. This is 
+		// useful when the emitter must release a lot of molecules.
+		// Note: This uses more memory at the beginning of the simulation, but
+		// speeds up the simulation execution.
+		bool preloadMolecules = default(false);
 
 	gates:
 		input in;
@@ -181,7 +215,7 @@ simple MoleculeReceiver {
 }
 
 simple SimpleCell {
-	
+
 	parameters:
 		//
 		// Mobility parameters

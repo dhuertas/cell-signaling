@@ -68,6 +68,8 @@ class MoleculeEmitter : public Emitter, public cSimpleModule {
 
 		double emissionDiffusion;
 
+		bool preloadMolecules;
+
 	public:
 
 		MoleculeEmitter();
