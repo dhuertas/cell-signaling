@@ -2,17 +2,17 @@
 
 The aim of this project is to model and simulate the communication channel of signaling cells over short distances (also knows as paracrine signaling). This code is the end result of my Final Project for the Telecommunication Engineering degree at Polytechnic University of Catalonia (BCN Telecom).
 
+It uses a hard-sphere model and brownian motion to reproduce the diffusion mechanism of signaling molecules in a fluid. It also includes a web based 3D visualization component using [three.js](http://threejs.org) library and JSON streaming.
+
+Note that to use this code the user must have installed the Omnet++ Simulation Framework and import the code as a new project.
+
 |Pulse received by a cell at 250nm from the emitter|
 |:------------------------------------------------:|
 |![Pulse-example](https://dl.dropboxusercontent.com/u/1690746/images/cell-signaling-pulse-example.png "Pulse example")|
 
-It uses a hard-sphere model and brownian motion to reproduce the diffusion mechanism of signaling molecules in a fluid. It also includes a web based 3D visualization component using [three.js](http://threejs.org) library and JSON streaming.
-
 |Snapshot of the 3D visualization component using Chromiun web browser|
 |:-------------------------------------------------------------------:|
 |![Snapshot](https://dl.dropboxusercontent.com/u/1690746/images/webclient-capture.png "Snapshot")|
-
-To use this code the user must have installed the Omnet++ Simulation Framework and import the code as a new project.
 
 ## Publications
 
