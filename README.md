@@ -78,6 +78,3 @@ Below follows a list of things that would be nice to have, in no specific order:
 
 View LICENSE file.
 
-#pulse, #snapshot {
-  text-align: center;
-} 
