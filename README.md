@@ -4,6 +4,10 @@ The aim of this project is to model and simulate the communication channel of si
 
 ![Pulse example](https://dl.dropboxusercontent.com/u/1690746/images/cell-signaling-pulse-example.png "Pulse example")
 
+It uses a hard-sphere model and brownian motion to reproduce the diffusion mechanism of signaling molecules in a fluid. It also includes a web based 3D visualization component using [three.js](http://threejs.org) library and JSON streaming.
+
+|[webclient-capture](https://dl.dropboxusercontent.com/u/1690746/images/webclient-capture.png "Webclient capture")
+
 To use this code the user must have installed the Omnet++ Simulation Framework and import the code as a new project.
 
 ## Publications
