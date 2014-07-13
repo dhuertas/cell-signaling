@@ -68,35 +68,35 @@ void SimpleCell::initialize(int stage) {
 		//  \    /             |
 		//   \  /  4*M_PI*D*dt
 		//    \/
-		setBMStdDev(sqrt(4*M_PI*par("diffusion").doubleValue()*(manager->getDeltaTime())));
+		setBMStdDev(sqrt(4*M_PI*par("diffusion").doubleValue()*(manager_->getDeltaTime())));
 
 		// Near-Neighbor List radius
 		setListRadius(par("listRadius").doubleValue());
 		setRefreshListRadius(par("refreshListRadius").doubleValue());
 
-		boundariesMode = par("boundariesMode");
+		setBoundariesMode(par("boundariesMode"));
 
-		timeToLive = par("timeToLive");
+		timeToLive_ = par("timeToLive");
 
-		if (timeToLive > 0) {
+		if (timeToLive_ > 0) {
 
-			timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+			timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
 
-			scheduleAt(simTime() + timeToLive, timeToLiveMsg);
+			scheduleAt(simTime() + timeToLive_, timeToLiveMsg_);
 
 		}
 
-		statsRefreshRate = par("statsRefreshRate");
+		statsRefreshRate_ = par("statsRefreshRate");
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(simTime() + statsRefreshRate/1000,
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(simTime() + statsRefreshRate_/1000,
 				new cMessage("refresh", EV_STATSUPDATE));
 		}
 
-		logCollisions = par("logCollisions");
+		logCollisions_ = par("logCollisions");
 
-		if (logCollisions > 0) {
-			collisionTimeVector = new cOutVector("collisionTime");
+		if (logCollisions_ > 0) {
+			collisionTimeVector_ = new cOutVector("collisionTime");
 		}
 
 		// update Cell position in the tk environment
@@ -135,8 +135,8 @@ void SimpleCell::handleMessage(cMessage *msg) {
 
 	} else if (kind == EV_STATSUPDATE) {
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(simTime() + statsRefreshRate/1000, msg);
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(simTime() + statsRefreshRate_/1000, msg);
 		}
 
 	} else if (kind == EV_TTLEXPIRE) {
@@ -158,8 +158,8 @@ void SimpleCell::finish() {
 	// Delete mobility messages
 	deleteMobilityMessages();
 
-	if (timeToLive > 0) {
-		cancelAndDelete(timeToLiveMsg);
+	if (timeToLive_ > 0) {
+		cancelAndDelete(timeToLiveMsg_);
 	}
 
 }
@@ -170,10 +170,10 @@ void SimpleCell::finish() {
  */
 void SimpleCell::expire() {
 
-	manager->registerExpire();
+	manager_->registerExpire();
 
 	// Unsubscribe from the manager
-	getManager()->unsubscribe(this);
+	manager_->unsubscribe(this);
 
 	// Get out of the simulation space gracefully
 	this->finishMobility();
@@ -181,8 +181,8 @@ void SimpleCell::expire() {
 	// Delete mobility messages
 	deleteMobilityMessages();
 
-	if (timeToLive > 0) {
-		cancelAndDelete(timeToLiveMsg);
+	if (timeToLive_ > 0) {
+		cancelAndDelete(timeToLiveMsg_);
 	}
 
 	this->deleteModule();
@@ -198,15 +198,15 @@ void SimpleCell::scheduleExpire(double time) {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
-	if (timeToLive > 0) {
-		if (timeToLiveMsg->isScheduled()) {
-				cancelEvent(timeToLiveMsg);
+	if (timeToLive_ > 0) {
+		if (timeToLiveMsg_->isScheduled()) {
+				cancelEvent(timeToLiveMsg_);
 		}
 	} else {
-		timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+		timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
 	}
 
-	scheduleAt(time, timeToLiveMsg);
+	scheduleAt(time, timeToLiveMsg_);
 
 }
 
@@ -227,8 +227,8 @@ bool SimpleCell::isSignaling(cMessage *msg) {
 
 		cmsg = (CollisionMessage *)msg;
 
-		if (particleType == T_RECEIVER ||
-			particleType == T_EMITTER_RECEIVER) {
+		if (particleType_ == T_RECEIVER ||
+			particleType_ == T_EMITTER_RECEIVER) {
 
 			if (cmsg->getPartner()->getParticleType() == T_SIGNALING) {
 				return true;

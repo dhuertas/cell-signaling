@@ -57,7 +57,7 @@ class Manager : public cSimpleModule {
 		double spaceCellSize;
 
 		// Overwrite particles' list radius.
-		double listRadius;
+		double listRadius_;
 
 		// Contains the particle Id from the last added particle to the domain.
 		int lastParticleId;
@@ -68,7 +68,7 @@ class Manager : public cSimpleModule {
 		double tkEnvRefreshRate;
 
 		// Update the cOutVectors periodically.
-		double statsRefreshRate;
+		double statsRefreshRate_;
 
 		int enableWebServer;
 
@@ -77,7 +77,7 @@ class Manager : public cSimpleModule {
 		struct arg_struct webServerArgs;
 
 		// Manager name
-		std::string name;
+		std::string name_;
 
 		// A list of particles contained in the simulation space. Every new
 		// particle must be subscribed to (and unsubscribed from).
@@ -151,7 +151,7 @@ class Manager : public cSimpleModule {
 
 		double getDeltaTime(void) { return deltaTime; };
 
-		double getListRadius(void) { return listRadius; };
+		double getListRadius(void) { return listRadius_; };
 
 		std::list<Particle *> *getSpaceCellParticles(int);
 
@@ -179,7 +179,7 @@ class Manager : public cSimpleModule {
 
 		void setDeltaTime(double dt) { deltaTime = dt; };
 
-		void setListRadius(double lr) { listRadius = lr; };
+		void setListRadius(double lr) { listRadius_ = lr; };
 
 		void clearStatistics(void);
 

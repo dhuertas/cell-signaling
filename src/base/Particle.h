@@ -27,51 +27,51 @@ class Particle {
 
 	protected:
 
-		bool active;
+		bool active_;
 
-		point_t position;
+		point_t position_;
 
-		vect_t velocity;
+		vect_t velocity_;
 
-		double mass;
+		double mass_;
 
-		double lastCollisionTime;
+		double lastCollisionTime_;
 
-		int particleId;
+		int particleId_;
 
-		int particleType;
+		int particleType_;
 
 		// Cell List attributes
-		int spaceCell; // TODO remove this and start using spaceCellIdx instead
+		int spaceCell_; // TODO remove this and start using spaceCellIdx instead
 
-		index_t spaceCellIdx;
+		index_t spaceCellIdx_;
 
-		int prevSpaceCell;
+		int prevSpaceCell_;
 
-		index_t prevSpaceCellIdx;
+		index_t prevSpaceCellIdx_;
 
 		// Near Neighbor List of particles
-		std::vector<Particle*> neighborParticles;
+		std::vector<Particle*> neighborParticles_;
 
 		// Near Neighbor List radius
-		double listRadius;
+		double listRadius_;
 
 		// Near Neighbor List refresh list radius
-		double refreshListRadius;
+		double refreshListRadius_;
 
 		// Boundaries mode. Whether the particle must bounce, expire, etc.
-		int boundariesMode;
+		int boundariesMode_;
 
 		//
 		// Brownian motion parameters
 		// 
-		double diffusion;
+		double diffusion_;
 
-		double inertia;
+		double inertia_;
 
-		double viscosity;
+		double viscosity_;
 
-		double BMStdDev;
+		double BMStdDev_;
 
 	public:
 
@@ -80,107 +80,109 @@ class Particle {
 		Particle(double, double, double, double, double);
 
 		// Gets and sets
-		inline int getParticleId(void) { return particleId; };
+		inline int getParticleId(void) { return particleId_; };
 
-		inline int getParticleType(void) { return particleType; };
+		inline int getParticleType(void) { return particleType_; };
 
-		inline double getX(void) { return position.x; };
+		inline double getX(void) { return position_.x; };
 
-		inline double getY(void) { return position.y; };
+		inline double getY(void) { return position_.y; };
 
-		inline double getZ(void) { return position.z; };
+		inline double getZ(void) { return position_.z; };
 
-		inline point_t *getPosition(void) { return &position; };
+		inline point_t *getPosition(void) { return &position_; };
 
-		inline double getVx(void) { return velocity.x; };
+		inline double getVx(void) { return velocity_.x; };
 
-		inline double getVy(void) { return velocity.y; };
+		inline double getVy(void) { return velocity_.y; };
 
-		inline double getVz(void) { return velocity.z; };
+		inline double getVz(void) { return velocity_.z; };
 
-		inline vect_t *getVelocity(void) { return &velocity; };
+		inline vect_t *getVelocity(void) { return &velocity_; };
 
-		inline double getMass(void) { return mass; };
+		inline double getMass(void) { return mass_; };
 
-		inline double *getDiffusion(void) { return &diffusion; };
+		inline double *getDiffusion(void) { return &diffusion_; };
 
-		inline double *getInertia(void) { return &inertia; };
+		inline double *getInertia(void) { return &inertia_; };
 
-		inline double *getViscosity(void) { return &viscosity; };
+		inline double *getViscosity(void) { return &viscosity_; };
 
-		inline double *getBMStdDev(void) { return &BMStdDev; };
-
-		// TODO remove this once the space cells indexes use data structures (spaceCellIdx)
-		inline int getSpaceCell(void) { return spaceCell; };
-
-		inline index_t getSpaceCellIdx(void) { return spaceCellIdx; };
+		inline double *getBMStdDev(void) { return &BMStdDev_; };
 
 		// TODO remove this once the space cells indexes use data structures (spaceCellIdx)
-		inline int getPrevSpaceCell(void) { return prevSpaceCell; };
+		inline int getSpaceCell(void) { return spaceCell_; };
 
-		inline index_t getPrevSpaceCellIdx(void) {return prevSpaceCellIdx; };
+		inline index_t getSpaceCellIdx(void) { return spaceCellIdx_; };
 
-		inline double getListRadius(void) { return listRadius; };
+		// TODO remove this once the space cells indexes use data structures (spaceCellIdx)
+		inline int getPrevSpaceCell(void) { return prevSpaceCell_; };
 
-		inline double getRefreshListRadius(void) { return refreshListRadius; };
+		inline index_t getPrevSpaceCellIdx(void) {return prevSpaceCellIdx_; };
+
+		inline double getListRadius(void) { return listRadius_; };
+
+		inline double getRefreshListRadius(void) { return refreshListRadius_; };
 
 		virtual double getRadius(void) = 0;
 
-		inline double getLastCollisionTime(void) { return lastCollisionTime; };
+		inline double getLastCollisionTime(void) { return lastCollisionTime_; };
 
-		inline std::vector<Particle*> getNeighborParticles(void) { return neighborParticles; };
+		inline std::vector<Particle*> getNeighborParticles(void) { return neighborParticles_; };
 
-		inline int getBoundariesMode(void) const { return boundariesMode; };
+		inline int getBoundariesMode(void) const { return boundariesMode_; };
 
-		inline bool isActive (void) { return active; };
+		inline bool isActive (void) { return active_; };
 		
-		inline void setParticleId(int id) { particleId = id; };
+		inline void setParticleId(int id) { particleId_ = id; };
 
-		inline void setParticleType(int t) { particleType = t; };
+		inline void setParticleType(int t) { particleType_ = t; };
 
-		inline void setX(double x) { position.x = x; };
+		inline void setX(double x) { position_.x = x; };
 
-		inline void setY(double y) { position.y = y; };
+		inline void setY(double y) { position_.y = y; };
 
-		inline void setZ(double z) { position.z = z; };
+		inline void setZ(double z) { position_.z = z; };
 
-		inline void setPosition(point_t p) { position = p; };
+		inline void setPosition(point_t p) { position_ = p; };
 
-		inline void setVx(double vx) { velocity.x = vx; };
+		inline void setVx(double vx) { velocity_.x = vx; };
 
-		inline void setVy(double vy) { velocity.y = vy; };
+		inline void setVy(double vy) { velocity_.y = vy; };
 
-		inline void setVz(double vz) { velocity.z = vz; };
+		inline void setVz(double vz) { velocity_.z = vz; };
 
-		inline void setVelocity(vect_t v) { velocity = v; };
+		inline void setVelocity(vect_t v) { velocity_ = v; };
 
-		inline void setMass(double m) { mass = m; };
+		inline void setMass(double m) { mass_ = m; };
 
-		inline void setDiffusion(double d) { diffusion = d; };
+		inline void setDiffusion(double d) { diffusion_ = d; };
 
-		inline void setInertia(double i) { inertia = i; };
+		inline void setInertia(double i) { inertia_ = i; };
 
-		inline void setViscosity(double v) { viscosity = v; };
+		inline void setViscosity(double v) { viscosity_ = v; };
 
-		inline void setBMStdDev(double sd) { BMStdDev = sd; };
+		inline void setBMStdDev(double sd) { BMStdDev_ = sd; };
 
-		inline void setSpaceCell(int c) { spaceCell = c; };
+		inline void setSpaceCell(int c) { spaceCell_ = c; };
 
-		inline void setSpaceCellIdx(index_t sci) { spaceCellIdx = sci; };
+		inline void setSpaceCellIdx(index_t sci) { spaceCellIdx_ = sci; };
 
-		inline void setPrevSpaceCell(int c) { prevSpaceCell = c; };
+		inline void setPrevSpaceCell(int c) { prevSpaceCell_ = c; };
 
-		inline void setListRadius(double r) { listRadius = r; };
+		inline void setPrevSpaceCellIdx(index_t psci) { prevSpaceCellIdx_ = psci; };
 
-		inline void setRefreshListRadius(double r) { refreshListRadius = r; };
+		inline void setListRadius(double r) { listRadius_ = r; };
+
+		inline void setRefreshListRadius(double r) { refreshListRadius_ = r; };
 
 		virtual void setRadius(double) = 0;
 
-		inline void setLastCollisionTime(double tc) { lastCollisionTime = tc; };
+		inline void setLastCollisionTime(double tc) { lastCollisionTime_ = tc; };
 
-		inline void setBoundariesMode(int bm) { boundariesMode = bm; };
+		inline void setBoundariesMode(int bm) { boundariesMode_ = bm; };
 
-		inline void setActive(bool a) { active = a; };
+		inline void setActive(bool a) { active_ = a; };
 
 		//
 		// tk Environment methods

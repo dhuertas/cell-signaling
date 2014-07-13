@@ -107,15 +107,15 @@ void MoleculeEmitter::handleMessage(cMessage *msg) {
     molecule = createMolecule();
     molecule->callInitialize();
 
-    molecule->setParticleId(manager->getNextParticleId());
+    molecule->setParticleId(manager_->getNextParticleId());
     molecule->setParticleType(T_SIGNALING);
     molecule->setLastCollisionTime(st);
 
     molecule->initMobilityMessages();
 
-    manager->attachParticleToSpaceCell(molecule, -1);
+    manager_->attachParticleToSpaceCell(molecule, -1);
 
-    if (manager->getMode() == M_NNLIST) {
+    if (manager_->getMode() == M_NNLIST) {
       molecule->setListRadius(2*emissionParticleRadius);
       molecule->createNearNeighborList();
     }
@@ -170,7 +170,7 @@ Molecule * MoleculeEmitter::createMolecule() {
   e = 0.01*epr;
   r = mobility->getRadius() + epr + e;
 
-  ss = manager->getSpaceSize();
+  ss = manager_->getSpaceSize();
 
   mpos = mobility->getPosition();
   mvel = mobility->getVelocity();
@@ -284,7 +284,7 @@ void MoleculeEmitter::finish() {
 void MoleculeEmitter::setManager(std::string param) {
 
   try {
-    manager = (Manager *)simulation.
+    manager_ = (Manager *)simulation.
       getSystemModule()->getSubmodule(param.c_str());
   } catch (cException *e) {
     EV << "setManager error" << "\n";
@@ -318,17 +318,17 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
   std::list<Particle *> *particleList;
   std::list<Particle *>::const_iterator pl;
 
-  spaceCellSize = manager->getSpaceCellSize();
+  spaceCellSize = manager_->getSpaceCellSize();
 
-  Nx = manager->getNumberOfSpaceCellsX();
-  Ny = manager->getNumberOfSpaceCellsY();
-  Nz = manager->getNumberOfSpaceCellsZ();
+  Nx = manager_->getNumberOfSpaceCellsX();
+  Ny = manager_->getNumberOfSpaceCellsY();
+  Nz = manager_->getNumberOfSpaceCellsZ();
 
   i = floor(ca.x/spaceCellSize);
   j = floor(ca.y/spaceCellSize);
   k = floor(ca.z/spaceCellSize);
 
-  if (manager->getMode() == M_NNLIST) {
+  if (manager_->getMode() == M_NNLIST) {
 
     particles = mobility->getNeighborParticles();
 
@@ -347,7 +347,7 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
     // Get the particles from each of the listed space cells
     for (sc = spaceCells.begin(); sc != spaceCells.end(); ++sc) {
 
-      particleList = manager->getSpaceCellParticles(*sc);
+      particleList = manager_->getSpaceCellParticles(*sc);
 
       for (pl = particleList->begin(); pl != particleList->end(); ++pl) {
         particles.push_back(*pl);

@@ -37,28 +37,28 @@ class Sphere : public Circle, public cSimpleModule {
 	private:
 
 		// Self messages
-		TransferMessage *transferMsg;
-		CollisionMessage *collisionMsg;
-		OutOfNeighborhoodMessage *outOfNeighborhoodMsg;
-		BrownianMotionMessage *brownianMotionMsg;
+		TransferMessage *transferMsg_;
+		CollisionMessage *collisionMsg_;
+		OutOfNeighborhoodMessage *outOfNeighborhoodMsg_;
+		BrownianMotionMessage *brownianMotionMsg_;
 
 	protected:
 
-		Manager *manager;
+		Manager *manager_;
 
 		// Log collisions
-		int logCollisions;
+		int logCollisions_;
 
 		// Log position
-		int logPosition;
+		int logPosition_;
 
 		// Track time between collisions
-		cOutVector *collisionTimeVector;
+		cOutVector *collisionTimeVector_;
 
 		// Vectors to get the mean free path
-		cOutVector *xCollisionPositionVector;
-		cOutVector *yCollisionPositionVector;
-		cOutVector *zCollisionPositionVector;
+		cOutVector *xCollisionPositionVector_;
+		cOutVector *yCollisionPositionVector_;
+		cOutVector *zCollisionPositionVector_;
 
 	public:
 
@@ -91,18 +91,18 @@ class Sphere : public Circle, public cSimpleModule {
 		// cOutVector methods
 		void logCollisionTime(double stime) {
 		    double st = simTime().dbl();
-			if (logCollisions && collisionTimeVector != NULL) {
-				collisionTimeVector->recordWithTimestamp(st, stime);
+			if (logCollisions_ && collisionTimeVector_ != NULL) {
+				collisionTimeVector_->recordWithTimestamp(st, stime);
 			}
 
-			if (logCollisions && 
-				xCollisionPositionVector != NULL &&
-				yCollisionPositionVector != NULL &&
-				zCollisionPositionVector != NULL) {
+			if (logCollisions_ && 
+				xCollisionPositionVector_ != NULL &&
+				yCollisionPositionVector_ != NULL &&
+				zCollisionPositionVector_ != NULL) {
 
-				xCollisionPositionVector->recordWithTimestamp(st, position.x);
-				yCollisionPositionVector->recordWithTimestamp(st, position.y);
-				zCollisionPositionVector->recordWithTimestamp(st, position.z);
+				xCollisionPositionVector_->recordWithTimestamp(st, position_.x);
+				yCollisionPositionVector_->recordWithTimestamp(st, position_.y);
+				zCollisionPositionVector_->recordWithTimestamp(st, position_.z);
 			}
 		}
 
@@ -112,7 +112,7 @@ class Sphere : public Circle, public cSimpleModule {
 		void tkEnvUpdatePosition(double);
 
 		// Gets and sets
-		Manager * getManager(void) { return manager; }
+		Manager * getManager(void) { return manager_; }
 		TransferMessage * getTransferMessage(void);
 		CollisionMessage * getCollisionMessage(void);
 

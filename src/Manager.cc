@@ -126,7 +126,7 @@ void Manager::initialize(int stage) {
 		}
 
 		tkEnvRefreshRate = par("tkRefreshRate");
-		statsRefreshRate = par("statsRefreshRate");
+		statsRefreshRate_ = par("statsRefreshRate");
 		enableWebServer = par("enableWebServer");
 
 		// Set network size for tkenv
@@ -213,8 +213,8 @@ void Manager::initialize(int stage) {
 		for (p = particles.begin(); p != particles.end(); ++p) {
 			// If the manager has set a list radius, overwrite the list
 			// radius of the particles
-			if (mode == M_NNLIST && listRadius > 0) {
-				(*p)->setListRadius(listRadius);
+			if (mode == M_NNLIST && listRadius_ > 0) {
+				(*p)->setListRadius(listRadius_);
 			}
 
 			attachParticleToSpaceCell(*p, -1);
@@ -232,8 +232,8 @@ void Manager::initialize(int stage) {
 				new cMessage("refresh", EV_TKENVUPDATE));
 		}
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(simTime() + statsRefreshRate/1000,
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(simTime() + statsRefreshRate_/1000,
 				new cMessage("refresh", EV_STATSUPDATE));
 		}
 
@@ -385,8 +385,8 @@ void Manager::handleMessage(cMessage *msg) {
 		// Clear the stats data structure
 		clearStatistics();
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(st + statsRefreshRate/1000, msg);
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(st + statsRefreshRate_/1000, msg);
 		}
 	}
 

@@ -38,7 +38,7 @@ class MoleculeEmitter : public Emitter, public cSimpleModule {
 
   private:
 
-    Manager *manager;
+    Manager *manager_;
 
     SimpleCell *mobility;
 

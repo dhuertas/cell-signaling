@@ -35,12 +35,12 @@ class MoleculeReceiver : public Receiver, public cSimpleModule {
 
 	private:
 
-		Manager *manager;
+		Manager *manager_;
 
 		SimpleCell *mobility;
 
 		// Update the cOutVectors periodically.
-		double statsRefreshRate;
+		double statsRefreshRate_;
 
 	protected:
 	

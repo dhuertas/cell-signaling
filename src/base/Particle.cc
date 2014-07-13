@@ -34,29 +34,29 @@ Particle::Particle(
 	double vy,
 	double m) {
 
-	position.x = x;
-	position.y = y;
-	position.z = 0;
+	position_.x = x;
+	position_.y = y;
+	position_.z = 0;
 
-	velocity.x = vx;
-	velocity.y = vy;
-	velocity.z = 0;
+	velocity_.x = vx;
+	velocity_.y = vy;
+	velocity_.z = 0;
 
-	spaceCell = -1;
+	spaceCell_ = -1;
 
-	spaceCellIdx.im = 0x00;
-	spaceCellIdx.i = 0;
-	spaceCellIdx.j = 0;
-	spaceCellIdx.k = 0;
+	spaceCellIdx_.im = 0x00;
+	spaceCellIdx_.i = 0;
+	spaceCellIdx_.j = 0;
+	spaceCellIdx_.k = 0;
 
-	prevSpaceCellIdx.im = 0x00;
-	prevSpaceCellIdx.i = 0;
-	prevSpaceCellIdx.j = 0;
-	prevSpaceCellIdx.k = 0;
+	prevSpaceCellIdx_.im = 0x00;
+	prevSpaceCellIdx_.i = 0;
+	prevSpaceCellIdx_.j = 0;
+	prevSpaceCellIdx_.k = 0;
 
-	mass = m;
-	lastCollisionTime = 0;
+	mass_ = m;
+	lastCollisionTime_ = 0;
 
-	listRadius = 1;
+	listRadius_ = 1;
 
 }
