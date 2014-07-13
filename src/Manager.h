@@ -36,70 +36,70 @@ class Manager : public cSimpleModule {
 	private:
 
 		// Molecule Dynamics Mode of operation
-		int mode;
+		int mode_;
 
 		// The number of space cells in each direction. They are used to
 		// access the spaceCells vector of vectors.
-		int Nx; 
-		int Ny;
-		int Nz;
+		int Nx_;
+		int Ny_;
+		int Nz_;
 
 		// File Descriptors to communicate with the Web Server thread
-		int quitFd[2];
+		int quitFd_[2];
 
 		// the simulation space size in each direction
-		vect_t spaceSize;
+		vect_t spaceSize_;
 
 		// Delta time
-		double deltaTime;
+		double deltaTime_;
 
 		// The space cell size
-		double spaceCellSize;
+		double spaceCellSize_;
 
 		// Overwrite particles' list radius.
 		double listRadius_;
 
 		// Contains the particle Id from the last added particle to the domain.
-		int lastParticleId;
+		int lastParticleId_;
 
 		// TK environment refresh rate
 		// It allows the manager module to send self-messages in order to
 		// update the position of each particle.
-		double tkEnvRefreshRate;
+		double tkEnvRefreshRate_;
 
 		// Update the cOutVectors periodically.
 		double statsRefreshRate_;
 
-		int enableWebServer;
+		int enableWebServer_;
 
-		pthread_t webServerThread;
+		pthread_t webServerThread_;
 
-		struct arg_struct webServerArgs;
+		struct arg_struct webServerArgs_;
 
 		// Manager name
 		std::string name_;
 
 		// A list of particles contained in the simulation space. Every new
 		// particle must be subscribed to (and unsubscribed from).
-		std::list<Particle*> particles;
+		std::list<Particle*> particles_;
 
 		// Space is divided into cells, each of which contains a list of
 		// particles belonging to it.
-		std::vector<std::list<Particle*> > spaceCells;
+		std::vector<std::list<Particle*> > spaceCells_;
 
 	protected:
 
-		statistics_t stats;
+		statistics_t stats_;
 
-		cOutVector allCollisionsVector;
+		cOutVector allCollisionsVector_;
 
-		cOutVector particleCollisionsVector;
+		cOutVector particleCollisionsVector_;
 
-		cOutVector wallCollisionsVector;
+		cOutVector wallCollisionsVector_;
 
-		cOutVector transfersVector;
+		cOutVector transfersVector_;
 
-		cOutVector expiresVector;
+		cOutVector expiresVector_;
 
 	public:
 
@@ -131,25 +131,25 @@ class Manager : public cSimpleModule {
 		void stopWebServerThread(void);
 
 		// Gets and sets
-		vect_t *getSpaceSize(void) { return &spaceSize; };
+		vect_t *getSpaceSize(void) { return &spaceSize_; };
 
-		double getSpaceSizeX(void) { return spaceSize.x; };
+		double getSpaceSizeX(void) { return spaceSize_.x; };
 
-		double getSpaceSizeY(void) { return spaceSize.y; };
+		double getSpaceSizeY(void) { return spaceSize_.y; };
 
-		double getSpaceSizeZ(void) { return spaceSize.z; };
+		double getSpaceSizeZ(void) { return spaceSize_.z; };
 
-		double getSpaceCellSize(void) { return spaceCellSize; };
+		double getSpaceCellSize(void) { return spaceCellSize_; };
 
-		int *getNumberOfSpaceCellsX(void) { return &Nx; };
+		int *getNumberOfSpaceCellsX(void) { return &Nx_; };
 
-		int *getNumberOfSpaceCellsY(void) { return &Ny; };
+		int *getNumberOfSpaceCellsY(void) { return &Ny_; };
 
-		int *getNumberOfSpaceCellsZ(void) { return &Nz; };
+		int *getNumberOfSpaceCellsZ(void) { return &Nz_; };
 
-		int getMode(void) { return mode; };
+		int getMode(void) { return mode_; };
 
-		double getDeltaTime(void) { return deltaTime; };
+		double getDeltaTime(void) { return deltaTime_; };
 
 		double getListRadius(void) { return listRadius_; };
 
@@ -157,27 +157,27 @@ class Manager : public cSimpleModule {
 
 		int getNextParticleId(void);
 
-		int getLastParticleId(void) { return lastParticleId; };
+		int getLastParticleId(void) { return lastParticleId_; };
 
-		void setSpaceSize(vect_t vsz) { spaceSize = vsz; };
+		void setSpaceSize(vect_t vsz) { spaceSize_ = vsz; };
 
-		void setSpaceSizeX(double sx) { spaceSize.x = sx; };
+		void setSpaceSizeX(double sx) { spaceSize_.x = sx; };
 
-		void setSpaceSizeY(double sy) { spaceSize.y = sy; };
+		void setSpaceSizeY(double sy) { spaceSize_.y = sy; };
 
-		void setSpaceSizeZ(double sz) { spaceSize.z = sz; };
+		void setSpaceSizeZ(double sz) { spaceSize_.z = sz; };
 
-		void setSpaceCellSize(double sc) { spaceCellSize = sc; };
+		void setSpaceCellSize(double sc) { spaceCellSize_ = sc; };
 
-		void setNumberOfSpaceCellsX(int n) { Nx = n; };
+		void setNumberOfSpaceCellsX(int n) { Nx_ = n; };
 
-		void setNumberOfSpaceCellsY(int n) { Ny = n; };
+		void setNumberOfSpaceCellsY(int n) { Ny_ = n; };
 
-		void setNumberOfSpaceCellsZ(int n) { Nz = n; };
+		void setNumberOfSpaceCellsZ(int n) { Nz_ = n; };
 
-		void setMode(int m) { mode = m; };
+		void setMode(int m) { mode_ = m; };
 
-		void setDeltaTime(double dt) { deltaTime = dt; };
+		void setDeltaTime(double dt) { deltaTime_ = dt; };
 
 		void setListRadius(double lr) { listRadius_ = lr; };
 
