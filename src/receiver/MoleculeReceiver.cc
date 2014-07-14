@@ -58,13 +58,13 @@ void MoleculeReceiver::initialize(int stage) {
 
 		particlesReceivedVector.setName("particlesReceived");
 
-		statsRefreshRate = par("statsRefreshRate");
+		statsRefreshRate_ = par("statsRefreshRate");
 
 		// Set the reference to the manager module
 		setManager("manager");
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(simTime() + statsRefreshRate/1000,
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(simTime() + statsRefreshRate_/1000,
 				new cMessage("refresh", EV_STATSUPDATE));
 		}
 	}
@@ -98,8 +98,8 @@ void MoleculeReceiver::handleMessage(cMessage *msg) {
 
 		received = 0;
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(st + statsRefreshRate/1000, msg);
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(st + statsRefreshRate_/1000, msg);
 		}
 
 	}
@@ -120,7 +120,7 @@ void MoleculeReceiver::finish() {
 void MoleculeReceiver::setManager(std::string param) {
 
 	try {
-		manager = (Manager *)simulation.
+		manager_ = (Manager *)simulation.
 			getSystemModule()->getSubmodule(param.c_str());
 	} catch (cException *e) {
 		EV << "setManager error" << "\n";

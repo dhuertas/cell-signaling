@@ -30,6 +30,6 @@ Circle::Circle(
     double r,
     double mass) : Particle(x, y, vx, vy, mass) {
 
-    radius = r;
+    radius_ = r;
 
 }

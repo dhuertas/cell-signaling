@@ -31,7 +31,7 @@ Manager::~Manager() {}
 void Manager::subscribe(Particle * p) {
 
 	// Add the particle pointer to the particles vector
-	particles.push_back(p);
+	particles_.push_back(p);
 
 	// Also add the particle to its corresponding space cell
 //	if (spaceCellSize > 0) {
@@ -51,7 +51,7 @@ void Manager::unsubscribe(Particle * p) {
 	detachParticleFromSpaceCell(p, -1);
 
 	// Remove the particle pointer from the particles vector
-	particles.remove(p);
+	particles_.remove(p);
 
 }
 
@@ -82,11 +82,11 @@ void Manager::initialize(int stage) {
 		// Initialize the statistics data structure
 		clearStatistics();
 
-		allCollisionsVector.setName("allCollisions");
-		particleCollisionsVector.setName("particleCollisions");
-		wallCollisionsVector.setName("wallCollisions");
-		transfersVector.setName("transfers");
-		expiresVector.setName("expires");
+		allCollisionsVector_.setName("allCollisions");
+		particleCollisionsVector_.setName("particleCollisions");
+		wallCollisionsVector_.setName("wallCollisions");
+		transfersVector_.setName("transfers");
+		expiresVector_.setName("expires");
 
 		// Set the mode of operation for the molecule dynamics 
 		setMode(par("mode"));
@@ -113,30 +113,30 @@ void Manager::initialize(int stage) {
 		setSpaceCellSize(par("spaceCellSize"));
 
 		EV << "space size: ";
-		EV << "X=" << spaceSize.x << ", ";
-		EV << "Y=" << spaceSize.y << ", ";
-		EV << "Z=" << spaceSize.z << "\n";
+		EV << "X=" << spaceSize_.x << ", ";
+		EV << "Y=" << spaceSize_.y << ", ";
+		EV << "Z=" << spaceSize_.z << "\n";
 
 		EV << "Space cell size: ";
 
-		if (spaceCellSize == 0) {
+		if (spaceCellSize_ == 0) {
 			EV << "auto" << "\n";
 		} else {
-			EV << spaceCellSize << "\n";
+			EV << spaceCellSize_ << "\n";
 		}
 
-		tkEnvRefreshRate = par("tkRefreshRate");
-		statsRefreshRate = par("statsRefreshRate");
-		enableWebServer = par("enableWebServer");
+		tkEnvRefreshRate_ = par("tkRefreshRate");
+		statsRefreshRate_ = par("statsRefreshRate");
+		enableWebServer_ = par("enableWebServer");
 
 		// Set network size for tkenv
-		buffer << spaceSize.y;
+		buffer << spaceSize_.y;
 
 		module = simulation.getSystemModule();
 		module->getDisplayString().setTagArg("bgb", 0, buffer.str().c_str());
 		buffer.str(std::string()); // clear buffer
 
-		buffer << spaceSize.x;
+		buffer << spaceSize_.x;
 		module->getDisplayString().setTagArg("bgb", 1, buffer.str().c_str());
 		buffer.str(std::string()); // clear buffer
 
@@ -146,9 +146,9 @@ void Manager::initialize(int stage) {
 
 		// All the particles are in the simulation space now. We can determine 
 		// the space cell size in case it has been set to 0 (default).
-		lastParticleId = 0;
+		lastParticleId_ = 0;
 
-		for (p = particles.begin(); p != particles.end(); ++p) {
+		for (p = particles_.begin(); p != particles_.end(); ++p) {
 
 			diameter = 2*(*p)->getRadius();
 
@@ -157,28 +157,28 @@ void Manager::initialize(int stage) {
 			}
 
 			// Initialize the particle attributes
-			(*p)->setParticleId(lastParticleId);
+			(*p)->setParticleId(lastParticleId_);
 
 			(*p)->setLastCollisionTime(0);
 
 			(*p)->initMobilityMessages();
 
-			lastParticleId++;
+			lastParticleId_++;
 		}
 
-		if (spaceCellSize == 0) {
-			spaceCellSize = tempSpaceCellSize;
+		if (spaceCellSize_ == 0) {
+			spaceCellSize_ = tempSpaceCellSize;
 		}
 
 		// Put every subscribed particle in its corresponding space cell
-		setNumberOfSpaceCellsX(ceil(spaceSize.x/spaceCellSize));
-		setNumberOfSpaceCellsY(ceil(spaceSize.y/spaceCellSize));
-		setNumberOfSpaceCellsZ(ceil(spaceSize.z/spaceCellSize));
+		setNumberOfSpaceCellsX(ceil(spaceSize_.x/spaceCellSize_));
+		setNumberOfSpaceCellsY(ceil(spaceSize_.y/spaceCellSize_));
+		setNumberOfSpaceCellsZ(ceil(spaceSize_.z/spaceCellSize_));
 
 		// N is the total number of space cells that the simulation space has.
-		N = Nx*Ny*Nz;
+		N = Nx_*Ny_*Nz_;
 
-		spaceCells.resize(N);
+		spaceCells_.resize(N);
 
 		particleDistribution = par("particleDistribution").stringValue();
 
@@ -186,59 +186,59 @@ void Manager::initialize(int stage) {
 
 			if (particleDistribution.compare("uniform") == 0) {
 
-				uniformDistribution3(spaceSize, &particles);
+				uniformDistribution3(spaceSize_, &particles_);
 
 			} else if (particleDistribution.compare("cube") == 0) {
 
-				cubeDistribution(spaceSize, &particles);
+				cubeDistribution(spaceSize_, &particles_);
 
 			} else if (particleDistribution.compare("sphere") == 0) {
 
-			    point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
-				sphereDistribution(spaceSize, &particles, c, 0);
+			    point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
+				sphereDistribution(spaceSize_, &particles_, c, 0);
 
 			} else if (particleDistribution.compare("highdensity") == 0) {
 
-			    point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
-				highDensityDistribution(spaceSize, &particles, c);
+			    point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
+				highDensityDistribution(spaceSize_, &particles_, c);
 
 			} else if (particleDistribution.compare("densepacked") == 0) {
 
-				point_t c = {spaceSize.x/2, spaceSize.y/2, spaceSize.z/2};
-				densepacked(spaceSize, &particles, c);
+				point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
+				densepacked(spaceSize_, &particles_, c);
 
 			}
 		}
 
-		for (p = particles.begin(); p != particles.end(); ++p) {
+		for (p = particles_.begin(); p != particles_.end(); ++p) {
 			// If the manager has set a list radius, overwrite the list
 			// radius of the particles
-			if (mode == M_NNLIST && listRadius > 0) {
-				(*p)->setListRadius(listRadius);
+			if (mode_ == M_NNLIST && listRadius_ > 0) {
+				(*p)->setListRadius(listRadius_);
 			}
 
 			attachParticleToSpaceCell(*p, -1);
 		}
 
-		if (mode == M_NNLIST) {
-			for (p = particles.begin(); p != particles.end(); ++p) {
+		if (mode_ == M_NNLIST) {
+			for (p = particles_.begin(); p != particles_.end(); ++p) {
 				(*p)->createNearNeighborList();
 			}
 		}
 
 		// Self message to refresh the tk environment
-		if (tkEnvRefreshRate > 0) {
-			scheduleAt(simTime() + tkEnvRefreshRate/1000, 
+		if (tkEnvRefreshRate_ > 0) {
+			scheduleAt(simTime() + tkEnvRefreshRate_/1000, 
 				new cMessage("refresh", EV_TKENVUPDATE));
 		}
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(simTime() + statsRefreshRate/1000,
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(simTime() + statsRefreshRate_/1000,
 				new cMessage("refresh", EV_STATSUPDATE));
 		}
 
 		// Make that every subscribed particle compute its next event time
-		for (p = particles.begin(); p != particles.end(); ++p) {
+		for (p = particles_.begin(); p != particles_.end(); ++p) {
 			(*p)->initializeMobility();
 		}
 
@@ -247,7 +247,7 @@ void Manager::initialize(int stage) {
 		}
 
 		// Start the web server
-		if (enableWebServer == 1) {
+		if (enableWebServer_ == 1) {
 			startWebServerThread();
 		}
 	}
@@ -282,19 +282,19 @@ void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 
 		pos = p->getPosition();
 
-		i = floor(pos->x/spaceCellSize);
-		j = floor(pos->y/spaceCellSize);
-		k = floor(pos->z/spaceCellSize);
+		i = floor(pos->x/spaceCellSize_);
+		j = floor(pos->y/spaceCellSize_);
+		k = floor(pos->z/spaceCellSize_);
 
-		n = i*Ny*Nz + j*Nz + k;
+		n = i*Ny_*Nz_ + j*Nz_ + k;
 
 		p->setSpaceCell(n);
 		p->setPrevSpaceCell(-1);
 
-		spaceCells.at(n).push_back(p);
+		spaceCells_.at(n).push_back(p);
 
 	} else {
-		spaceCells.at(to).push_back(p);
+		spaceCells_.at(to).push_back(p);
 	}
 
 }
@@ -308,9 +308,9 @@ void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
 
 	if (from < 0) {
-		spaceCells.at(p->getSpaceCell()).remove(p);
+		spaceCells_.at(p->getSpaceCell()).remove(p);
 	} else {
-		spaceCells.at(from).remove(p);
+		spaceCells_.at(from).remove(p);
 	}
 
 }
@@ -341,15 +341,15 @@ void Manager::transferParticle(Particle *p, int from, int to) {
  */
 std::list<Particle *> *Manager::getSpaceCellParticles(int n) {
 
-	return &spaceCells.at(n);
+	return &spaceCells_.at(n);
 
 }
 
 int Manager::getNextParticleId() {
 
-	int result = lastParticleId;
+	int result = lastParticleId_;
 
-	lastParticleId++;
+	lastParticleId_++;
 
 	return result;
 }
@@ -369,24 +369,24 @@ void Manager::handleMessage(cMessage *msg) {
 		tkEnvUpdateNetwork();
 
 		// Self message to refresh the tk environment
-		if (tkEnvRefreshRate > 0) {
-			scheduleAt(st + tkEnvRefreshRate/1000, msg);
+		if (tkEnvRefreshRate_ > 0) {
+			scheduleAt(st + tkEnvRefreshRate_/1000, msg);
 		}
 
 	} else if (kind == EV_STATSUPDATE) {
 
 		// Put the statistics logged so far to cout vectors
-		allCollisionsVector.recordWithTimestamp(st, stats.allCollisions);
-		particleCollisionsVector.recordWithTimestamp(st, stats.particleCollisions);
-		wallCollisionsVector.recordWithTimestamp(st, stats.wallCollisions);
-		transfersVector.recordWithTimestamp(st, stats.transfers);
-		expiresVector.recordWithTimestamp(st, stats.expires);
+		allCollisionsVector_.recordWithTimestamp(st, stats_.allCollisions);
+		particleCollisionsVector_.recordWithTimestamp(st, stats_.particleCollisions);
+		wallCollisionsVector_.recordWithTimestamp(st, stats_.wallCollisions);
+		transfersVector_.recordWithTimestamp(st, stats_.transfers);
+		expiresVector_.recordWithTimestamp(st, stats_.expires);
 
 		// Clear the stats data structure
 		clearStatistics();
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(st + statsRefreshRate/1000, msg);
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(st + statsRefreshRate_/1000, msg);
 		}
 	}
 
@@ -397,8 +397,8 @@ void Manager::handleMessage(cMessage *msg) {
  */
 void Manager::finish() {
 
-	if (enableWebServer == 1) {
-		// stopWebServerThread(); // TODO the server hangs the tk environment
+	if (enableWebServer_ == 1) {
+		// stopWebServerThread(); // TODO the server hangs the tk environment here
 	}
 
 }
@@ -412,7 +412,7 @@ void Manager::tkEnvUpdateNetwork() {
 	std::list<Particle *>::const_iterator p;
 
 	// Update particle positions
-	for (p = particles.begin(); p != particles.end(); ++p) {
+	for (p = particles_.begin(); p != particles_.end(); ++p) {
 		(*p)->tkEnvUpdatePosition(simTime().dbl());
 	}
 
@@ -423,9 +423,7 @@ void Manager::tkEnvUpdateNetwork() {
  */
 void Manager::startWebServerThread() {
 
-	int res;
-
-	if(pipe(quitFd)) {
+	if(pipe(quitFd_)) {
 	    EV << "pipe failed\n";
 	    return;
 	}
@@ -433,16 +431,14 @@ void Manager::startWebServerThread() {
 	settings_t settings;
 
 	// Gather simulation settings
-	settings.numberOfParticles = particles.size();
-	settings.simSpaceSize = spaceSize;
+	settings.numberOfParticles = particles_.size();
+	settings.simSpaceSize = spaceSize_;
 
-	webServerArgs.quitFd = quitFd[READ];
-	webServerArgs.settings = settings;
-	webServerArgs.particles = &particles;
+	webServerArgs_.quitFd = quitFd_[READ];
+	webServerArgs_.settings = settings;
+	webServerArgs_.particles = &particles_;
 
-	res = pthread_create(&webServerThread, NULL, startServerThread, &webServerArgs);
-
-	if (res == 0) {
+	if (pthread_create(&webServerThread_, NULL, startServerThread, &webServerArgs_) == 0) {
 	    EV << "Web server started" << endl;
 	} else {
 	    EV << "Error starting the web server" << endl;
@@ -455,12 +451,12 @@ void Manager::startWebServerThread() {
  */
 void Manager::stopWebServerThread() {
 
-	endServerThread(quitFd[WRITE]);
+	endServerThread(quitFd_[WRITE]);
 
-	pthread_join(webServerThread, NULL);
+	pthread_join(webServerThread_, NULL);
 
-	close(quitFd[READ]);
-	close(quitFd[WRITE]);
+	close(quitFd_[READ]);
+	close(quitFd_[WRITE]);
 
 }
 
@@ -468,35 +464,35 @@ void Manager::stopWebServerThread() {
  * Sets the statistics data structure to zero.
  */
 void Manager::clearStatistics() {
-	memset(&stats, 0, sizeof(stats));
+	memset(&stats_, 0, sizeof(stats_));
 }
 
 /*
  * Increment the collisions counter
  */
 void Manager::registerCollision() {
-	stats.particleCollisions++;
-	stats.allCollisions++;
+	stats_.particleCollisions++;
+	stats_.allCollisions++;
 }
 
 /*
  * Increment the wall collisions counter
  */
 void Manager::registerWallCollision() {
-	stats.wallCollisions++;
-	stats.allCollisions++;
+	stats_.wallCollisions++;
+	stats_.allCollisions++;
 }
 
 /*
  * Increment the transfer counter
  */
 void Manager::registerTransfer() {
-	stats.transfers++;
+	stats_.transfers++;
 }
 
 /*
  * Increment the expires counter
  */
 void Manager::registerExpire() {
-	stats.expires++;
+	stats_.expires++;
 }

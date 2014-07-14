@@ -34,24 +34,24 @@ void Probe::initialize(int stage) {
 		// Particles initialization
 		// Probes initialization
 		
-		name = par("name").stringValue();
+		name_ = par("name").stringValue();
 		
-		position.x = par("xpos").doubleValue();
-		position.y = par("ypos").doubleValue();
-		position.z = par("zpos").doubleValue();
+		position_.x = par("xpos").doubleValue();
+		position_.y = par("ypos").doubleValue();
+		position_.z = par("zpos").doubleValue();
 
-		radius = par("radius").doubleValue();
+		radius_ = par("radius").doubleValue();
 
-		statsRefreshRate = par("statsRefreshRate");
+		statsRefreshRate_ = par("statsRefreshRate");
 
-		type = par("type");
+		type_ = par("type");
 
-		moleculeDensityVector.setName(name.c_str());
+		moleculeDensityVector.setName(name_.c_str());
 
 		setManager("manager");
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(simTime() + statsRefreshRate/1000,
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(simTime() + statsRefreshRate_/1000,
 				new cMessage("refresh", EV_STATSUPDATE));
 		}		
 
@@ -80,8 +80,8 @@ void Probe::handleMessage(cMessage *msg) {
 
 		moleculeDensityVector.recordWithTimestamp(st, getMoleculeDensity());
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(st + statsRefreshRate/1000, msg);
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(st + statsRefreshRate_/1000, msg);
 		}
 	}
 }
@@ -113,19 +113,19 @@ double Probe::getMoleculeDensity() {
 	list<Particle *> *particleList;
 	list<Particle *>::const_iterator p;
 
-	Nx = manager->getNumberOfSpaceCellsX();
-	Ny = manager->getNumberOfSpaceCellsY();
-	Nz = manager->getNumberOfSpaceCellsZ();
+	Nx = manager_->getNumberOfSpaceCellsX();
+	Ny = manager_->getNumberOfSpaceCellsY();
+	Nz = manager_->getNumberOfSpaceCellsZ();
 
-	spaceCellSize = manager->getSpaceCellSize();
+	spaceCellSize = manager_->getSpaceCellSize();
 
-	i = floor(position.x/spaceCellSize);
-	j = floor(position.y/spaceCellSize);
-	k = floor(position.z/spaceCellSize);
+	i = floor(position_.x/spaceCellSize);
+	j = floor(position_.y/spaceCellSize);
+	k = floor(position_.z/spaceCellSize);
 
 	n = i*(*Ny)*(*Nz) + j*(*Nz) + k;
 
-	l = ceil(radius/spaceCellSize);
+	l = ceil(radius_/spaceCellSize);
 
 	// Loop each cell list looking for the particles that fall in the sphere
 	for (a = -l; a <= l; a++)
@@ -134,16 +134,16 @@ double Probe::getMoleculeDensity() {
 		if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, *Nx, *Ny, *Nz)) {
 
 			n = (i+a)*(*Ny)*(*Nz) + (j+b)*(*Nz) + (k+c);
-			particleList = manager->getSpaceCellParticles(n);
+			particleList = manager_->getSpaceCellParticles(n);
 
 			for (p = particleList->begin(); p != particleList->end(); ++p) {
 
 				ppos = (*p)->getPosition();
 
-				if ((*p)->getParticleType() == type && 
-					((position.x-ppos->x)*(position.x-ppos->x) + 
-					(position.y-ppos->y)*(position.y-ppos->y) +
-					(position.z-ppos->z)*(position.z-ppos->z) <= radius*radius)) {
+				if ((*p)->getParticleType() == type_ && 
+					((position_.x-ppos->x)*(position_.x-ppos->x) + 
+					(position_.y-ppos->y)*(position_.y-ppos->y) +
+					(position_.z-ppos->z)*(position_.z-ppos->z) <= radius_*radius_)) {
 
 					count++;
 				}
@@ -152,7 +152,7 @@ double Probe::getMoleculeDensity() {
 	}
 
 	// return the quotient of the counter and the volume of the probe
-	return count/((4.0/3.0)*M_PI*radius*radius*radius);
+	return count/((4.0/3.0)*M_PI*radius_*radius_*radius_);
 
 }
 
@@ -162,7 +162,7 @@ double Probe::getMoleculeDensity() {
 void Probe::setManager(std::string param) {
 
 	try {
-		manager = (Manager *)simulation.
+		manager_ = (Manager *)simulation.
 			getSystemModule()->getSubmodule(param.c_str());
 	} catch (cException *e) {
 		EV << "setManager error" << "\n";

@@ -34,7 +34,7 @@ void Molecule::initialize(int stage) {
 		// Manager module initializes during this stage
 	} else if (stage == 1) {
 
-		active = true;
+		active_ = true;
 
 		setParticleType(T_MOLECULE);
 
@@ -67,7 +67,7 @@ void Molecule::initialize(int stage) {
 		//  \    /             |
 		//   \  /  4*M_PI*D*dt
 		//    \/
-		setBMStdDev(sqrt(4*M_PI*par("diffusion").doubleValue()*(manager->getDeltaTime())));
+		setBMStdDev(sqrt(4*M_PI*par("diffusion").doubleValue()*(manager_->getDeltaTime())));
 
 		// Near-Neighbor List radius
 		setListRadius(par("listRadius").doubleValue());
@@ -75,36 +75,36 @@ void Molecule::initialize(int stage) {
 		// Near Neighbor List refresh list radius
 		setRefreshListRadius(par("refreshListRadius").doubleValue());
 
-		boundariesMode = par("boundariesMode");
+		setBoundariesMode(par("boundariesMode"));
 
-		timeToLive = par("timeToLive");
+		timeToLive_ = par("timeToLive");
 
-		if (timeToLive > 0) {
-			timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
-			scheduleAt(simTime() + timeToLive, timeToLiveMsg);
+		if (timeToLive_ > 0) {
+			timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+			scheduleAt(simTime() + timeToLive_, timeToLiveMsg_);
 		}
 
-		logCollisions = par("logCollisions");
+		logCollisions_ = par("logCollisions");
 
-		if (logCollisions > 0) {
-			collisionTimeVector = new cOutVector("collisionTime");
-			xCollisionPositionVector = new cOutVector("xCollisionPosition");
-			yCollisionPositionVector = new cOutVector("yCollisionPosition");
-			zCollisionPositionVector = new cOutVector("zCollisionPosition");
+		if (logCollisions_ > 0) {
+			collisionTimeVector_ = new cOutVector("collisionTime");
+			xCollisionPositionVector_ = new cOutVector("xCollisionPosition");
+			yCollisionPositionVector_ = new cOutVector("yCollisionPosition");
+			zCollisionPositionVector_ = new cOutVector("zCollisionPosition");
 		}
 
-		logPosition = par("logPosition");
+		logPosition_ = par("logPosition");
 
-		if (logPosition > 0) {
-			xPositionVector = new cOutVector("xPosition");
-			yPositionVector = new cOutVector("yPosition");
-			zPositionVector = new cOutVector("zPosition");
+		if (logPosition_ > 0) {
+			xPositionVector_ = new cOutVector("xPosition");
+			yPositionVector_ = new cOutVector("yPosition");
+			zPositionVector_ = new cOutVector("zPosition");
 		}
 
-		statsRefreshRate = par("statsRefreshRate");
+		statsRefreshRate_ = par("statsRefreshRate");
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(simTime() + statsRefreshRate/1000,
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(simTime() + statsRefreshRate_/1000,
 				new cMessage("refresh", EV_STATSUPDATE));
 		}
 
@@ -149,15 +149,15 @@ void Molecule::handleMessage(cMessage *msg) {
 	} else if (kind == EV_STATSUPDATE) {
 
 		double st = simTime().dbl();
-		double dt = st - lastCollisionTime;
+		double dt = st - lastCollisionTime_;
 
 		// Put the statistics logged so far to cout vectors
-		xPositionVector->recordWithTimestamp(st, position.x + velocity.x * dt);
-		yPositionVector->recordWithTimestamp(st, position.y + velocity.y * dt);
-		zPositionVector->recordWithTimestamp(st, position.z + velocity.z * dt);
+		xPositionVector_->recordWithTimestamp(st, position_.x + velocity_.x * dt);
+		yPositionVector_->recordWithTimestamp(st, position_.y + velocity_.y * dt);
+		zPositionVector_->recordWithTimestamp(st, position_.z + velocity_.z * dt);
 
-		if (statsRefreshRate > 0) {
-			scheduleAt(st + statsRefreshRate/1000, msg);
+		if (statsRefreshRate_ > 0) {
+			scheduleAt(st + statsRefreshRate_/1000, msg);
 		}
 
 	} else if (kind == EV_TTLEXPIRE) {
@@ -177,8 +177,8 @@ void Molecule::finish() {
 	// Delete mobility messages
 	deleteMobilityMessages();
 
-	if (timeToLive > 0) {
-		cancelAndDelete(timeToLiveMsg);
+	if (timeToLive_ > 0) {
+		cancelAndDelete(timeToLiveMsg_);
 	}
 
 }
@@ -191,12 +191,12 @@ void Molecule::expire() {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
-	active = false;
+	active_ = false;
 
-	manager->registerExpire();
+	manager_->registerExpire();
 
 	// Unsubscribe from the manager
-	getManager()->unsubscribe(this);
+	manager_->unsubscribe(this);
 
 	// Get out of the simulation space gracefully
 	this->finishMobility();
@@ -204,8 +204,8 @@ void Molecule::expire() {
 	// Delete mobility messages
 	deleteMobilityMessages();
 
-	if (timeToLive > 0) {
-		cancelAndDelete(timeToLiveMsg);
+	if (timeToLive_ > 0) {
+		cancelAndDelete(timeToLiveMsg_);
 	}
 
 	this->deleteModule();
@@ -220,15 +220,15 @@ void Molecule::scheduleExpire(double time) {
 	// Methods called from other modules must have this macro
 	Enter_Method_Silent();
 
-	if (timeToLive > 0) {
-		if (timeToLiveMsg->isScheduled()) {
-			cancelEvent(timeToLiveMsg);
+	if (timeToLive_ > 0) {
+		if (timeToLiveMsg_->isScheduled()) {
+			cancelEvent(timeToLiveMsg_);
 		}
 	} else {
-		timeToLiveMsg = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+		timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
 	}
 
-	scheduleAt(time, timeToLiveMsg);
+	scheduleAt(time, timeToLiveMsg_);
 
 }
 
@@ -252,7 +252,7 @@ bool Molecule::isSignaling(cMessage *msg) {
 
 		cmsg = (CollisionMessage *)msg;
 
-		if (particleType == T_SIGNALING) {
+		if (particleType_ == T_SIGNALING) {
 
 			partnerParticleType = cmsg->getPartner()->getParticleType();
 

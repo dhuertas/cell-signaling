@@ -34,20 +34,20 @@ class Probe : public cSimpleModule {
 
 	private:
 
-		Manager *manager;
+		Manager *manager_;
 
 		// Probe name
 		// Also used to name the cOutVector
-		std::string name;
+		std::string name_;
 
-		int type;
+		int type_;
 
-		point_t position;
+		point_t position_;
 
-		double radius;
+		double radius_;
 
 		// Update the cOutVectors periodically.
-		double statsRefreshRate;
+		double statsRefreshRate_;
 
 	protected:
 
@@ -73,21 +73,21 @@ class Probe : public cSimpleModule {
 		//
 		// Gets and sets
 		//
-		std::string getName(void) { return name; };
+		std::string getName(void) { return name_; };
 
-		point_t getPosition(void) { return position; };
+		point_t getPosition(void) { return position_; };
 
-		double getRadius(void) { return radius; };
+		double getRadius(void) { return radius_; };
 
-		int getType(void) { return type; };
+		int getType(void) { return type_; };
 
-		void setName(std::string n) { name = n; };
+		void setName(std::string n) { name_ = n; };
 
-		void setPosition(point_t p) { position = p; };
+		void setPosition(point_t p) { position_ = p; };
 
-		void setRadius(double r) { radius = r; };
+		void setRadius(double r) { radius_ = r; };
 
-		void setType(int t) { type = t; };
+		void setType(int t) { type_ = t; };
 
 		void setManager(std::string);
 

@@ -26,7 +26,7 @@ class Circle : public Particle {
 
 	protected:
 
-        double radius;
+        double radius_;
 
 	public:
 
@@ -34,9 +34,9 @@ class Circle : public Particle {
 
 		Circle(double, double, double, double, double, double);
 
-		inline double getRadius(void) { return radius; };
+		inline double getRadius(void) { return radius_; };
 
-		void setRadius(double r) { radius = r; };
+		void setRadius(double r) { radius_ = r; };
 
 };
 

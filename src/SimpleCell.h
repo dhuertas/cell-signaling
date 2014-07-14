@@ -31,13 +31,13 @@ class SimpleCell : public Sphere {
 	private:
 
 		// Amount of time that will pass before it expires.
-		double timeToLive;
+		double timeToLive_;
 
 		// Update the cOutVectors periodically.
-		double statsRefreshRate;
+		double statsRefreshRate_;
 
 		// Self messages
-		TimeToLiveMessage *timeToLiveMsg;
+		TimeToLiveMessage *timeToLiveMsg_;
 
 	protected:
 
