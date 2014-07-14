@@ -32,25 +32,23 @@ Final project (to be added).
 
 ## Installation
 
-Download the project on your Omnet++ Workplace directory and export the omnet installation path. Then run `opp_makemake` to generate the Makefile:
+Download the project to your Omnet++ workplace directory and export the omnet installation path:
 
 ```
-export OMNET_BASE=/path/to/omnet++/folder
-opp_makemake -f --deep -O out \
-	-I$OMNET_BASE/src/tkenv \
-    -I$OMNET_BASE/include/platdep \
-    -I$OMNET_BASE/src/common \
-    -I$OMNET_BASE/src/envir \
-    -I/usr/include/tcl8.5 \
-    -- /usr/lib/libtcl8.5.so.0
+cd /path/to/workplace/folder
+git clone https://github.com/dhuertas/cell-signaling ./cell-signaling
+cd /path/to/omnet++/folder
+. setenv
 ```
-**Note**: project includes some of the tcl/tk libraries but they are expected to be unnecessary in a near future.
 
-Then call `make` to compile the project:
+Start Omnet++ IDE (Eclipse) and create an empty Omnet++ project. Set the folder project to use the cell-signaling folder. To build the source code the project must be configured to link against libpthread:
 
-```
-make MODE=release CONFIGNAME=gcc-release all
-```
+1. Go to project properties and select Omnet++ section. 
+2. Go to Makemake, select the source folder and choose "Makemake" option. 
+3. Click the options button and navigate to the "Link" tab.
+4. Add "pthread" to the link box.
+
+Finally build and run the simulation environment.
 
 ## Known issues
 
@@ -64,11 +62,10 @@ make MODE=release CONFIGNAME=gcc-release all
 Below follows a list of things that would be nice to have, in no specific order:
 
 * Change space cell identifiers to use datastructures using unsigned integers instead of multiple integers (one integer per direction)
-* Enable the cell list algorithm to use quadtrees
-* Parallelization (particle/domain decomposition)
+* Enable the cell list algorithm to use octrees
+* Parallelization (particle/domain/event decomposition)
 * Add ellipsoid molecules
-* Periodic boundaries support
-* Preload signaling molecules during emitter initialization instead.
+* Add periodic boundaries
 
 ## Release
 
