@@ -1,6 +1,6 @@
 #include "Defines.h"
 
-class OcNode {
+class Ocnode {
 
   private:
 

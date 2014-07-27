@@ -33,174 +33,174 @@
 
 class Manager : public cSimpleModule {
 
-	private:
+  private:
 
-		// Molecule Dynamics Mode of operation
-		int mode_;
+    // Molecule Dynamics Mode of operation
+    int mode_;
 
-		// The number of space cells in each direction. They are used to
-		// access the spaceCells vector of vectors.
-		int Nx_;
-		int Ny_;
-		int Nz_;
+    // The number of space cells in each direction. They are used to
+    // access the spaceCells vector of vectors.
+    int Nx_;
+    int Ny_;
+    int Nz_;
 
-		// File Descriptors to communicate with the Web Server thread
-		int quitFd_[2];
+    // File Descriptors to communicate with the Web Server thread
+    int quitFd_[2];
 
-		// the simulation space size in each direction
-		vect_t spaceSize_;
+    // the simulation space size in each direction
+    vect_t spaceSize_;
 
-		// Delta time
-		double deltaTime_;
+    // Delta time
+    double deltaTime_;
 
-		// The space cell size
-		double spaceCellSize_;
+    // The space cell size
+    double spaceCellSize_;
 
-		// Overwrite particles' list radius.
-		double listRadius_;
+    // Overwrite particles' list radius.
+    double listRadius_;
 
-		// Contains the particle Id from the last added particle to the domain.
-		int lastParticleId_;
+    // Contains the particle Id from the last added particle to the domain.
+    int lastParticleId_;
 
-		// TK environment refresh rate
-		// It allows the manager module to send self-messages in order to
-		// update the position of each particle.
-		double tkEnvRefreshRate_;
+    // TK environment refresh rate
+    // It allows the manager module to send self-messages in order to
+    // update the position of each particle.
+    double tkEnvRefreshRate_;
 
-		// Update the cOutVectors periodically.
-		double statsRefreshRate_;
+    // Update the cOutVectors periodically.
+    double statsRefreshRate_;
 
-		int enableWebServer_;
+    int enableWebServer_;
 
-		pthread_t webServerThread_;
+    pthread_t webServerThread_;
 
-		struct arg_struct webServerArgs_;
+    struct arg_struct webServerArgs_;
 
-		// Manager name
-		std::string name_;
+    // Manager name
+    std::string name_;
 
-		// A list of particles contained in the simulation space. Every new
-		// particle must be subscribed to (and unsubscribed from).
-		std::list<Particle*> particles_;
+    // A list of particles contained in the simulation space. Every new
+    // particle must be subscribed to (and unsubscribed from).
+    std::list<Particle*> particles_;
 
-		// Space is divided into cells, each of which contains a list of
-		// particles belonging to it.
-		std::vector<std::list<Particle*> > spaceCells_;
+    // Space is divided into cells, each of which contains a list of
+    // particles belonging to it.
+    std::vector<std::list<Particle*> > spaceCells_;
 
-	protected:
+  protected:
 
-		statistics_t stats_;
+    statistics_t stats_;
 
-		cOutVector allCollisionsVector_;
+    cOutVector allCollisionsVector_;
 
-		cOutVector particleCollisionsVector_;
+    cOutVector particleCollisionsVector_;
 
-		cOutVector wallCollisionsVector_;
+    cOutVector wallCollisionsVector_;
 
-		cOutVector transfersVector_;
+    cOutVector transfersVector_;
 
-		cOutVector expiresVector_;
+    cOutVector expiresVector_;
 
-	public:
+  public:
 
-		~Manager();
+    ~Manager();
 
-		// Every particle must be subscribed in order to access its attributes
-		// during simulation time.
-		void subscribe(Particle *);
+    // Every particle must be subscribed in order to access its attributes
+    // during simulation time.
+    void subscribe(Particle *);
 
-		// Unsubcribe particles. Particles may expire, be received, leave the 
-		// area, etc.
-		void unsubscribe(Particle *);
+    // Unsubcribe particles. Particles may expire, be received, leave the 
+    // area, etc.
+    void unsubscribe(Particle *);
 
-		void attachParticleToSpaceCell(Particle *, int);
+    void attachParticleToSpaceCell(Particle *, int);
 
-		void detachParticleFromSpaceCell(Particle *, int);
+    void detachParticleFromSpaceCell(Particle *, int);
 
-		// Move one particle from one space cell to another.
-		void transferParticle(Particle *, int, int);
+    // Move one particle from one space cell to another.
+    void transferParticle(Particle *, int, int);
 
-		// Update the tk environment
-		void tkEnvUpdateNetwork(void);
+    // Update the tk environment
+    void tkEnvUpdateNetwork(void);
 
-		//
-		// Web Server related methods
-		//
-		void startWebServerThread(void);
+    //
+    // Web Server related methods
+    //
+    void startWebServerThread(void);
 
-		void stopWebServerThread(void);
+    void stopWebServerThread(void);
 
-		// Gets and sets
-		vect_t *getSpaceSize(void) { return &spaceSize_; };
+    // Gets and sets
+    vect_t *getSpaceSize(void) { return &spaceSize_; };
 
-		double getSpaceSizeX(void) { return spaceSize_.x; };
+    double getSpaceSizeX(void) { return spaceSize_.x; };
 
-		double getSpaceSizeY(void) { return spaceSize_.y; };
+    double getSpaceSizeY(void) { return spaceSize_.y; };
 
-		double getSpaceSizeZ(void) { return spaceSize_.z; };
+    double getSpaceSizeZ(void) { return spaceSize_.z; };
 
-		double getSpaceCellSize(void) { return spaceCellSize_; };
+    double getSpaceCellSize(void) { return spaceCellSize_; };
 
-		int *getNumberOfSpaceCellsX(void) { return &Nx_; };
+    int *getNumberOfSpaceCellsX(void) { return &Nx_; };
 
-		int *getNumberOfSpaceCellsY(void) { return &Ny_; };
+    int *getNumberOfSpaceCellsY(void) { return &Ny_; };
 
-		int *getNumberOfSpaceCellsZ(void) { return &Nz_; };
+    int *getNumberOfSpaceCellsZ(void) { return &Nz_; };
 
-		int getMode(void) { return mode_; };
+    int getMode(void) { return mode_; };
 
-		double getDeltaTime(void) { return deltaTime_; };
+    double getDeltaTime(void) { return deltaTime_; };
 
-		double getListRadius(void) { return listRadius_; };
+    double getListRadius(void) { return listRadius_; };
 
-		std::list<Particle *> *getSpaceCellParticles(int);
+    std::list<Particle *> *getSpaceCellParticles(int);
 
-		int getNextParticleId(void);
+    int getNextParticleId(void);
 
-		int getLastParticleId(void) { return lastParticleId_; };
+    int getLastParticleId(void) { return lastParticleId_; };
 
-		void setSpaceSize(vect_t vsz) { spaceSize_ = vsz; };
+    void setSpaceSize(vect_t vsz) { spaceSize_ = vsz; };
 
-		void setSpaceSizeX(double sx) { spaceSize_.x = sx; };
+    void setSpaceSizeX(double sx) { spaceSize_.x = sx; };
 
-		void setSpaceSizeY(double sy) { spaceSize_.y = sy; };
+    void setSpaceSizeY(double sy) { spaceSize_.y = sy; };
 
-		void setSpaceSizeZ(double sz) { spaceSize_.z = sz; };
+    void setSpaceSizeZ(double sz) { spaceSize_.z = sz; };
 
-		void setSpaceCellSize(double sc) { spaceCellSize_ = sc; };
+    void setSpaceCellSize(double sc) { spaceCellSize_ = sc; };
 
-		void setNumberOfSpaceCellsX(int n) { Nx_ = n; };
+    void setNumberOfSpaceCellsX(int n) { Nx_ = n; };
 
-		void setNumberOfSpaceCellsY(int n) { Ny_ = n; };
+    void setNumberOfSpaceCellsY(int n) { Ny_ = n; };
 
-		void setNumberOfSpaceCellsZ(int n) { Nz_ = n; };
+    void setNumberOfSpaceCellsZ(int n) { Nz_ = n; };
 
-		void setMode(int m) { mode_ = m; };
+    void setMode(int m) { mode_ = m; };
 
-		void setDeltaTime(double dt) { deltaTime_ = dt; };
+    void setDeltaTime(double dt) { deltaTime_ = dt; };
 
-		void setListRadius(double lr) { listRadius_ = lr; };
+    void setListRadius(double lr) { listRadius_ = lr; };
 
-		void clearStatistics(void);
+    void clearStatistics(void);
 
-		void registerCollision(void);
+    void registerCollision(void);
 
-		void registerWallCollision(void);
+    void registerWallCollision(void);
 
-		void registerTransfer(void);
+    void registerTransfer(void);
 
-		void registerExpire(void);
+    void registerExpire(void);
 
-		//
-		// cSimpleModule inheritance
-		//
-		virtual void initialize(int stage);
+    //
+    // cSimpleModule inheritance
+    //
+    virtual void initialize(int stage);
 
-		virtual int numInitStages() const;
+    virtual int numInitStages() const;
 
-		virtual void handleMessage(cMessage *);
+    virtual void handleMessage(cMessage *);
 
-		virtual void finish();
+    virtual void finish();
 };
 
 #endif

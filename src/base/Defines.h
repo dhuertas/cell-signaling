@@ -93,6 +93,8 @@ typedef struct CellIndex3D {
   unsigned int i; // space cell index along x axis
   unsigned int j; // space cell index along y axis
   unsigned int k; // space cell index along z axis
+  unsigned int l; // space cell layer
+
 } index_t;
 
 typedef struct Statistics {
