@@ -28,35 +28,38 @@ Particle::Particle() {}
  * Constructor overload.
  */
 Particle::Particle(
-	double x,
-	double y,
-	double vx,
-	double vy,
-	double m) {
+  double x,
+  double y,
+  double vx,
+  double vy,
+  double m) {
 
-	position_.x = x;
-	position_.y = y;
-	position_.z = 0;
+  position_.x = x;
+  position_.y = y;
+  position_.z = 0;
 
-	velocity_.x = vx;
-	velocity_.y = vy;
-	velocity_.z = 0;
+  velocity_.x = vx;
+  velocity_.y = vy;
+  velocity_.z = 0;
 
-	spaceCell_ = -1;
+  spaceCell_ = -1;
 
-	spaceCellIdx_.im = 0x00;
-	spaceCellIdx_.i = 0;
-	spaceCellIdx_.j = 0;
-	spaceCellIdx_.k = 0;
+  spaceCellIdx_.flags = 0x00;
+  spaceCellIdx_.i = 0;
+  spaceCellIdx_.j = 0;
+  spaceCellIdx_.k = 0;
+  spaceCellIdx_.layer = 0;
 
-	prevSpaceCellIdx_.im = 0x00;
-	prevSpaceCellIdx_.i = 0;
-	prevSpaceCellIdx_.j = 0;
-	prevSpaceCellIdx_.k = 0;
+  prevSpaceCellIdx_.flags = 0x00;
+  prevSpaceCellIdx_.i = 0;
+  prevSpaceCellIdx_.j = 0;
+  prevSpaceCellIdx_.k = 0;
+  spaceCellIdx_.layer = 0;
 
-	mass_ = m;
-	lastCollisionTime_ = 0;
 
-	listRadius_ = 1;
+  mass_ = m;
+  lastCollisionTime_ = 0;
+
+  listRadius_ = 1;
 
 }

@@ -30,13 +30,13 @@ Manager::~Manager() {}
  */
 void Manager::subscribe(Particle * p) {
 
-	// Add the particle pointer to the particles vector
-	particles_.push_back(p);
+  // Add the particle pointer to the particles vector
+  particles_.push_back(p);
 
-	// Also add the particle to its corresponding space cell
-//	if (spaceCellSize > 0) {
-//		attachParticleToSpaceCell(p, -1);
-//	}
+  // Also add the particle to its corresponding space cell
+//  if (spaceCellSize > 0) {
+//    attachParticleToSpaceCell(p, -1);
+//  }
 
 }
 
@@ -47,11 +47,11 @@ void Manager::subscribe(Particle * p) {
  */
 void Manager::unsubscribe(Particle * p) {
 
-	// Remove the particle pointer from the space cell structure
-	detachParticleFromSpaceCell(p, -1);
+  // Remove the particle pointer from the space cell structure
+  detachParticleFromSpaceCell(p, -1);
 
-	// Remove the particle pointer from the particles vector
-	particles_.remove(p);
+  // Remove the particle pointer from the particles vector
+  particles_.remove(p);
 
 }
 
@@ -62,195 +62,195 @@ void Manager::unsubscribe(Particle * p) {
  */
 void Manager::initialize(int stage) {
 
-	int N;
+  int N;
 
-	double diameter, tempSpaceCellSize;
+  double diameter, tempSpaceCellSize;
 
-	cModule *module;
-	std::list<Particle *>::const_iterator p;
-	std::string particleDistribution;
-	std::stringstream buffer;
+  cModule *module;
+  std::list<Particle *>::const_iterator p;
+  std::string particleDistribution;
+  std::stringstream buffer;
 
-	// Initialize variables
-	N = 0;
-	diameter = 0.0;
-	tempSpaceCellSize = 0;
+  // Initialize variables
+  N = 0;
+  diameter = 0.0;
+  tempSpaceCellSize = 0;
 
-	// The manager node should be the first module to be initialized
-	if (stage == 0) {
+  // The manager node should be the first module to be initialized
+  if (stage == 0) {
 
-		// Initialize the statistics data structure
-		clearStatistics();
+    // Initialize the statistics data structure
+    clearStatistics();
 
-		allCollisionsVector_.setName("allCollisions");
-		particleCollisionsVector_.setName("particleCollisions");
-		wallCollisionsVector_.setName("wallCollisions");
-		transfersVector_.setName("transfers");
-		expiresVector_.setName("expires");
+    allCollisionsVector_.setName("allCollisions");
+    particleCollisionsVector_.setName("particleCollisions");
+    wallCollisionsVector_.setName("wallCollisions");
+    transfersVector_.setName("transfers");
+    expiresVector_.setName("expires");
 
-		// Set the mode of operation for the molecule dynamics 
-		setMode(par("mode"));
+    // Set the mode of operation for the molecule dynamics 
+    setMode(par("mode"));
 
-		// Set the name of the manager so we can have later access from
-		// the other nodes.
-		setName(par("name").stringValue());
+    // Set the name of the manager so we can have later access from
+    // the other nodes.
+    setName(par("name").stringValue());
 
-		// The global list radius. When set, overwrites the list radius
-		// of the particles (default value is 0).
-		setListRadius(par("listRadius"));
+    // The global list radius. When set, overwrites the list radius
+    // of the particles (default value is 0).
+    setListRadius(par("listRadius"));
 
-		EV << "particle distribution: " << particleDistribution << "\n";
+    EV << "particle distribution: " << particleDistribution << "\n";
 
-		setDeltaTime(par("deltaTime").doubleValue());
+    setDeltaTime(par("deltaTime").doubleValue());
 
-		// Get the simulation space size
-		setSpaceSizeX(simulation.getSystemModule()->par("spaceSizeX"));
-		setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));
-		setSpaceSizeZ(simulation.getSystemModule()->par("spaceSizeZ"));
+    // Get the simulation space size
+    setSpaceSizeX(simulation.getSystemModule()->par("spaceSizeX"));
+    setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));
+    setSpaceSizeZ(simulation.getSystemModule()->par("spaceSizeZ"));
 
-		// Get the space cell size. If set to 0 we must wait untill all the 
-		// initial particles have been subscribed.
-		setSpaceCellSize(par("spaceCellSize"));
+    // Get the space cell size. If set to 0 we must wait untill all the 
+    // initial particles have been subscribed.
+    setSpaceCellSize(par("spaceCellSize"));
 
-		EV << "space size: ";
-		EV << "X=" << spaceSize_.x << ", ";
-		EV << "Y=" << spaceSize_.y << ", ";
-		EV << "Z=" << spaceSize_.z << "\n";
+    EV << "space size: ";
+    EV << "X=" << spaceSize_.x << ", ";
+    EV << "Y=" << spaceSize_.y << ", ";
+    EV << "Z=" << spaceSize_.z << "\n";
 
-		EV << "Space cell size: ";
+    EV << "Space cell size: ";
 
-		if (spaceCellSize_ == 0) {
-			EV << "auto" << "\n";
-		} else {
-			EV << spaceCellSize_ << "\n";
-		}
+    if (spaceCellSize_ == 0) {
+      EV << "auto" << "\n";
+    } else {
+      EV << spaceCellSize_ << "\n";
+    }
 
-		tkEnvRefreshRate_ = par("tkRefreshRate");
-		statsRefreshRate_ = par("statsRefreshRate");
-		enableWebServer_ = par("enableWebServer");
+    tkEnvRefreshRate_ = par("tkRefreshRate");
+    statsRefreshRate_ = par("statsRefreshRate");
+    enableWebServer_ = par("enableWebServer");
 
-		// Set network size for tkenv
-		buffer << spaceSize_.y;
+    // Set network size for tkenv
+    buffer << spaceSize_.y;
 
-		module = simulation.getSystemModule();
-		module->getDisplayString().setTagArg("bgb", 0, buffer.str().c_str());
-		buffer.str(std::string()); // clear buffer
+    module = simulation.getSystemModule();
+    module->getDisplayString().setTagArg("bgb", 0, buffer.str().c_str());
+    buffer.str(std::string()); // clear buffer
 
-		buffer << spaceSize_.x;
-		module->getDisplayString().setTagArg("bgb", 1, buffer.str().c_str());
-		buffer.str(std::string()); // clear buffer
+    buffer << spaceSize_.x;
+    module->getDisplayString().setTagArg("bgb", 1, buffer.str().c_str());
+    buffer.str(std::string()); // clear buffer
 
-	} else if (stage == 1) {
-		// the rest of the modules are being initialized ...
-	} else if (stage == 2) {
+  } else if (stage == 1) {
+    // the rest of the modules are being initialized ...
+  } else if (stage == 2) {
 
-		// All the particles are in the simulation space now. We can determine 
-		// the space cell size in case it has been set to 0 (default).
-		lastParticleId_ = 0;
+    // All the particles are in the simulation space now. We can determine 
+    // the space cell size in case it has been set to 0 (default).
+    lastParticleId_ = 0;
 
-		for (p = particles_.begin(); p != particles_.end(); ++p) {
+    for (p = particles_.begin(); p != particles_.end(); ++p) {
 
-			diameter = 2*(*p)->getRadius();
+      diameter = 2*(*p)->getRadius();
 
-			if (tempSpaceCellSize < diameter) {
-				tempSpaceCellSize = diameter;
-			}
+      if (tempSpaceCellSize < diameter) {
+        tempSpaceCellSize = diameter;
+      }
 
-			// Initialize the particle attributes
-			(*p)->setParticleId(lastParticleId_);
+      // Initialize the particle attributes
+      (*p)->setParticleId(lastParticleId_);
 
-			(*p)->setLastCollisionTime(0);
+      (*p)->setLastCollisionTime(0);
 
-			(*p)->initMobilityMessages();
+      (*p)->initMobilityMessages();
 
-			lastParticleId_++;
-		}
+      lastParticleId_++;
+    }
 
-		if (spaceCellSize_ == 0) {
-			spaceCellSize_ = tempSpaceCellSize;
-		}
+    if (spaceCellSize_ == 0) {
+      spaceCellSize_ = tempSpaceCellSize;
+    }
 
-		// Put every subscribed particle in its corresponding space cell
-		setNumberOfSpaceCellsX(ceil(spaceSize_.x/spaceCellSize_));
-		setNumberOfSpaceCellsY(ceil(spaceSize_.y/spaceCellSize_));
-		setNumberOfSpaceCellsZ(ceil(spaceSize_.z/spaceCellSize_));
+    // Put every subscribed particle in its corresponding space cell
+    setNumberOfSpaceCellsX(ceil(spaceSize_.x/spaceCellSize_));
+    setNumberOfSpaceCellsY(ceil(spaceSize_.y/spaceCellSize_));
+    setNumberOfSpaceCellsZ(ceil(spaceSize_.z/spaceCellSize_));
 
-		// N is the total number of space cells that the simulation space has.
-		N = Nx_*Ny_*Nz_;
+    // N is the total number of space cells that the simulation space has.
+    N = Nx_*Ny_*Nz_;
 
-		spaceCells_.resize(N);
+    spaceCells_.resize(N);
 
-		particleDistribution = par("particleDistribution").stringValue();
+    particleDistribution = par("particleDistribution").stringValue();
 
-		if (particleDistribution.compare("undefined") != 0) {
+    if (particleDistribution.compare("undefined") != 0) {
 
-			if (particleDistribution.compare("uniform") == 0) {
+      if (particleDistribution.compare("uniform") == 0) {
 
-				uniformDistribution3(spaceSize_, &particles_);
+        uniformDistribution3(spaceSize_, &particles_);
 
-			} else if (particleDistribution.compare("cube") == 0) {
+      } else if (particleDistribution.compare("cube") == 0) {
 
-				cubeDistribution(spaceSize_, &particles_);
+        cubeDistribution(spaceSize_, &particles_);
 
-			} else if (particleDistribution.compare("sphere") == 0) {
+      } else if (particleDistribution.compare("sphere") == 0) {
 
-			    point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
-				sphereDistribution(spaceSize_, &particles_, c, 0);
+          point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
+        sphereDistribution(spaceSize_, &particles_, c, 0);
 
-			} else if (particleDistribution.compare("highdensity") == 0) {
+      } else if (particleDistribution.compare("highdensity") == 0) {
 
-			    point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
-				highDensityDistribution(spaceSize_, &particles_, c);
+          point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
+        highDensityDistribution(spaceSize_, &particles_, c);
 
-			} else if (particleDistribution.compare("densepacked") == 0) {
+      } else if (particleDistribution.compare("densepacked") == 0) {
 
-				point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
-				densepacked(spaceSize_, &particles_, c);
+        point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
+        densepacked(spaceSize_, &particles_, c);
 
-			}
-		}
+      }
+    }
 
-		for (p = particles_.begin(); p != particles_.end(); ++p) {
-			// If the manager has set a list radius, overwrite the list
-			// radius of the particles
-			if (mode_ == M_NNLIST && listRadius_ > 0) {
-				(*p)->setListRadius(listRadius_);
-			}
+    for (p = particles_.begin(); p != particles_.end(); ++p) {
+      // If the manager has set a list radius, overwrite the list
+      // radius of the particles
+      if (mode_ == M_NNLIST && listRadius_ > 0) {
+        (*p)->setListRadius(listRadius_);
+      }
 
-			attachParticleToSpaceCell(*p, -1);
-		}
+      attachParticleToSpaceCell(*p, -1);
+    }
 
-		if (mode_ == M_NNLIST) {
-			for (p = particles_.begin(); p != particles_.end(); ++p) {
-				(*p)->createNearNeighborList();
-			}
-		}
+    if (mode_ == M_NNLIST) {
+      for (p = particles_.begin(); p != particles_.end(); ++p) {
+        (*p)->createNearNeighborList();
+      }
+    }
 
-		// Self message to refresh the tk environment
-		if (tkEnvRefreshRate_ > 0) {
-			scheduleAt(simTime() + tkEnvRefreshRate_/1000, 
-				new cMessage("refresh", EV_TKENVUPDATE));
-		}
+    // Self message to refresh the tk environment
+    if (tkEnvRefreshRate_ > 0) {
+      scheduleAt(simTime() + tkEnvRefreshRate_/1000, 
+        new cMessage("refresh", EV_TKENVUPDATE));
+    }
 
-		if (statsRefreshRate_ > 0) {
-			scheduleAt(simTime() + statsRefreshRate_/1000,
-				new cMessage("refresh", EV_STATSUPDATE));
-		}
+    if (statsRefreshRate_ > 0) {
+      scheduleAt(simTime() + statsRefreshRate_/1000,
+        new cMessage("refresh", EV_STATSUPDATE));
+    }
 
-		// Make that every subscribed particle compute its next event time
-		for (p = particles_.begin(); p != particles_.end(); ++p) {
-			(*p)->initializeMobility();
-		}
+    // Make that every subscribed particle compute its next event time
+    for (p = particles_.begin(); p != particles_.end(); ++p) {
+      (*p)->initializeMobility();
+    }
 
-		if (ev.isGUI()) {
-			tkEnvUpdateNetwork();
-		}
+    if (ev.isGUI()) {
+      tkEnvUpdateNetwork();
+    }
 
-		// Start the web server
-		if (enableWebServer_ == 1) {
-			startWebServerThread();
-		}
-	}
+    // Start the web server
+    if (enableWebServer_ == 1) {
+      startWebServerThread();
+    }
+  }
 
 }
 
@@ -261,7 +261,7 @@ void Manager::initialize(int stage) {
  */
 int Manager::numInitStages() const {
 
-	return 3;
+  return 3;
 
 }
 
@@ -275,27 +275,27 @@ int Manager::numInitStages() const {
  */
 void Manager::attachParticleToSpaceCell(Particle *p, int to) {
 
-	int i, j, k, n;
-	point_t *pos = NULL;
+  int i, j, k, n;
+  point_t *pos = NULL;
 
-	if (to < 0) {
+  if (to < 0) {
 
-		pos = p->getPosition();
+    pos = p->getPosition();
 
-		i = floor(pos->x/spaceCellSize_);
-		j = floor(pos->y/spaceCellSize_);
-		k = floor(pos->z/spaceCellSize_);
+    i = floor(pos->x/spaceCellSize_);
+    j = floor(pos->y/spaceCellSize_);
+    k = floor(pos->z/spaceCellSize_);
 
-		n = i*Ny_*Nz_ + j*Nz_ + k;
+    n = i*Ny_*Nz_ + j*Nz_ + k;
 
-		p->setSpaceCell(n);
-		p->setPrevSpaceCell(-1);
+    p->setSpaceCell(n);
+    p->setPrevSpaceCell(-1);
 
-		spaceCells_.at(n).push_back(p);
+    spaceCells_.at(n).push_back(p);
 
-	} else {
-		spaceCells_.at(to).push_back(p);
-	}
+  } else {
+    spaceCells_.at(to).push_back(p);
+  }
 
 }
 
@@ -307,11 +307,11 @@ void Manager::attachParticleToSpaceCell(Particle *p, int to) {
  */
 void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
 
-	if (from < 0) {
-		spaceCells_.at(p->getSpaceCell()).remove(p);
-	} else {
-		spaceCells_.at(from).remove(p);
-	}
+  if (from < 0) {
+    spaceCells_.at(p->getSpaceCell()).remove(p);
+  } else {
+    spaceCells_.at(from).remove(p);
+  }
 
 }
 
@@ -324,11 +324,11 @@ void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
  */
 void Manager::transferParticle(Particle *p, int from, int to) {
 
-	// Detach particle from its space cell
-	detachParticleFromSpaceCell(p, from);
+  // Detach particle from its space cell
+  detachParticleFromSpaceCell(p, from);
 
-	// Attach the particle to its new space cell
-	attachParticleToSpaceCell(p, to);
+  // Attach the particle to its new space cell
+  attachParticleToSpaceCell(p, to);
 
 }
 
@@ -341,17 +341,17 @@ void Manager::transferParticle(Particle *p, int from, int to) {
  */
 std::list<Particle *> *Manager::getSpaceCellParticles(int n) {
 
-	return &spaceCells_.at(n);
+  return &spaceCells_.at(n);
 
 }
 
 int Manager::getNextParticleId() {
 
-	int result = lastParticleId_;
+  int result = lastParticleId_;
 
-	lastParticleId_++;
+  lastParticleId_++;
 
-	return result;
+  return result;
 }
 /*
  * Handles every message that the manager module receives.
@@ -360,35 +360,35 @@ int Manager::getNextParticleId() {
  */
 void Manager::handleMessage(cMessage *msg) {
 
-	int kind = msg->getKind();
+  int kind = msg->getKind();
 
-	simtime_t st = simTime();
+  simtime_t st = simTime();
 
-	if (kind == EV_TKENVUPDATE) {
+  if (kind == EV_TKENVUPDATE) {
 
-		tkEnvUpdateNetwork();
+    tkEnvUpdateNetwork();
 
-		// Self message to refresh the tk environment
-		if (tkEnvRefreshRate_ > 0) {
-			scheduleAt(st + tkEnvRefreshRate_/1000, msg);
-		}
+    // Self message to refresh the tk environment
+    if (tkEnvRefreshRate_ > 0) {
+      scheduleAt(st + tkEnvRefreshRate_/1000, msg);
+    }
 
-	} else if (kind == EV_STATSUPDATE) {
+  } else if (kind == EV_STATSUPDATE) {
 
-		// Put the statistics logged so far to cout vectors
-		allCollisionsVector_.recordWithTimestamp(st, stats_.allCollisions);
-		particleCollisionsVector_.recordWithTimestamp(st, stats_.particleCollisions);
-		wallCollisionsVector_.recordWithTimestamp(st, stats_.wallCollisions);
-		transfersVector_.recordWithTimestamp(st, stats_.transfers);
-		expiresVector_.recordWithTimestamp(st, stats_.expires);
+    // Put the statistics logged so far to cout vectors
+    allCollisionsVector_.recordWithTimestamp(st, stats_.allCollisions);
+    particleCollisionsVector_.recordWithTimestamp(st, stats_.particleCollisions);
+    wallCollisionsVector_.recordWithTimestamp(st, stats_.wallCollisions);
+    transfersVector_.recordWithTimestamp(st, stats_.transfers);
+    expiresVector_.recordWithTimestamp(st, stats_.expires);
 
-		// Clear the stats data structure
-		clearStatistics();
+    // Clear the stats data structure
+    clearStatistics();
 
-		if (statsRefreshRate_ > 0) {
-			scheduleAt(st + statsRefreshRate_/1000, msg);
-		}
-	}
+    if (statsRefreshRate_ > 0) {
+      scheduleAt(st + statsRefreshRate_/1000, msg);
+    }
+  }
 
 }
 
@@ -397,9 +397,9 @@ void Manager::handleMessage(cMessage *msg) {
  */
 void Manager::finish() {
 
-	if (enableWebServer_ == 1) {
-		// stopWebServerThread(); // TODO the server hangs the tk environment here
-	}
+  if (enableWebServer_ == 1) {
+    // stopWebServerThread(); // TODO the server hangs the tk environment here
+  }
 
 }
 
@@ -409,12 +409,12 @@ void Manager::finish() {
  */
 void Manager::tkEnvUpdateNetwork() {
 
-	std::list<Particle *>::const_iterator p;
+  std::list<Particle *>::const_iterator p;
 
-	// Update particle positions
-	for (p = particles_.begin(); p != particles_.end(); ++p) {
-		(*p)->tkEnvUpdatePosition(simTime().dbl());
-	}
+  // Update particle positions
+  for (p = particles_.begin(); p != particles_.end(); ++p) {
+    (*p)->tkEnvUpdatePosition(simTime().dbl());
+  }
 
 }
 
@@ -423,26 +423,26 @@ void Manager::tkEnvUpdateNetwork() {
  */
 void Manager::startWebServerThread() {
 
-	if(pipe(quitFd_)) {
-	    EV << "pipe failed\n";
-	    return;
-	}
+  if(pipe(quitFd_)) {
+      EV << "pipe failed\n";
+      return;
+  }
 
-	settings_t settings;
+  settings_t settings;
 
-	// Gather simulation settings
-	settings.numberOfParticles = particles_.size();
-	settings.simSpaceSize = spaceSize_;
+  // Gather simulation settings
+  settings.numberOfParticles = particles_.size();
+  settings.simSpaceSize = spaceSize_;
 
-	webServerArgs_.quitFd = quitFd_[READ];
-	webServerArgs_.settings = settings;
-	webServerArgs_.particles = &particles_;
+  webServerArgs_.quitFd = quitFd_[READ];
+  webServerArgs_.settings = settings;
+  webServerArgs_.particles = &particles_;
 
-	if (pthread_create(&webServerThread_, NULL, startServerThread, &webServerArgs_) == 0) {
-	    EV << "Web server started" << endl;
-	} else {
-	    EV << "Error starting the web server" << endl;
-	}
+  if (pthread_create(&webServerThread_, NULL, startServerThread, &webServerArgs_) == 0) {
+      EV << "Web server started" << endl;
+  } else {
+      EV << "Error starting the web server" << endl;
+  }
 
 }
 
@@ -451,12 +451,12 @@ void Manager::startWebServerThread() {
  */
 void Manager::stopWebServerThread() {
 
-	endServerThread(quitFd_[WRITE]);
+  endServerThread(quitFd_[WRITE]);
 
-	pthread_join(webServerThread_, NULL);
+  pthread_join(webServerThread_, NULL);
 
-	close(quitFd_[READ]);
-	close(quitFd_[WRITE]);
+  close(quitFd_[READ]);
+  close(quitFd_[WRITE]);
 
 }
 
@@ -464,35 +464,35 @@ void Manager::stopWebServerThread() {
  * Sets the statistics data structure to zero.
  */
 void Manager::clearStatistics() {
-	memset(&stats_, 0, sizeof(stats_));
+  memset(&stats_, 0, sizeof(stats_));
 }
 
 /*
  * Increment the collisions counter
  */
 void Manager::registerCollision() {
-	stats_.particleCollisions++;
-	stats_.allCollisions++;
+  stats_.particleCollisions++;
+  stats_.allCollisions++;
 }
 
 /*
  * Increment the wall collisions counter
  */
 void Manager::registerWallCollision() {
-	stats_.wallCollisions++;
-	stats_.allCollisions++;
+  stats_.wallCollisions++;
+  stats_.allCollisions++;
 }
 
 /*
  * Increment the transfer counter
  */
 void Manager::registerTransfer() {
-	stats_.transfers++;
+  stats_.transfers++;
 }
 
 /*
  * Increment the expires counter
  */
 void Manager::registerExpire() {
-	stats_.expires++;
+  stats_.expires++;
 }

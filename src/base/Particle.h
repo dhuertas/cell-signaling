@@ -113,12 +113,12 @@ class Particle {
 		// TODO remove this once the space cells indexes use data structures (spaceCellIdx)
 		inline int getSpaceCell(void) { return spaceCell_; };
 
-		inline index_t* getSpaceCellIdx(void) { return &spaceCellIdx_; };
+		inline index_t getSpaceCellIdx(void) { return spaceCellIdx_; };
 
 		// TODO remove this once the space cells indexes use data structures (spaceCellIdx)
 		inline int getPrevSpaceCell(void) { return prevSpaceCell_; };
 
-		inline index_t* getPrevSpaceCellIdx(void) {return &prevSpaceCellIdx_; };
+		inline index_t getPrevSpaceCellIdx(void) { return prevSpaceCellIdx_; };
 
 		inline double getListRadius(void) { return listRadius_; };
 

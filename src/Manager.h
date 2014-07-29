@@ -29,6 +29,7 @@
 
 #include "Particle.h"
 #include "ParticleDistributionHelper.h"
+#include "Octree.h"
 #include "WebServer.h"
 
 class Manager : public cSimpleModule {
@@ -46,6 +47,9 @@ class Manager : public cSimpleModule {
 
     // File Descriptors to communicate with the Web Server thread
     int quitFd_[2];
+
+    // The simulation space
+    Octree space_;
 
     // the simulation space size in each direction
     vect_t spaceSize_;
