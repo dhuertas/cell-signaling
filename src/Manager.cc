@@ -31,7 +31,7 @@ Manager::~Manager() {}
 void Manager::subscribe(Particle * p) {
 
   // Add the particle pointer to the particles vector
-  particles_.push_back(p);
+  space_.subscribe(p);
 
   // Also add the particle to its corresponding space cell
 //  if (spaceCellSize > 0) {
@@ -48,10 +48,10 @@ void Manager::subscribe(Particle * p) {
 void Manager::unsubscribe(Particle * p) {
 
   // Remove the particle pointer from the space cell structure
-  detachParticleFromSpaceCell(p, -1);
+  // detachParticleFromSpaceCell(p, -1); // TODO remove this
 
   // Remove the particle pointer from the particles vector
-  particles_.remove(p);
+  space_.unsubscribe(p);
 
 }
 
@@ -65,6 +65,8 @@ void Manager::initialize(int stage) {
   int N;
 
   double diameter, tempSpaceCellSize;
+
+  vect_t spaceSize;
 
   cModule *module;
   std::list<Particle *>::const_iterator p;
@@ -104,39 +106,28 @@ void Manager::initialize(int stage) {
     setDeltaTime(par("deltaTime").doubleValue());
 
     // Get the simulation space size
-    setSpaceSizeX(simulation.getSystemModule()->par("spaceSizeX"));
-    setSpaceSizeY(simulation.getSystemModule()->par("spaceSizeY"));
-    setSpaceSizeZ(simulation.getSystemModule()->par("spaceSizeZ"));
+    spaceSize.x = simulation.getSystemModule()->par("spaceSizeX");
+    spaceSize.y = simulation.getSystemModule()->par("spaceSizeY");
+    spaceSize.z = simulation.getSystemModule()->par("spaceSizeZ");
 
-    // Get the space cell size. If set to 0 we must wait untill all the 
+    space_.setSpaceSize(spaceSize);
+
+    // Get the space cell size. If set to 0 we must wait until all the
     // initial particles have been subscribed.
-    setSpaceCellSize(par("spaceCellSize"));
-
-    EV << "space size: ";
-    EV << "X=" << spaceSize_.x << ", ";
-    EV << "Y=" << spaceSize_.y << ", ";
-    EV << "Z=" << spaceSize_.z << "\n";
-
-    EV << "Space cell size: ";
-
-    if (spaceCellSize_ == 0) {
-      EV << "auto" << "\n";
-    } else {
-      EV << spaceCellSize_ << "\n";
-    }
+    space_.setMaxSpaceCellSize(par("maxSpaceCellSize"));
 
     tkEnvRefreshRate_ = par("tkRefreshRate");
     statsRefreshRate_ = par("statsRefreshRate");
     enableWebServer_ = par("enableWebServer");
 
     // Set network size for tkenv
-    buffer << spaceSize_.y;
+    buffer << space_.getSpaceSize()->y;
 
     module = simulation.getSystemModule();
     module->getDisplayString().setTagArg("bgb", 0, buffer.str().c_str());
     buffer.str(std::string()); // clear buffer
 
-    buffer << spaceSize_.x;
+    buffer << space_.getSpaceSize()->x;
     module->getDisplayString().setTagArg("bgb", 1, buffer.str().c_str());
     buffer.str(std::string()); // clear buffer
 
@@ -166,19 +157,19 @@ void Manager::initialize(int stage) {
       lastParticleId_++;
     }
 
-    if (spaceCellSize_ == 0) {
-      spaceCellSize_ = tempSpaceCellSize;
+    if (space_.getMaxSpaceCellSize() == 0) {
+      space_.setMaxSpaceCellSize(tempSpaceCellSize);
     }
 
     // Put every subscribed particle in its corresponding space cell
-    setNumberOfSpaceCellsX(ceil(spaceSize_.x/spaceCellSize_));
-    setNumberOfSpaceCellsY(ceil(spaceSize_.y/spaceCellSize_));
-    setNumberOfSpaceCellsZ(ceil(spaceSize_.z/spaceCellSize_));
+    //setNumberOfSpaceCellsX(ceil(spaceSize_.x/spaceCellSize_)); // TODO remove this
+    //setNumberOfSpaceCellsY(ceil(spaceSize_.y/spaceCellSize_)); // TODO remove this
+    //setNumberOfSpaceCellsZ(ceil(spaceSize_.z/spaceCellSize_)); // TODO remove this
 
     // N is the total number of space cells that the simulation space has.
-    N = Nx_*Ny_*Nz_;
+    //N = Nx_*Ny_*Nz_;
 
-    spaceCells_.resize(N);
+    //spaceCells_.resize(N); // TODO remove this
 
     particleDistribution = par("particleDistribution").stringValue();
 
@@ -186,26 +177,37 @@ void Manager::initialize(int stage) {
 
       if (particleDistribution.compare("uniform") == 0) {
 
-        uniformDistribution3(spaceSize_, &particles_);
+        uniformDistribution3(*space_.getSpaceSize(), &particles_);
 
       } else if (particleDistribution.compare("cube") == 0) {
 
-        cubeDistribution(spaceSize_, &particles_);
+        cubeDistribution(*space_.getSpaceSize(), &particles_);
 
       } else if (particleDistribution.compare("sphere") == 0) {
 
-          point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
-        sphereDistribution(spaceSize_, &particles_, c, 0);
+        point_t c = {
+          space_.getSpaceSize()->x/2, 
+          space_.getSpaceSize()->y/2, 
+          space_.getSpaceSize()->z/2};
+
+        sphereDistribution(*space_.getSpaceSize(), &particles_, c, 0);
 
       } else if (particleDistribution.compare("highdensity") == 0) {
 
-          point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
-        highDensityDistribution(spaceSize_, &particles_, c);
+        point_t c = {
+          space_.getSpaceSize()->x/2, 
+          space_.getSpaceSize()->y/2, 
+          space_.getSpaceSize()->z/2};
+
+        highDensityDistribution(*space_.getSpaceSize(), &particles_, c);
 
       } else if (particleDistribution.compare("densepacked") == 0) {
 
-        point_t c = {spaceSize_.x/2, spaceSize_.y/2, spaceSize_.z/2};
-        densepacked(spaceSize_, &particles_, c);
+        point_t c = {
+          space_.getSpaceSize()->x/2, 
+          space_.getSpaceSize()->y/2, 
+          space_.getSpaceSize()->z/2};
+        densepacked(*space_.getSpaceSize(), &particles_, c);
 
       }
     }
@@ -217,7 +219,7 @@ void Manager::initialize(int stage) {
         (*p)->setListRadius(listRadius_);
       }
 
-      attachParticleToSpaceCell(*p, -1);
+      space_.attachParticleToSpaceCell(*p, IDX_NULL);
     }
 
     if (mode_ == M_NNLIST) {
@@ -271,31 +273,11 @@ int Manager::numInitStages() const {
  * must be calculated. 
  *
  * @param {Particle *} p
- * @param {integer} to
+ * @param {index_t} to
  */
-void Manager::attachParticleToSpaceCell(Particle *p, int to) {
+void Manager::attachParticleToSpaceCell(Particle *p, index_t to) {
 
-  int i, j, k, n;
-  point_t *pos = NULL;
-
-  if (to < 0) {
-
-    pos = p->getPosition();
-
-    i = floor(pos->x/spaceCellSize_);
-    j = floor(pos->y/spaceCellSize_);
-    k = floor(pos->z/spaceCellSize_);
-
-    n = i*Ny_*Nz_ + j*Nz_ + k;
-
-    p->setSpaceCell(n);
-    p->setPrevSpaceCell(-1);
-
-    spaceCells_.at(n).push_back(p);
-
-  } else {
-    spaceCells_.at(to).push_back(p);
-  }
+  space_.attachParticleToSpaceCell(p, to);
 
 }
 
@@ -303,15 +285,11 @@ void Manager::attachParticleToSpaceCell(Particle *p, int to) {
  * Detach a particle from a space cell.
  *
  * @param {Particle *} p
- * @param {integer} from
+ * @param {index_t} from
  */
-void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
+void Manager::detachParticleFromSpaceCell(Particle *p, index_t from) {
 
-  if (from < 0) {
-    spaceCells_.at(p->getSpaceCell()).remove(p);
-  } else {
-    spaceCells_.at(from).remove(p);
-  }
+  space_.detachParticleFromSpaceCell(p, from);
 
 }
 
@@ -319,30 +297,22 @@ void Manager::detachParticleFromSpaceCell(Particle *p, int from) {
  * Transfer a particle from one space cell to another.
  *
  * @param {Particle *} p
- * @param {integer} from
- * @param {integer} to
+ * @param {index_t} from
+ * @param {index_t} to
  */
-void Manager::transferParticle(Particle *p, int from, int to) {
+void Manager::transferParticle(Particle *p, index_t from, index_t to) {
 
-  // Detach particle from its space cell
-  detachParticleFromSpaceCell(p, from);
-
-  // Attach the particle to its new space cell
-  attachParticleToSpaceCell(p, to);
+  space_.transferParticle(p, from, to);
 
 }
 
-/*
- * Return a list containing the pointers to the particles in a given
- * space cell.
- *
- * @param {Integer} n n-th space cell index
- * @return {std::list<Particle *> *} a pointer to a list of particle pointers
- */
-std::list<Particle *> *Manager::getSpaceCellParticles(int n) {
+std::list<Particle *> getNeighborParticles(index_t idx) {
 
-  return &spaceCells_.at(n);
+  std::list<Particle *> particles;
 
+  // TODO complete me
+
+  return particles;
 }
 
 int Manager::getNextParticleId() {
@@ -432,7 +402,7 @@ void Manager::startWebServerThread() {
 
   // Gather simulation settings
   settings.numberOfParticles = particles_.size();
-  settings.simSpaceSize = spaceSize_;
+  settings.simSpaceSize = *(space_.getSpaceSize());
 
   webServerArgs_.quitFd = quitFd_[READ];
   webServerArgs_.settings = settings;

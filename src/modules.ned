@@ -37,7 +37,7 @@ simple Manager {
 		// be at least as wide as the widest diameter of the particles it 
 		// contains. If set to 0, the manager will adjust the space cell size
 		// by searching the maximum radius of the particles (2*MaxRadius).
-		double spaceCellSize = default(0);
+		double maxSpaceCellSize = default(0);
 
 		// Verlet list radius. When set, overwrites the list radius of the 
 		// particles when using mode 2 (near neighbor lists, or verlet lists).

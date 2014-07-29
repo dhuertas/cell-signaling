@@ -318,7 +318,7 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
   std::list<Particle *> *particleList;
   std::list<Particle *>::const_iterator pl;
 
-  spaceCellSize = manager_->getSpaceCellSize();
+  spaceCellSize = manager_->getSpaceCellSize(IDX_NULL); // TODO fix this
 
   Nx = manager_->getNumberOfSpaceCellsX();
   Ny = manager_->getNumberOfSpaceCellsY();

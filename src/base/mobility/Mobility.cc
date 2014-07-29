@@ -69,7 +69,7 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
 
 	manager = msg->getManager();
 
-	spaceCellSize = manager->getSpaceCellSize();
+	spaceCellSize = manager->getSpaceCellSize(p->getSpaceCellIdx());
 
 	transferTime = NO_TIME;
 

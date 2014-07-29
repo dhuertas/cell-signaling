@@ -38,11 +38,9 @@ class Octree {
 
   unsigned int numLayers_;
 
-  double maxSideLength_;
+  double maxSpaceCellSize_;
 
   vect_t spaceSize_;
-
-  std::list<Particle*> particles_;
 
   std::vector<layer_t> spaceCellsTree_;
 
@@ -73,19 +71,19 @@ class Octree {
   //
   inline unsigned int getNumLayers(void) { return numLayers_; };
 
-  inline double getMaxSideLength(void) { return maxSideLength_; };
+  inline double getMaxSpaceCellSize(void) { return maxSpaceCellSize_; };
 
-  inline vect_t getSpaceSize(void) { return spaceSize_; };
+  inline vect_t *getSpaceSize(void) { return &spaceSize_; };
 
   // Returns the side length of a given cell and layer
   // D_cell = D_max/(2^layer)
   inline double getSpaceCellSideLength(index_t idx) {
-    return maxSideLength_/(1 << idx.layer);
+    return maxSpaceCellSize_/(1 << idx.layer);
   }
 
   inline void setNumLayers(unsigned int nl) { numLayers_ = nl; };
 
-  inline void setMaxSideLength(double sl) { maxSideLength_ = sl; };
+  inline void setMaxSpaceCellSize(double sl) { maxSpaceCellSize_ = sl; };
 
   inline void setSpaceSize(vect_t ss) { spaceSize_ = ss; }; 
 

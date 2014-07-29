@@ -41,9 +41,9 @@ class Manager : public cSimpleModule {
 
     // The number of space cells in each direction. They are used to
     // access the spaceCells vector of vectors.
-    int Nx_;
-    int Ny_;
-    int Nz_;
+    // int Nx_; // TODO remove this
+    // int Ny_; // TODO remove this
+    // int Nz_; // TODO remove this
 
     // File Descriptors to communicate with the Web Server thread
     int quitFd_[2];
@@ -52,13 +52,13 @@ class Manager : public cSimpleModule {
     Octree space_;
 
     // the simulation space size in each direction
-    vect_t spaceSize_;
+    // vect_t spaceSize_; // TODO remove this
 
     // Delta time
     double deltaTime_;
 
     // The space cell size
-    double spaceCellSize_;
+    //double spaceCellSize_; // TODO remove this
 
     // Overwrite particles' list radius.
     double listRadius_;
@@ -89,7 +89,7 @@ class Manager : public cSimpleModule {
 
     // Space is divided into cells, each of which contains a list of
     // particles belonging to it.
-    std::vector<std::list<Particle*> > spaceCells_;
+    //std::vector<std::list<Particle*> > spaceCells_; // TODO remove this
 
   protected:
 
@@ -117,12 +117,12 @@ class Manager : public cSimpleModule {
     // area, etc.
     void unsubscribe(Particle *);
 
-    void attachParticleToSpaceCell(Particle *, int);
+    void attachParticleToSpaceCell(Particle *, index_t);
 
-    void detachParticleFromSpaceCell(Particle *, int);
+    void detachParticleFromSpaceCell(Particle *, index_t);
 
     // Move one particle from one space cell to another.
-    void transferParticle(Particle *, int, int);
+    void transferParticle(Particle *, index_t, index_t);
 
     // Update the tk environment
     void tkEnvUpdateNetwork(void);
@@ -135,21 +135,15 @@ class Manager : public cSimpleModule {
     void stopWebServerThread(void);
 
     // Gets and sets
-    vect_t *getSpaceSize(void) { return &spaceSize_; };
+    vect_t *getSpaceSize(void) { return space_.getSpaceSize(); };
 
-    double getSpaceSizeX(void) { return spaceSize_.x; };
+    double getSpaceCellSize(index_t idx) { return space_.getSpaceCellSideLength(idx); };
 
-    double getSpaceSizeY(void) { return spaceSize_.y; };
+    // int *getNumberOfSpaceCellsX(void) { return &Nx_; }; // TODO remove this
 
-    double getSpaceSizeZ(void) { return spaceSize_.z; };
+    // int *getNumberOfSpaceCellsY(void) { return &Ny_; }; // TODO remove this
 
-    double getSpaceCellSize(void) { return spaceCellSize_; };
-
-    int *getNumberOfSpaceCellsX(void) { return &Nx_; };
-
-    int *getNumberOfSpaceCellsY(void) { return &Ny_; };
-
-    int *getNumberOfSpaceCellsZ(void) { return &Nz_; };
+    // int *getNumberOfSpaceCellsZ(void) { return &Nz_; }; // TODO remove this
 
     int getMode(void) { return mode_; };
 
@@ -159,25 +153,27 @@ class Manager : public cSimpleModule {
 
     std::list<Particle *> *getSpaceCellParticles(int);
 
+    std::list<Particle *> getNeighborParticles(index_t idx);
+
     int getNextParticleId(void);
 
     int getLastParticleId(void) { return lastParticleId_; };
 
-    void setSpaceSize(vect_t vsz) { spaceSize_ = vsz; };
+    void setSpaceSize(vect_t vsz) { space_.setSpaceSize(vsz); };
 
-    void setSpaceSizeX(double sx) { spaceSize_.x = sx; };
+    // void setSpaceSizeX(double sx) { spaceSize_.x = sx; }; // TODO remove this
 
-    void setSpaceSizeY(double sy) { spaceSize_.y = sy; };
+    // void setSpaceSizeY(double sy) { spaceSize_.y = sy; }; // TODO remove this
 
-    void setSpaceSizeZ(double sz) { spaceSize_.z = sz; };
+    // void setSpaceSizeZ(double sz) { spaceSize_.z = sz; }; // TODO remove this
 
-    void setSpaceCellSize(double sc) { spaceCellSize_ = sc; };
+    // void setSpaceCellSize(double sc) { spaceCellSize_ = sc; }; // TODO remove this
 
-    void setNumberOfSpaceCellsX(int n) { Nx_ = n; };
+    // void setNumberOfSpaceCellsX(int n) { Nx_ = n; }; // TODO remove this
 
-    void setNumberOfSpaceCellsY(int n) { Ny_ = n; };
+    // void setNumberOfSpaceCellsY(int n) { Ny_ = n; }; // TODO remove this
 
-    void setNumberOfSpaceCellsZ(int n) { Nz_ = n; };
+    // void setNumberOfSpaceCellsZ(int n) { Nz_ = n; }; // TODO remove this
 
     void setMode(int m) { mode_ = m; };
 

@@ -117,7 +117,7 @@ double Probe::getMoleculeDensity() {
 	Ny = manager_->getNumberOfSpaceCellsY();
 	Nz = manager_->getNumberOfSpaceCellsZ();
 
-	spaceCellSize = manager_->getSpaceCellSize();
+	spaceCellSize = manager_->getSpaceCellSize(IDX_NULL); // TODO fix this
 
 	i = floor(position_.x/spaceCellSize);
 	j = floor(position_.y/spaceCellSize);
