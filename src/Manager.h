@@ -39,26 +39,14 @@ class Manager : public cSimpleModule {
     // Molecule Dynamics Mode of operation
     int mode_;
 
-    // The number of space cells in each direction. They are used to
-    // access the spaceCells vector of vectors.
-    // int Nx_; // TODO remove this
-    // int Ny_; // TODO remove this
-    // int Nz_; // TODO remove this
-
     // File Descriptors to communicate with the Web Server thread
     int quitFd_[2];
 
     // The simulation space
     Octree space_;
 
-    // the simulation space size in each direction
-    // vect_t spaceSize_; // TODO remove this
-
     // Delta time
     double deltaTime_;
-
-    // The space cell size
-    //double spaceCellSize_; // TODO remove this
 
     // Overwrite particles' list radius.
     double listRadius_;
@@ -86,10 +74,6 @@ class Manager : public cSimpleModule {
     // A list of particles contained in the simulation space. Every new
     // particle must be subscribed to (and unsubscribed from).
     std::list<Particle*> particles_;
-
-    // Space is divided into cells, each of which contains a list of
-    // particles belonging to it.
-    //std::vector<std::list<Particle*> > spaceCells_; // TODO remove this
 
   protected:
 
@@ -134,16 +118,12 @@ class Manager : public cSimpleModule {
 
     void stopWebServerThread(void);
 
+    //
     // Gets and sets
+    //
     vect_t *getSpaceSize(void) { return space_.getSpaceSize(); };
 
     double getSpaceCellSize(index_t idx) { return space_.getSpaceCellSideLength(idx); };
-
-    // int *getNumberOfSpaceCellsX(void) { return &Nx_; }; // TODO remove this
-
-    // int *getNumberOfSpaceCellsY(void) { return &Ny_; }; // TODO remove this
-
-    // int *getNumberOfSpaceCellsZ(void) { return &Nz_; }; // TODO remove this
 
     int getMode(void) { return mode_; };
 
@@ -160,20 +140,6 @@ class Manager : public cSimpleModule {
     int getLastParticleId(void) { return lastParticleId_; };
 
     void setSpaceSize(vect_t vsz) { space_.setSpaceSize(vsz); };
-
-    // void setSpaceSizeX(double sx) { spaceSize_.x = sx; }; // TODO remove this
-
-    // void setSpaceSizeY(double sy) { spaceSize_.y = sy; }; // TODO remove this
-
-    // void setSpaceSizeZ(double sz) { spaceSize_.z = sz; }; // TODO remove this
-
-    // void setSpaceCellSize(double sc) { spaceCellSize_ = sc; }; // TODO remove this
-
-    // void setNumberOfSpaceCellsX(int n) { Nx_ = n; }; // TODO remove this
-
-    // void setNumberOfSpaceCellsY(int n) { Ny_ = n; }; // TODO remove this
-
-    // void setNumberOfSpaceCellsZ(int n) { Nz_ = n; }; // TODO remove this
 
     void setMode(int m) { mode_ = m; };
 

@@ -30,13 +30,11 @@ Manager::~Manager() {}
  */
 void Manager::subscribe(Particle * p) {
 
-  // Add the particle pointer to the particles vector
-  space_.subscribe(p);
+  // Add the particle pointer to the particles list
+  particles_.push_back(p);
 
   // Also add the particle to its corresponding space cell
-//  if (spaceCellSize > 0) {
-//    attachParticleToSpaceCell(p, -1);
-//  }
+  space_.subscribe(p);
 
 }
 
@@ -48,10 +46,10 @@ void Manager::subscribe(Particle * p) {
 void Manager::unsubscribe(Particle * p) {
 
   // Remove the particle pointer from the space cell structure
-  // detachParticleFromSpaceCell(p, -1); // TODO remove this
-
-  // Remove the particle pointer from the particles vector
   space_.unsubscribe(p);
+
+  // Remove the particle pointer from the particles list
+  particles_.remove(p);
 
 }
 
@@ -160,16 +158,6 @@ void Manager::initialize(int stage) {
     if (space_.getMaxSpaceCellSize() == 0) {
       space_.setMaxSpaceCellSize(tempSpaceCellSize);
     }
-
-    // Put every subscribed particle in its corresponding space cell
-    //setNumberOfSpaceCellsX(ceil(spaceSize_.x/spaceCellSize_)); // TODO remove this
-    //setNumberOfSpaceCellsY(ceil(spaceSize_.y/spaceCellSize_)); // TODO remove this
-    //setNumberOfSpaceCellsZ(ceil(spaceSize_.z/spaceCellSize_)); // TODO remove this
-
-    // N is the total number of space cells that the simulation space has.
-    //N = Nx_*Ny_*Nz_;
-
-    //spaceCells_.resize(N); // TODO remove this
 
     particleDistribution = par("particleDistribution").stringValue();
 
@@ -306,11 +294,17 @@ void Manager::transferParticle(Particle *p, index_t from, index_t to) {
 
 }
 
+/*
+ *
+ */
 std::vector<Particle *> *Manager::getNeighborParticles(index_t idx, std::vector<Particle *> *list) {
 
   return space_.getNeighborParticles(idx, list);
 }
 
+/*
+ *
+ */
 int Manager::getNextParticleId() {
 
   int result = lastParticleId_;
@@ -319,6 +313,7 @@ int Manager::getNextParticleId() {
 
   return result;
 }
+
 /*
  * Handles every message that the manager module receives.
  *

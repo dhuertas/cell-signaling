@@ -91,6 +91,7 @@ void Octree::transferParticle(Particle *p, index_t from, index_t to) {
  */
 void Octree::subscribe(Particle *p) {
 
+  // TODO complete me
 }
 
 /*
@@ -98,6 +99,7 @@ void Octree::subscribe(Particle *p) {
  */
 void Octree::unsubscribe(Particle *p) {
 
+  // TODO complete me
 }
 
 /*
@@ -126,7 +128,7 @@ void Octree::attachParticleToSpaceCell(Particle *p, index_t idx) {
 
     pos = p->getPosition();
 
-    // Note that the integer already performs the floor() operation
+    // Note that the integer = operator already performs the floor() operation
     //idx.i = floor(pos->x/(maxSpaceCellSize_/(1 << idx.layer)));
     //idx.j = floor(pos->y/(maxSpaceCellSize_/(1 << idx.layer)));
     //idx.k = floor(pos->z/(maxSpaceCellSize_/(1 << idx.layer)));
