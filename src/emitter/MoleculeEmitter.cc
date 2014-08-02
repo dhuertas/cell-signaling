@@ -113,10 +113,9 @@ void MoleculeEmitter::handleMessage(cMessage *msg) {
 
     molecule->initMobilityMessages();
 
-    manager_->attachParticleToSpaceCell(molecule, -1);
+    manager_->attachParticleToSpaceCell(molecule, IDX_NULL);
 
     if (manager_->getMode() == M_NNLIST) {
-      molecule->setListRadius(2*emissionParticleRadius);
       molecule->createNearNeighborList();
     }
 
@@ -177,6 +176,7 @@ Molecule * MoleculeEmitter::createMolecule() {
 
   // Create molecule or get a preloaded one
   Molecule *m = NULL;
+
   if (preloadedMolecules.size() > 0) {
     m = preloadedMolecules.front();
     preloadedMolecules.pop_front(); // remove first molecule from the list
@@ -309,65 +309,26 @@ bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
 
   point_t *cb = NULL;
 
+  index_t idx;
+
   std::vector<Particle *> particles;
   std::vector<Particle *>::iterator p;
 
-  std::vector<int> spaceCells;
-  std::vector<int>::iterator sc;
+  idx = manager_->getSpaceCellIdx(ca, ra);
 
-  std::list<Particle *> *particleList;
-  std::list<Particle *>::const_iterator pl;
+  manager_->getNeighborParticles(idx, &particles);
 
-  spaceCellSize = manager_->getSpaceCellSize(IDX_NULL); // TODO fix this
+  for (p = particles.begin(); p != particles.end(); ++p) {
 
-  Nx = manager_->getNumberOfSpaceCellsX();
-  Ny = manager_->getNumberOfSpaceCellsY();
-  Nz = manager_->getNumberOfSpaceCellsZ();
+    cb = (*p)->getPosition();
+    rb = (*p)->getRadius();
 
-  i = floor(ca.x/spaceCellSize);
-  j = floor(ca.y/spaceCellSize);
-  k = floor(ca.z/spaceCellSize);
+    dx = ca.x - cb->x;
+    dy = ca.y - cb->y;
+    dz = ca.z - cb->z;
 
-  if (manager_->getMode() == M_NNLIST) {
-
-    particles = mobility->getNeighborParticles();
-
-  } else {
-
-    for (a = -1; a <= 1; a++)
-    for (b = -1; b <= 1; b++)
-    for (c = -1; c <= 1; c++) {
-
-      if (CELLBELONGSTOSIMSPACE(i+a, j+b, k+c, *Nx, *Ny, *Nz)) {
-        spaceCells.push_back((i+a)*(*Ny)*(*Nz)+(j+b)*(*Nz)+(k+c));
-      }
-
-    }
-
-    // Get the particles from each of the listed space cells
-    for (sc = spaceCells.begin(); sc != spaceCells.end(); ++sc) {
-
-      particleList = manager_->getSpaceCellParticles(*sc);
-
-      for (pl = particleList->begin(); pl != particleList->end(); ++pl) {
-        particles.push_back(*pl);
-      }
-
-    }
-
-    for (p = particles.begin(); p != particles.end(); ++p) {
-
-      cb = (*p)->getPosition();
-      rb = (*p)->getRadius();
-
-      dx = ca.x - cb->x;
-      dy = ca.y - cb->y;
-      dz = ca.z - cb->z;
-
-      if (sqrt(dx*dx + dy*dy + dz*dz) <= ra + rb) {
-        return true;
-      }
-
+    if (sqrt(dx*dx + dy*dy + dz*dz) <= ra + rb) {
+      return true;
     }
 
   }

@@ -306,13 +306,9 @@ void Manager::transferParticle(Particle *p, index_t from, index_t to) {
 
 }
 
-std::list<Particle *> getNeighborParticles(index_t idx) {
+std::vector<Particle *> *Manager::getNeighborParticles(index_t idx, std::vector<Particle *> *list) {
 
-  std::list<Particle *> particles;
-
-  // TODO complete me
-
-  return particles;
+  return space_.getNeighborParticles(idx, list);
 }
 
 int Manager::getNextParticleId() {

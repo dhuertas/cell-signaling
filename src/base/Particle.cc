@@ -56,7 +56,6 @@ Particle::Particle(
   prevSpaceCellIdx_.k = 0;
   spaceCellIdx_.layer = 0;
 
-
   mass_ = m;
   lastCollisionTime_ = 0;
 

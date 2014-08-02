@@ -54,7 +54,7 @@ class Octree {
 
   std::list<Particle *> *getSpaceCellParticles(index_t idx);
 
-  std::list<Particle *> getNeighborParticles(index_t idx);
+  std::vector<Particle *> *getNeighborParticles(index_t idx, std::vector<Particle *> *list);
 
   void transferParticle(Particle *p, index_t from, index_t to);
 
@@ -75,10 +75,20 @@ class Octree {
 
   inline vect_t *getSpaceSize(void) { return &spaceSize_; };
 
-  // Returns the side length of a given cell and layer
+  // Returns the side length of a given layer and space cell
   // D_cell = D_max/(2^layer)
   inline double getSpaceCellSideLength(index_t idx) {
     return maxSpaceCellSize_/(1 << idx.layer);
+  }
+
+  inline index_t getSpaceCellIdx(point_t p, double radius) {
+
+    index_t res;
+    res.layer = floor(log(maxSpaceCellSize_/(2*radius))/LOG2);
+    res.i = p.x/(maxSpaceCellSize_/(1 << res.layer));
+    res.j = p.y/(maxSpaceCellSize_/(1 << res.layer));
+    res.k = p.z/(maxSpaceCellSize_/(1 << res.layer));
+    return res;
   }
 
   inline void setNumLayers(unsigned int nl) { numLayers_ = nl; };

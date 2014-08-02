@@ -151,9 +151,9 @@ class Manager : public cSimpleModule {
 
     double getListRadius(void) { return listRadius_; };
 
-    std::list<Particle *> *getSpaceCellParticles(int);
+    index_t getSpaceCellIdx(point_t p, double r) { return space_.getSpaceCellIdx(p, r); };
 
-    std::list<Particle *> getNeighborParticles(index_t idx);
+    std::vector<Particle *> *getNeighborParticles(index_t idx, std::vector<Particle *> *list);
 
     int getNextParticleId(void);
 

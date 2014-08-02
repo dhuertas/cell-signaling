@@ -16,21 +16,24 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 cplusplus {{
-	#include "Manager.h"
-	#include "Particle.h"
+  #include "Defines.h"
+  #include "Manager.h"
+  #include "Particle.h"
 
-	typedef Manager *ManagerPtr;
+  typedef Manager *ManagerPtr;
+  typedef index_t Index;
 }}
 
 class noncobject ManagerPtr;
+class noncobject Index;
 
 message TransferMessage {
 
-	int prevSpaceCell;
-	int nextSpaceCell;
+  double transferTime;
 
-	double transferTime;
+  Index prevIdx;
+  Index nextIdx;
 
-	ManagerPtr manager;
+  ManagerPtr manager;
 
 }

@@ -34,7 +34,7 @@ Octree::Octree(unsigned int numLayers, double maxSideLength) {
 
   numLayers_ = numLayers;
 
-  maxSideLength_ = maxSideLength;
+  maxSpaceCellSize_ = maxSideLength;
 
   spaceCellsTree_.resize(numLayers_);
 
@@ -52,11 +52,26 @@ Octree::~Octree() {
  */
 std::list<Particle *> *Octree::getSpaceCellParticles(index_t idx) {
 
-  //unsigned int Nx = ceil(spaceSize_.x/(maxSideLength_/(1 << idx.l)));
-  unsigned int Ny = ceil(spaceSize_.y/(maxSideLength_/(1 << idx.layer)));
-  unsigned int Nz = ceil(spaceSize_.z/(maxSideLength_/(1 << idx.layer)));
+  //unsigned int Nx = ceil(spaceSize_.x/(maxSpaceCellSize_/(1 << idx.l)));
+  unsigned int Ny = ceil(spaceSize_.y/(maxSpaceCellSize_/(1 << idx.layer)));
+  unsigned int Nz = ceil(spaceSize_.z/(maxSpaceCellSize_/(1 << idx.layer)));
 
   return &spaceCellsTree_[idx.layer][(Ny*Nz)*idx.i + Nz*idx.j + idx.k];
+}
+
+/*
+ *
+ */
+std::vector<Particle *> *Octree::getNeighborParticles(index_t idx, std::vector<Particle *> *list) {
+
+  // Get the particles from each of the listed space cells
+  //for (sc = spaceCells.begin(); sc != spaceCells.end(); ++sc) {
+  //
+  //  particleList = manager->getSpaceCellParticles(*sc);
+  //  particles.insert(particles.end(), particleList->begin(), particleList->end());
+  //}
+
+  return list;
 }
 
 /*
@@ -100,20 +115,25 @@ void Octree::attachParticleToSpaceCell(Particle *p, index_t idx) {
 
   if (IDX_ISNULL(idx)) {
 
+    // Set enable
     idx.flags |= IDX_ENABLED;
 
-    // TODO Set the corresponding space cell layer
-    idx.layer = floor(log(maxSideLength_/(2*p->getRadius()))/LOG2);
+    idx.layer = floor(log(maxSpaceCellSize_/(2*p->getRadius()))/LOG2);
 
-    Nx = ceil(spaceSize_.x/(maxSideLength_/(1 << idx.layer)));
-    Ny = ceil(spaceSize_.y/(maxSideLength_/(1 << idx.layer)));
-    Nz = ceil(spaceSize_.z/(maxSideLength_/(1 << idx.layer)));
+    Nx = ceil(spaceSize_.x/(maxSpaceCellSize_/(1 << idx.layer)));
+    Ny = ceil(spaceSize_.y/(maxSpaceCellSize_/(1 << idx.layer)));
+    Nz = ceil(spaceSize_.z/(maxSpaceCellSize_/(1 << idx.layer)));
 
     pos = p->getPosition();
 
-    idx.i = floor(pos->x/(maxSideLength_/(1 << idx.layer)));
-    idx.j = floor(pos->y/(maxSideLength_/(1 << idx.layer)));
-    idx.k = floor(pos->z/(maxSideLength_/(1 << idx.layer)));
+    // Note that the integer already performs the floor() operation
+    //idx.i = floor(pos->x/(maxSpaceCellSize_/(1 << idx.layer)));
+    //idx.j = floor(pos->y/(maxSpaceCellSize_/(1 << idx.layer)));
+    //idx.k = floor(pos->z/(maxSpaceCellSize_/(1 << idx.layer)));
+
+    idx.i = pos->x/(maxSpaceCellSize_/(1 << idx.layer));
+    idx.j = pos->y/(maxSpaceCellSize_/(1 << idx.layer));
+    idx.k = pos->z/(maxSpaceCellSize_/(1 << idx.layer));
 
     n = Ny*Nz*idx.i + Nz*idx.j + idx.k;
 
@@ -123,9 +143,9 @@ void Octree::attachParticleToSpaceCell(Particle *p, index_t idx) {
 
   } else {
 
-    Nx = ceil(spaceSize_.x/(maxSideLength_/(1 << idx.layer)));
-    Ny = ceil(spaceSize_.y/(maxSideLength_/(1 << idx.layer)));
-    Nz = ceil(spaceSize_.z/(maxSideLength_/(1 << idx.layer)));
+    Nx = ceil(spaceSize_.x/(maxSpaceCellSize_/(1 << idx.layer)));
+    Ny = ceil(spaceSize_.y/(maxSpaceCellSize_/(1 << idx.layer)));
+    Nz = ceil(spaceSize_.z/(maxSpaceCellSize_/(1 << idx.layer)));
 
     n = Ny*Nz*idx.i + Nz*idx.j + idx.k;
   }
@@ -149,9 +169,9 @@ void Octree::detachParticleFromSpaceCell(Particle *p, index_t idx) {
     idx = p->getSpaceCellIdx();
   }
 
-  Nx = ceil(spaceSize_.x/(maxSideLength_/(1 << idx.layer)));
-  Ny = ceil(spaceSize_.y/(maxSideLength_/(1 << idx.layer)));
-  Nz = ceil(spaceSize_.z/(maxSideLength_/(1 << idx.layer)));
+  Nx = ceil(spaceSize_.x/(maxSpaceCellSize_/(1 << idx.layer)));
+  Ny = ceil(spaceSize_.y/(maxSpaceCellSize_/(1 << idx.layer)));
+  Nz = ceil(spaceSize_.z/(maxSpaceCellSize_/(1 << idx.layer)));
 
   n = Ny*Nz*idx.i + Nz*idx.j + idx.k;
 
