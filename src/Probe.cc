@@ -99,19 +99,20 @@ void Probe::finish() {
 double Probe::getMoleculeDensity() {
   // Find cell coordinates that fall within the given sphere (with position 
   // pos and radius r)
-  int a, b, c, l;
-  int n;
+  //int a, b, c, l;
+  //int n;
 
-  index_t idx;
+  //index3_t idx;
 
-  int Nx, Ny, Nz;
+  //int Nx, Ny, Nz;
 
-  int count = 0;
+  //int count = 0;
 
   // TODO rewrite this
 
   // return the quotient of the counter and the volume of the probe
-  return count/((4.0/3.0)*M_PI*radius_*radius_*radius_);
+  return 0;
+  //count/((4.0/3.0)*M_PI*radius_*radius_*radius_);
 
 }
 

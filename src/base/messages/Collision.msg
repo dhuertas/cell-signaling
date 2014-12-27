@@ -16,31 +16,37 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 cplusplus {{
-	#include "Manager.h"
-	#include "Particle.h"
+  #include "Common.h"
+  #include "Manager.h"
+  #include "Particle.h"
 
-	typedef Manager *ManagerPtr;
-	typedef Particle *ParticlePtr;
+  typedef Manager *ManagerPtr;
+  typedef Particle *ParticlePtr;
+
+  typedef point3_t Point;
+  typedef vector3_t Vector;
+
+  //typedef uint8_t Hits;
 }}
 
 class noncobject ManagerPtr;
 class noncobject ParticlePtr;
+class noncobject Point;
+class noncobject Vector;
+//class noncobject Hits;
 
 message CollisionMessage {
 
-	double collisionTime;
+  ManagerPtr manager;
 
-	double x; 	// x coordinate of the centroid after a wall collision occurs
-	double y; 	// y coordinate of the centroid after a wall collision occurs
-	double z; 	// z coordinate of the centroid after a wall collision occurs
+  Point position;
 
-	double vx; 	// vx component of the velocity after a wall collision occurs
-	double vy;	// vy component of the velocity after a wall collision occurs
-	double vz;	// vz component of the velocity after a wall collision occurs
+  Vector velocity;
 
-	ManagerPtr manager;
+  double collisionTime;
 
-	ParticlePtr partner;
-	ParticlePtr prevPartner;
+  int hits;
 
+  ParticlePtr partner;
+  ParticlePtr prevPartner;
 }

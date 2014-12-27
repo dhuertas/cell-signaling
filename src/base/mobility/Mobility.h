@@ -32,12 +32,15 @@
 
 class Mobility {
 
-	public:
+ public:
 
-		static double nextTransfer(TransferMessage *, Particle *);
-		static double outOfNeighborhoodTime(OutOfNeighborhoodMessage *, Particle *);
+  static uint8_t sides_[];
 
-		static void resetCollisionMessage(CollisionMessage *);
+  static double nextTransferTime(TransferMessage *msg, Particle *p);
+
+  static void handleTransfer(TransferMessage *msg, Particle *p);
+
+  static void resetCollisionMessage(CollisionMessage *msg);
 
 };
 

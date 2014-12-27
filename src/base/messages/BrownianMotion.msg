@@ -16,24 +16,24 @@
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 cplusplus {{
-	#include "Manager.h"
+  #include "Manager.h"
 
-	typedef Manager *ManagerPtr;
+  typedef Manager *ManagerPtr;
+  typedef point3_t Point;
+  typedef vector3_t Vector;
 }}
 
 class noncobject ManagerPtr;
+class noncobject Point;
+class noncobject Vector;
 
 message BrownianMotionMessage {
 
-	double brownianMotionTime;
+  double brownianMotionTime;
 
-	double x;
-	double y;
-	double z;
+  Point position;
 
-	double vx;
-	double vy;
-	double vz;
+  Vector velocity;
 
-	ManagerPtr manager;
+  ManagerPtr manager;
 }

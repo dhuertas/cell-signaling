@@ -94,13 +94,13 @@ typedef struct Point3D {
   double x;
   double y;
   double z;
-} point_t;
+} point3_t;
 
 typedef struct Vector3D {
   double x;
   double y;
   double z;
-} vect_t;
+} vector3_t;
 
 typedef struct CellIndex3D {
   unsigned char flags; // index mask
@@ -109,9 +109,8 @@ typedef struct CellIndex3D {
   unsigned int i; // space cell index along x axis
   unsigned int j; // space cell index along y axis
   unsigned int k; // space cell index along z axis
-  unsigned int layer; // space cell layer
-
-} index_t;
+  unsigned int depth; // space cell layer
+} index3_t;
 
 typedef struct Statistics {
   unsigned long long allCollisions;
@@ -125,6 +124,6 @@ typedef struct Statistics {
 // the transfer time.
 extern char sp[10*6];
 
-# define IDX_NULL (index_t ){0,0,0,0,0}
+# define IDX_NULL (index3_t ){0,0,0,0,0}
 
 #endif

@@ -20,19 +20,19 @@
 using namespace std;
 
 // Space cell side points that allows to obtain the side equation and compute 
-// the transfer time. Defined in src/base/Defines.h file.
-char sp[10*6] = { 
-  //  0, 1, 2, 3, 4, 5 <- dice side
-    1, 1, 0, 0, 0, 0, // Px
-    0, 0, 0, 1, 0, 0, // Py
-    1, 0, 0, 0, 0, 0, // Pz
-    1, 1, 1, 1, 0, 1, // Qx
-    1, 1, 0, 1, 0, 0, // Qy
-    1, 0, 0, 0, 1, 0, // Qz
-    0, 1, 0, 0, 0, 0, // Rx
-    0, 0, 0, 1, 1, 1, // Ry
-    1, 1, 1, 1, 0, 0  // Rz
-  };
+// the transfer time. Defined in src/base/Common.h file.
+uint8_t Mobility::sides_[] = { 
+//0, 1, 2, 3, 4, 5 <- dice side
+  1, 1, 0, 0, 0, 0, // Px
+  0, 0, 0, 1, 0, 0, // Py
+  1, 0, 0, 0, 0, 0, // Pz
+  1, 1, 1, 1, 0, 1, // Qx
+  1, 1, 0, 1, 0, 0, // Qy
+  1, 0, 0, 0, 1, 0, // Qz
+  0, 1, 0, 0, 0, 0, // Rx
+  0, 0, 0, 1, 1, 1, // Ry
+  1, 1, 1, 1, 0, 0  // Rz
+};
 
 /*
  * Computes the transfer time of the particle with the sides of its space cell
@@ -41,86 +41,83 @@ char sp[10*6] = {
  * @param {TransferMessage *} msg
  * @param {Particle *} p
  */
-double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
+double Mobility::nextTransferTime(TransferMessage *msg, Particle *p) {
 
-  int counter;
+  index3_t *idx = p->getSpaceCellIdx();
+  index3_t nextIdx;
 
-  unsigned int Nx, Ny, Nz;
+  point3_t *pos = p->getPosition();
+  vector3_t *vel = p->getVelocity();
 
-  double x, y, z;
-  double spaceCellSize;
-  double temp;
-  double transferTime;
-  double sTime;
-  double lastCollisionTime;
+  point3_t cPos;
 
-  point_t P, Q, R;
-  point_t *pos = NULL;
+  point3_t P, Q, R;
+  vector3_t V, W, N;
 
-  vect_t V, W, N;
-  vect_t *vel = NULL;
-  vect_t *spaceSize = NULL;
+  Manager *manager = NULL;
 
-  index_t idx;
+  double currentTime = simTime().dbl();
+  double transferTime = NO_TIME;
 
-  vector<int> sides, hits;
-  vector<int>::const_iterator side, hit;
+  uint8_t side, sides, count;
+  uint8_t hits;
 
-  Manager *manager;
+  double spaceCellSize = 0;
+  double temp = 0;
 
-  idx = p->getSpaceCellIdx();
+  memset(&nextIdx, 0, sizeof(index3_t));
 
   manager = msg->getManager();
 
-  spaceSize = manager->getSpaceSize();
+  sides = hits = count = 0;
 
-  spaceCellSize = manager->getSpaceCellSize(idx);
+  spaceCellSize = manager->getMaxSpaceSize();
 
-  // Note that the integer already performs the floor() operation
-  Nx = spaceSize->x/spaceCellSize;
-  Ny = spaceSize->y/spaceCellSize;
-  Nz = spaceSize->z/spaceCellSize;
+  spaceCellSize /= (1 << idx->depth);
 
-  transferTime = NO_TIME;
+  double diff = currentTime - p->getLastCollisionTime();
 
-  sTime = simTime().dbl();
-  lastCollisionTime = p->getLastCollisionTime();
-
-  temp = NO_TIME;
-
-  pos = p->getPosition();
-  vel = p->getVelocity();
-
-  x = pos->x + vel->x*(sTime - lastCollisionTime);
-  y = pos->y + vel->y*(sTime - lastCollisionTime);
-  z = pos->z + vel->z*(sTime - lastCollisionTime);
+  cPos.x = pos->x + vel->x*diff;
+  cPos.y = pos->y + vel->y*diff;
+  cPos.z = pos->z + vel->z*diff;
 
   // In a space cell we have 6 possible sides but since we know the direction 
-  // of the particle we need to check only 3 (at most).
-  if (vel->x > 0) sides.push_back(1);
-  else if (vel->x < 0) sides.push_back(4);
+  // of the particle we only need to check 3 at most.
+  // sides order
+  // --x----- side 5 0x20
+  // ---x---- side 4 0x10
+  // ----x--- side 3 0x08
+  // -----x-- side 2 0x04
+  // ------x- side 1 0x02
+  // -------x side 0 0x01
+  if (vel->x > 0) sides |= 0x02;
+  if (vel->x < 0) sides |= 0x10;
+  if (vel->y > 0) sides |= 0x08;
+  if (vel->y < 0) sides |= 0x04;
+  if (vel->z > 0) sides |= 0x01;
+  if (vel->z < 0) sides |= 0x20;
 
-  if (vel->y > 0) sides.push_back(3);
-  else if (vel->y < 0) sides.push_back(2);
+  side = 0;
 
-  if (vel->z > 0) sides.push_back(0);
-  else if (vel->z < 0) sides.push_back(5);
+  while (sides > 0) {
 
-  counter = 0;
+    if ( ! (sides & 0x01)) {
+      side++;
+      sides >>= 1;
+      continue;
+    }
 
-  for (side = sides.begin(); side != sides.end(); ++side) {
-    // Select 3 points for each side following the previous rules (sp[])
-    P.x = (idx.i + sp[0*6 + *side])*spaceCellSize;
-    P.y = (idx.j + sp[1*6 + *side])*spaceCellSize;
-    P.z = (idx.k + sp[2*6 + *side])*spaceCellSize;
+    P.x = (idx->i + sides_[0*6 + side])*spaceCellSize;
+    P.y = (idx->j + sides_[1*6 + side])*spaceCellSize;
+    P.z = (idx->k + sides_[2*6 + side])*spaceCellSize;
 
-    Q.x = (idx.i + sp[3*6 + *side])*spaceCellSize;
-    Q.y = (idx.j + sp[4*6 + *side])*spaceCellSize;
-    Q.z = (idx.k + sp[5*6 + *side])*spaceCellSize;
+    Q.x = (idx->i + sides_[3*6 + side])*spaceCellSize;
+    Q.y = (idx->j + sides_[4*6 + side])*spaceCellSize;
+    Q.z = (idx->k + sides_[5*6 + side])*spaceCellSize;
 
-    R.x = (idx.i + sp[6*6 + *side])*spaceCellSize;
-    R.y = (idx.j + sp[7*6 + *side])*spaceCellSize;
-    R.z = (idx.k + sp[8*6 + *side])*spaceCellSize;
+    R.x = (idx->i + sides_[6*6 + side])*spaceCellSize;
+    R.y = (idx->j + sides_[7*6 + side])*spaceCellSize;
+    R.z = (idx->k + sides_[8*6 + side])*spaceCellSize;
 
     V.x = Q.x - P.x; V.y = Q.y - P.y; V.z = Q.z - P.z;
     W.x = R.x - P.x; W.y = R.y - P.y; W.z = R.z - P.z;
@@ -130,70 +127,46 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
     N.y = V.z * W.x - V.x * W.z;
     N.z = V.x * W.y - V.y * W.x;
 
-    // This is our plane equation N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
-    // Substitute for: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and 
+    // The plane equation is: N.x*(x-P.x)+N.y*(y-P.y)+N.z*(z-P.z) = 0
+    // Replace by: x = xi + vx*t, y = yi + vy*t, z = zi + vz*t and 
     // solve for t.
     temp = (N.x*vel->x + N.y*vel->y + N.z*vel->z);
 
     if (temp != 0) {
 
-      temp = (N.x*(P.x-x) + N.y*(P.y-y) + N.z*(P.z-z))/temp;
+      temp = (N.x*(P.x-cPos.x) + N.y*(P.y-cPos.y) + N.z*(P.z-cPos.z))/temp;
 
       // Solution found. "temp" is the amount of time the centroid of the
       // particle takes to go from its current position to the space cell 
       // side where it is bounded.
-      if (counter == 0) {
-
-        if (temp == 0) {
-          // The centroid of the particle is on a space cell side and
-          // needs to update its space cell value and recalculate the
-          // transfer time.
-            transferTime = temp;
-            hits.push_back(*side);
-            counter++;
-          break;
-        } else if (0 < temp) {
-            transferTime = temp;
-            hits.push_back(*side);
-            counter++;
-        } else {
-            // We don't want it
-        }
-
+      if (temp == 0) {
+        // The centroid of the particle is on a space cell side and
+        // needs to update its space cell value and recalculate the
+        // transfer time.
+        transferTime = 0;
+        hits |= 0x01 << side;
+        break;
+      } else if (count == 0 && 0 < temp) {
+        transferTime = temp;
+        hits |= 0x01 << side;
+        count++;
+      } else if (count > 0 && 0 < temp && temp < transferTime) {
+        transferTime = temp;
+        hits = 0x01 << side;
+      } else if (count > 0 && 0 < temp && temp == transferTime) {
+        hits |= 0x01 << side;
       } else {
-
-        if (temp == 0) {
-          // The centroid of the particle is on a space cell side and
-          // needs to update its space cell value and recalculate the 
-          // transfer time.
-          transferTime = temp;
-          hits.push_back(*side);
-          counter++;
-          break;
-
-        } else if (0 < temp && temp < transferTime) {
-
-          transferTime = temp;
-
-          hits.clear();
-          hits.push_back(*side);
-          counter++;
-
-        } else if (0 < temp && temp == transferTime) {
-          // The particle hit two or more sides at the same time
-          hits.push_back(*side);
-          counter++;
-
-        }
+        // We don't want it
       }
-    } else {
-      // Line and plane doesn't intersect
     }
+
+    side++;
+    sides >>= 1;
   }
 
   if (transferTime > 0) {
 
-    transferTime += sTime;
+    transferTime += currentTime;
 
   } else if (transferTime == 0) {
     // If transferTime equals the simuation time sTime means that temp 
@@ -201,70 +174,45 @@ double Mobility::nextTransfer(TransferMessage *msg, Particle *p) {
     // is crossing. Set an event transfer at the same simulation time so it
     // will update the NextSpaceCell value and compute again the next 
     // transfer time.
-    transferTime = sTime;
+    transferTime = currentTime;
   } else {
     // transfer time not found (NO_TIME)
   }
 
+  nextIdx = *idx;
+
+  if (hits & 0x01) nextIdx.k = idx->k+1;
+  if (hits & 0x02) nextIdx.i = idx->i+1;
+  if (hits & 0x04) nextIdx.j = idx->j-1;
+  if (hits & 0x08) nextIdx.j = idx->j+1;
+  if (hits & 0x10) nextIdx.i = idx->i-1;
+  if (hits & 0x20) nextIdx.k = idx->k-1;
+
+  msg->setNextSpaceCell(nextIdx);
+  msg->setPrevSpaceCell(*idx);
+
   msg->setTransferTime(transferTime);
-  msg->setPrevIdx(idx);
-
-  for (hit = hits.begin(); hit != hits.end(); ++hit) {
-
-    // TODO It should not be necessary to constantly check for "out of bounds" indexes
-    if (*hit == 0)      idx.k = (idx.k < Nz-1)  ? idx.k+1 : idx.k;
-    else if (*hit == 1) idx.i = (idx.i < Nx-1)  ? idx.i+1 : idx.i;
-    else if (*hit == 2) idx.j = (idx.j > 0)     ? idx.j-1 : idx.j;
-    else if (*hit == 3) idx.j = (idx.j < Ny-1)  ? idx.j+1 : idx.j;
-    else if (*hit == 4) idx.i = (idx.i > 0)     ? idx.i-1 : idx.i;
-    else                idx.k = (idx.k > 0)     ? idx.k-1 : idx.k;
-  }
-
-  msg->setNextIdx(idx);
 
   return transferTime;
 
 }
 
 /*
- * Computes the time when the particle leaves its neighborhood area and its
- * Near-Neighbor List must be updated.
  *
- * @param {OutOfNeighborhoodMessage *} msg
- * @param {Particle *} p
- * @return {double} the computed time
  */
-double Mobility::outOfNeighborhoodTime(OutOfNeighborhoodMessage *msg, Particle *p) {
+void Mobility::handleTransfer(TransferMessage *msg, Particle *p) {
 
-//  double vx, vy, vz, vm, lr, rlr;
-  double vm, lr, rlr;
-  double outOfNeighborhoodTime;
-  double sTime;
+  Manager *manager = p->getManager();
+  index3_t prev, next;
 
-  vect_t *vel = NULL;
+  prev = msg->getPrevSpaceCell();
+  next = msg->getNextSpaceCell();
 
-  vel = p->getVelocity();
+  manager->transferParticle(p, &prev, &next);
 
-  lr = 0;
-  rlr = 0;
-
-  sTime = simTime().dbl();
-  outOfNeighborhoodTime = NO_TIME;
-
-  lr = p->getListRadius();
-  rlr = p->getRefreshListRadius();
-
-  if (rlr > 0) lr = rlr;
-
-  vm = sqrt(vel->x*vel->x + vel->y*vel->y + vel->z*vel->z);
-
-  if (vm != 0) {
-    outOfNeighborhoodTime = lr/vm + sTime;
-  }
-
-    return outOfNeighborhoodTime;
-
+  p->setSpaceCellIdx(next);
 }
+
 
 /*
  * Set default values for the collision message.
@@ -275,15 +223,17 @@ void Mobility::resetCollisionMessage(CollisionMessage *msg) {
 
   msg->setCollisionTime(NO_TIME);
 
-  msg->setX(-1);
-  msg->setY(-1);
-  msg->setZ(-1);
+  point3_t pos;
+  vector3_t vel;
 
-  msg->setVx(0);
-  msg->setVy(0);
-  msg->setVz(0);
+  memset(&pos, 0, sizeof(point3_t));
+  memset(&vel, 0, sizeof(vector3_t));
+
+  msg->setPosition(pos);
+  msg->setVelocity(vel);
 
   msg->setPartner(NULL);
   msg->setPrevPartner(NULL);
 
+  msg->setHits(0);
 }

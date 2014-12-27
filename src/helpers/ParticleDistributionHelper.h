@@ -28,7 +28,7 @@
 #include <random.h>
 
 // project
-#include "Defines.h"
+#include "Common.h"
 #include "Particle.h"
 
 
@@ -36,26 +36,26 @@
 // different distributions.
 
 // Place each particle at a random position.
-void uniformDistribution(vect_t, std::list<Particle *> *);
-void uniformDistribution2(vect_t, std::list<Particle *> *);
-void uniformDistribution3(vect_t, std::list<Particle *> *);
+void uniformDistribution(vector3_t, std::list<Particle *> *);
+void uniformDistribution2(vector3_t, std::list<Particle *> *);
+void uniformDistribution3(vector3_t, std::list<Particle *> *);
 
 // Place each particle following a cube pattern.
-void cubeDistribution(vect_t, std::list<Particle *> *);
+void cubeDistribution(vector3_t, std::list<Particle *> *);
 
 // Place each particle randomly on a sphere surface.
-void sphereDistribution(vect_t, std::list<Particle *> *, point_t, double);
+void sphereDistribution(vector3_t, std::list<Particle *> *, point3_t, double);
 
 // Place each particle equally distributed on a sphere surface
-void sphereEquallyDistributed(vect_t, std::list<Particle *> *, point_t, double);
+void sphereEquallyDistributed(vector3_t, std::list<Particle *> *, point3_t, double);
 
 // Put all the particles in the center of the simulation space one near the other.
-void highDensityDistribution(vect_t, std::list<Particle *> *, point_t);
+void highDensityDistribution(vector3_t, std::list<Particle *> *, point3_t);
 
-void densepacked(vect_t, std::list<Particle *> *, point_t);
+void densepacked(vector3_t, std::list<Particle *> *, point3_t);
 
 // Detect whether two sphere particles are overlaping or not.
-bool checkOverlap(point_t*, double, point_t*, double);
+bool checkOverlap(point3_t*, double, point3_t*, double);
 
 double dblRandNormal(double, double);
 

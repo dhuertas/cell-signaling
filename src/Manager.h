@@ -29,144 +29,125 @@
 
 #include "Particle.h"
 #include "ParticleDistributionHelper.h"
-#include "Octree.h"
-#include "WebServer.h"
+#include "OctreeNode.h"
 
 class Manager : public cSimpleModule {
 
-  private:
+ protected:
 
-    // Molecule Dynamics Mode of operation
-    int mode_;
+  unsigned int depth_;
 
-    // File Descriptors to communicate with the Web Server thread
-    int quitFd_[2];
+  // Delta time
+  double deltaTime_;
 
-    // The simulation space
-    Octree space_;
+  vector3_t spaceSize_;
 
-    // Delta time
-    double deltaTime_;
+  // The simulation space
+  OctreeNode *space_;
 
-    // Overwrite particles' list radius.
-    double listRadius_;
+  LinkedListIterator *it_;
 
-    // Contains the particle Id from the last added particle to the domain.
-    int lastParticleId_;
+  double maxSpaceSize_;
 
-    // TK environment refresh rate
-    // It allows the manager module to send self-messages in order to
-    // update the position of each particle.
-    double tkEnvRefreshRate_;
+  // Contains the particle Id from the last added particle to the domain.
+  long long unsigned nextParticleId_;
 
-    // Update the cOutVectors periodically.
-    double statsRefreshRate_;
+  // File Descriptors to communicate with the Web Server thread
+  int quitFd_[2];
 
-    int enableWebServer_;
+  // TK environment refresh rate
+  // It allows the manager module to send self-messages in order to
+  // update the position of each particle.
+  double tkEnvRefreshRate_;
 
-    pthread_t webServerThread_;
+  // Update the cOutVectors periodically.
+  double statsRefreshRate_;
 
-    struct arg_struct webServerArgs_;
+  // Manager name
+  std::string name_;
 
-    // Manager name
-    std::string name_;
+  // Statistics & vectors
+  statistics_t stats_;
 
-    // A list of particles contained in the simulation space. Every new
-    // particle must be subscribed to (and unsubscribed from).
-    std::list<Particle*> particles_;
+  cOutVector allCollisionsVector_;
 
-  protected:
+  cOutVector particleCollisionsVector_;
 
-    statistics_t stats_;
+  cOutVector wallCollisionsVector_;
 
-    cOutVector allCollisionsVector_;
+  cOutVector transfersVector_;
 
-    cOutVector particleCollisionsVector_;
+  cOutVector expiresVector_;
 
-    cOutVector wallCollisionsVector_;
+ public:
 
-    cOutVector transfersVector_;
+  Manager();
 
-    cOutVector expiresVector_;
+  ~Manager();
 
-  public:
+  //
+  // cSimpleModule inheritance
+  //
+  virtual void initialize(int stage);
 
-    ~Manager();
+  virtual int numInitStages() const;
 
-    // Every particle must be subscribed in order to access its attributes
-    // during simulation time.
-    void subscribe(Particle *);
+  virtual void handleMessage(cMessage *);
 
-    // Unsubcribe particles. Particles may expire, be received, leave the 
-    // area, etc.
-    void unsubscribe(Particle *);
+  virtual void finish();
 
-    void attachParticleToSpaceCell(Particle *, index_t);
+  //
+  // Handle particles
+  //
+  void subscribe(Particle *);
 
-    void detachParticleFromSpaceCell(Particle *, index_t);
+  void unsubscribe(Particle *);
 
-    // Move one particle from one space cell to another.
-    void transferParticle(Particle *, index_t, index_t);
+  void transferParticle(Particle *, index3_t *from, index3_t *to);
 
-    // Update the tk environment
-    void tkEnvUpdateNetwork(void);
+  //
+  // Update the tk environment
+  //
+  void tkEnvUpdateNetwork(void);
 
-    //
-    // Web Server related methods
-    //
-    void startWebServerThread(void);
+  //
+  // Gets and sets
+  //
+  vector3_t *getSpaceSize(void) { return &spaceSize_; }
 
-    void stopWebServerThread(void);
+  unsigned int getDepth() { return depth_; }
 
-    //
-    // Gets and sets
-    //
-    vect_t *getSpaceSize(void) { return space_.getSpaceSize(); };
+  double getMaxSpaceSize() { return maxSpaceSize_; }
 
-    double getSpaceCellSize(index_t idx) { return space_.getSpaceCellSideLength(idx); };
+  double getDeltaTime(void) { return deltaTime_; };
 
-    int getMode(void) { return mode_; };
+  void getNeighborParticles(index3_t *idx, std::vector<Particle *> *container);
 
-    double getDeltaTime(void) { return deltaTime_; };
+  long long unsigned getNextParticleId(void) { return nextParticleId_; }
 
-    double getListRadius(void) { return listRadius_; };
+  long long unsigned getNextIncParticleId(void) { 
+    long long unsigned n = nextParticleId_; 
+    nextParticleId_++;
+    return n;
+  }
 
-    index_t getSpaceCellIdx(point_t p, double r) { return space_.getSpaceCellIdx(p, r); };
+  void setMaxSpaceSize(double spaceSize) { maxSpaceSize_ = spaceSize; }
 
-    std::vector<Particle *> *getNeighborParticles(index_t idx, std::vector<Particle *> *list);
+  void setDeltaTime(double dt) { deltaTime_ = dt; }
 
-    int getNextParticleId(void);
+  //
+  // Statistics
+  //
+  void clearStatistics(void);
 
-    int getLastParticleId(void) { return lastParticleId_; };
+  void registerCollision(void);
 
-    void setSpaceSize(vect_t vsz) { space_.setSpaceSize(vsz); };
+  void registerWallCollision(void);
 
-    void setMode(int m) { mode_ = m; };
+  void registerTransfer(void);
 
-    void setDeltaTime(double dt) { deltaTime_ = dt; };
+  void registerExpire(void);
 
-    void setListRadius(double lr) { listRadius_ = lr; };
-
-    void clearStatistics(void);
-
-    void registerCollision(void);
-
-    void registerWallCollision(void);
-
-    void registerTransfer(void);
-
-    void registerExpire(void);
-
-    //
-    // cSimpleModule inheritance
-    //
-    virtual void initialize(int stage);
-
-    virtual int numInitStages() const;
-
-    virtual void handleMessage(cMessage *);
-
-    virtual void finish();
 };
 
 #endif

@@ -15,8 +15,8 @@
 //  You should have received a copy of the GNU General Public License
 //  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#ifndef COMPUTESPHERE_H
-#define COMPUTESPHERE_H
+#ifndef SPHEREMOBILITY_H
+#define SPHEREMOBILITY_H
 
 #include <csimplemodule.h>
 #include <cmessage.h>
@@ -34,15 +34,28 @@
 
 class SphereMobility : public Mobility {
 
-	public:
+ public:
 
-		static double nextCollision(CollisionMessage *,int, Sphere *);
-		static double nextBoundaryCollision(CollisionMessage *, Sphere *);
-		static double nextWallCollision(CollisionMessage *, Sphere *);
-		static double leaveBoundedSpace(CollisionMessage *, Sphere *);
-		static double solveCollision(Particle *, Particle *);
+  static double nextCollisionTime(CollisionMessage *msg, Sphere *s);
 
-		static double brownianMotion(BrownianMotionMessage *, Particle *);
+  static double nextBoundaryCollisionTime(CollisionMessage *msg, Sphere *s);
+
+  static double leaveBoundedSpace(CollisionMessage *msg, Sphere *s);
+
+  static double solveCollision(Sphere *sa, Sphere *sb);
+
+  static double brownianMotion(BrownianMotionMessage *msg, Sphere *s);
+
+  static void handleCollision(CollisionMessage *msg, Sphere *s);
+
+  static void handleBoundaryCollision(CollisionMessage *msg, Sphere *s);
+
+  static void handleWallCollision(CollisionMessage *msg, Sphere *s);
+
+  static void handlePeriodicBoundary(CollisionMessage *msg, Sphere *s);
+
+  static void handleBrownianMotion(BrownianMotionMessage *msg, Sphere *s);
+
 };
 
 #endif

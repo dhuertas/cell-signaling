@@ -29,11 +29,11 @@ class Emitter {
 
   protected:
 
-    bool enabled;
+    bool enabled_;
 
-    uint8_t emitterStatus;
+    uint8_t emitterStatus_;
 
-    uint64_t emitterCount;
+    uint64_t emitterCount_;
 
   public:
 
@@ -41,13 +41,13 @@ class Emitter {
 
     ~Emitter();
 
-    uint64_t getEmitterCount(void) { return emitterCount; };
+    uint64_t getEmitterCount(void) { return emitterCount_; };
 
-    uint8_t getEmitterStatus(void) { return emitterStatus; };
+    uint8_t getEmitterStatus(void) { return emitterStatus_; };
 
-    void setEmitterCount(uint64_t c) { emitterCount = c; };
+    void setEmitterCount(uint64_t c) { emitterCount_ = c; };
 
-    void setEmitterStatus(uint8_t s) { emitterStatus = s; };
+    void setEmitterStatus(uint8_t s) { emitterStatus_ = s; };
 
 };
 

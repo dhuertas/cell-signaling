@@ -36,57 +36,62 @@
 
 class MoleculeEmitter : public Emitter, public cSimpleModule {
 
-  private:
+ private:
 
-    Manager *manager_;
+  Manager *manager_;
 
-    SimpleCell *mobility;
+  SimpleCell *mobility_;
 
-    bool checkOverlap(point_t, double);
+  bool checkOverlap(point3_t, double);
 
-    std::list<Molecule *> preloadedMolecules;
+  std::list<Molecule *> preloadedMolecules_;
 
-  protected:
+ protected:
 
-    double emissionStart;
+  double emissionStart_;
 
-    double emissionDuration;
+  double emissionDuration_;
 
-    double emissionRate;
+  double emissionRate_;
 
-    double emissionParticleRadius;
+  double emissionParticleRadius_;
 
-    double emissionParticleMass;
+  double emissionParticleMass_;
 
-    double emissionTimeToLive;
+  double emissionTimeToLive_;
 
-    uint8_t emissionFunction;
+  uint8_t emissionFunction_;
 
-    int emissionBoundariesMode;
+  int emissionBoundariesMode_;
 
-    double emissionVelocity;
+  double emissionVelocity_;
 
-    double emissionListRadius;
+  double emissionListRadius_;
 
-    double emissionRefreshListRadius;
+  double emissionRefreshListRadius_;
 
-    double emissionDiffusion;
+  double emissionDiffusion_;
 
-    bool preloadMolecules;
+  bool preloadMolecules_;
 
-  public:
+ public:
 
-    MoleculeEmitter();
-    ~MoleculeEmitter();
+  MoleculeEmitter();
 
-    virtual void initialize(int);
-    virtual int numInitStages() const;
-    virtual void handleMessage(cMessage *);
-    virtual void finish();
+  ~MoleculeEmitter();
 
-    Molecule * createMolecule();
+  virtual void initialize(int);
 
-    void setManager(std::string);
+  virtual int numInitStages() const;
+
+  virtual void handleMessage(cMessage *);
+
+  virtual void finish();
+
+  Molecule *createMolecule();
+
+  void setManager(std::string);
+
 };
 
 #endif

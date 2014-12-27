@@ -18,189 +18,153 @@
 #ifndef PARTICLE_H
 #define PARTICLE_H
 
-#include "Defines.h"
+#include <csimplemodule.h>
+#include <cmessage.h>
+#include <cqueue.h>
+#include <coutvector.h>
+#include <omnetpp.h>
+
+#include "Common.h"
 #include <vector>
 
-class Particle {
+class Manager;
 
-  private:
+class Particle : public cSimpleModule {
 
-  protected:
+ private:
 
-    bool active_;
+ protected:
 
-    point_t position_;
+  Manager *manager_;
 
-    vect_t velocity_;
+  bool active_;
 
-    double mass_;
+  point3_t position_;
 
-    double lastCollisionTime_;
+  vector3_t velocity_;
 
-    int particleId_;
+  double mass_;
 
-    int particleType_;
+  double radius_;
 
-    // Cell List attributes
-    int spaceCell_; // TODO remove this and start using spaceCellIdx instead
+  double lastCollisionTime_;
 
-    index_t spaceCellIdx_;
+  unsigned int particleId_;
 
-    int prevSpaceCell_;
+  unsigned int particleType_;
 
-    index_t prevSpaceCellIdx_;
+  index3_t spaceCellIdx_;
 
-    // Near Neighbor List of particles
-    std::vector<Particle*> neighborParticles_;
+  // Whether the particle must bounce, expire, etc.
+  unsigned int boundariesMode_;
 
-    // Near Neighbor List radius
-    double listRadius_;
+  unsigned int imageIdx_;
 
-    // Near Neighbor List refresh list radius
-    double refreshListRadius_;
+  //
+  // Brownian motion parameters
+  // 
+  double diffusion_;
 
-    // Boundaries mode. Whether the particle must bounce, expire, etc.
-    int boundariesMode_;
+  double brownianMotionStdDev_;
 
-    //
-    // Brownian motion parameters
-    // 
-    double diffusion_;
+ public:
 
-    double inertia_;
+  Particle();
 
-    double viscosity_;
+  //
+  // cSimpleModule inheritance
+  //
+  virtual void initialize(int stage);
 
-    double BMStdDev_;
+  virtual int numInitStages() const;
 
-  public:
+  virtual void handleMessage(cMessage *);
 
-    Particle();
+  virtual void finish();
 
-    Particle(double, double, double, double, double);
+  //
+  // Gets and sets
+  //
+  Manager *getManager()  { return manager_; }
 
-    // Gets and sets
-    inline int getParticleId(void) { return particleId_; };
+  point3_t *getPosition(void) { return &position_; }
 
-    inline int getParticleType(void) { return particleType_; };
+  vector3_t *getVelocity(void) { return &velocity_; }
 
-    inline double getX(void) { return position_.x; };
+  double getMass(void) { return mass_; }
 
-    inline double getY(void) { return position_.y; };
+  double getRadius(void) { return radius_; }
 
-    inline double getZ(void) { return position_.z; };
+  double getLastCollisionTime(void) { return lastCollisionTime_; }
 
-    inline point_t *getPosition(void) { return &position_; };
+  unsigned int getParticleId(void) { return particleId_; }
 
-    inline double getVx(void) { return velocity_.x; };
+  unsigned int getParticleType(void) { return particleType_; }
 
-    inline double getVy(void) { return velocity_.y; };
+  index3_t *getSpaceCellIdx(void) { return &spaceCellIdx_; }
 
-    inline double getVz(void) { return velocity_.z; };
+  unsigned int getBoundariesMode(void) const { return boundariesMode_; }
 
-    inline vect_t *getVelocity(void) { return &velocity_; };
+  unsigned int getImageIdx() { return imageIdx_; }
 
-    inline double getMass(void) { return mass_; };
+  double getDiffusion(void) { return diffusion_; }
 
-    inline double *getDiffusion(void) { return &diffusion_; };
+  double getBrownianMotionStdDev(void) { return brownianMotionStdDev_; }
 
-    inline double *getInertia(void) { return &inertia_; };
+  void setManager(Manager *manager) { manager_ = manager; }
 
-    inline double *getViscosity(void) { return &viscosity_; };
+  void setPosition(point3_t p) { position_ = p; }
 
-    inline double *getBMStdDev(void) { return &BMStdDev_; };
+  void setVelocity(vector3_t v) { velocity_ = v; }
 
-    inline index_t getSpaceCellIdx(void) { return spaceCellIdx_; };
+  void setMass(double m) { mass_ = m; }
 
-    inline index_t getPrevSpaceCellIdx(void) { return prevSpaceCellIdx_; };
+  void setRadius(double r) { radius_ = r; }
 
-    inline double getListRadius(void) { return listRadius_; };
+  void setLastCollisionTime(double t) { lastCollisionTime_ = t; }
 
-    inline double getRefreshListRadius(void) { return refreshListRadius_; };
+  void setParticleId(unsigned int id) { particleId_ = id; }
 
-    virtual double getRadius(void) = 0;
+  void setParticleType(unsigned int t) { particleType_ = t; }
 
-    inline double getLastCollisionTime(void) { return lastCollisionTime_; };
+  void setSpaceCellIdx(index3_t idx) { spaceCellIdx_ = idx; }
 
-    inline std::vector<Particle*> getNeighborParticles(void) { return neighborParticles_; };
+  void setBoundariesMode(int mode) { boundariesMode_ = mode; }
 
-    inline int getBoundariesMode(void) const { return boundariesMode_; };
+  void setImageIdx(unsigned int imageIdx) { imageIdx_ = imageIdx; }
 
-    inline bool isActive (void) { return active_; };
-    
-    inline void setParticleId(int id) { particleId_ = id; };
+  void setDiffusion(double d) { diffusion_ = d; }
 
-    inline void setParticleType(int t) { particleType_ = t; };
+  void setBrownianMotionStdDev(double sd) { brownianMotionStdDev_ = sd; };
 
-    inline void setX(double x) { position_.x = x; };
+  void setActive(bool a) { active_ = a; };
 
-    inline void setY(double y) { position_.y = y; };
+  void setManager(std::string name);
 
-    inline void setZ(double z) { position_.z = z; };
+  //
+  // Boolean methods
+  //
+  bool isActive (void) { return active_; };
 
-    inline void setPosition(point_t p) { position_ = p; };
+  //
+  // tk Environment methods
+  //
+  virtual void tkEnvDrawShape(void) = 0;
 
-    inline void setVx(double vx) { velocity_.x = vx; };
+  virtual void tkEnvUpdatePosition(void) = 0;
 
-    inline void setVy(double vy) { velocity_.y = vy; };
+  virtual void tkEnvUpdatePosition(double) = 0;
 
-    inline void setVz(double vz) { velocity_.z = vz; };
+  //
+  // Event related methods
+  //
+  virtual void initializeMobilityMessages() = 0;
 
-    inline void setVelocity(vect_t v) { velocity_ = v; };
+  virtual void initializeMobility() = 0;
 
-    inline void setMass(double m) { mass_ = m; };
+  virtual void finishMobility() = 0;
 
-    inline void setDiffusion(double d) { diffusion_ = d; };
-
-    inline void setInertia(double i) { inertia_ = i; };
-
-    inline void setViscosity(double v) { viscosity_ = v; };
-
-    inline void setBMStdDev(double sd) { BMStdDev_ = sd; };
-
-    inline void setSpaceCell(int c) { spaceCell_ = c; };
-
-    inline void setSpaceCellIdx(index_t sci) { spaceCellIdx_ = sci; };
-
-    inline void setPrevSpaceCell(int c) { prevSpaceCell_ = c; };
-
-    inline void setPrevSpaceCellIdx(index_t psci) { prevSpaceCellIdx_ = psci; };
-
-    inline void setListRadius(double r) { listRadius_ = r; };
-
-    inline void setRefreshListRadius(double r) { refreshListRadius_ = r; };
-
-    virtual void setRadius(double) = 0;
-
-    inline void setLastCollisionTime(double tc) { lastCollisionTime_ = tc; };
-
-    inline void setBoundariesMode(int bm) { boundariesMode_ = bm; };
-
-    inline void setActive(bool a) { active_ = a; };
-
-    //
-    // tk Environment methods
-    //
-    virtual void tkEnvDrawShape(void) = 0;
-
-    virtual void tkEnvUpdatePosition(void) = 0;
-
-    virtual void tkEnvUpdatePosition(double) = 0;
-
-    //
-    // Event related methods
-    //
-    virtual void initMobilityMessages() = 0;
-
-    virtual void initializeMobility() = 0;
-
-    virtual void finishMobility() = 0;
-
-    virtual void createNearNeighborList() = 0;
-
-    virtual void updateNearNeighborList() = 0;
-
-    virtual void expire() = 0;
+  virtual void expire() = 0;
 };
 
 #endif

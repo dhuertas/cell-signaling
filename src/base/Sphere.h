@@ -18,105 +18,81 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include <csimplemodule.h>
-#include <cmessage.h>
-#include <cqueue.h>
-#include <coutvector.h>
-#include <omnetpp.h>
-
 #include "Manager.h"
-#include "Circle.h"
+#include "Particle.h"
 
 #include "messages/Transfer_m.h"
 #include "messages/Collision_m.h"
 #include "messages/OutOfNeighborhood_m.h"
 #include "messages/BrownianMotion_m.h"
 
-class Sphere : public Circle, public cSimpleModule {
+class Sphere : public Particle {
 
-	private:
+ private:
 
-		// Self messages
-		TransferMessage *transferMsg_;
-		CollisionMessage *collisionMsg_;
-		OutOfNeighborhoodMessage *outOfNeighborhoodMsg_;
-		BrownianMotionMessage *brownianMotionMsg_;
+  // Self messages
+  TransferMessage *transferMsg_;
+  CollisionMessage *collisionMsg_;
 
-	protected:
+  BrownianMotionMessage *brownianMotionMsg_;
 
-		Manager *manager_;
+ protected:
 
-		// Log collisions
-		int logCollisions_;
+  Manager *manager_;
 
-		// Log position
-		int logPosition_;
+  // Log collisions
+  bool logCollisions_;
 
-		// Track time between collisions
-		cOutVector *collisionTimeVector_;
+  // Log position
+  bool logPosition_;
 
-		// Vectors to get the mean free path
-		cOutVector *xCollisionPositionVector_;
-		cOutVector *yCollisionPositionVector_;
-		cOutVector *zCollisionPositionVector_;
+  // Track time between collisions
+  cOutVector *collisionTimeVector_;
 
-	public:
+  // Vectors to get the mean free path
+  cOutVector *xCollisionPositionVector_;
+  cOutVector *yCollisionPositionVector_;
+  cOutVector *zCollisionPositionVector_;
 
-		Sphere() : Circle() {};
-		Sphere(double, double, double, double , double, double, double, double);
+ public:
 
-		void initMobilityMessages(void);
-		void deleteMobilityMessages(void);
+  Sphere();
 
-		// Initialize the event queue
-		void initializeMobility(void);
-		void finishMobility(void);
-		void finishMobility(Particle *from);
+  ~Sphere();
 
-		void handleMobilityMessage(cMessage *);
+  void initializeMobilityMessages(void);
 
-		void handleTransfer(TransferMessage *);
-		void handleCollision(CollisionMessage *);
-		void handleBoundaryCollision(CollisionMessage *);
-		void handleWallCollision(CollisionMessage *);
-		void handleBrownianMotion(BrownianMotionMessage *);
-		void handleOutOfNeighborhood(void);
+  void initializeMobility(void);
 
-		void adjustCollision(double, Particle *);
+  void deleteMobilityMessages(void);
 
-		// Near-Neighbor List methods
-		void createNearNeighborList(void);
-		void updateNearNeighborList(void);
+  void finishMobility(void);
 
-		// cOutVector methods
-		void logCollisionTime(double stime) {
-		    double st = simTime().dbl();
-			if (logCollisions_ && collisionTimeVector_ != NULL) {
-				collisionTimeVector_->recordWithTimestamp(st, stime);
-			}
+  void finishMobility(Particle *from);
 
-			if (logCollisions_ && 
-				xCollisionPositionVector_ != NULL &&
-				yCollisionPositionVector_ != NULL &&
-				zCollisionPositionVector_ != NULL) {
+  void handleMobilityMessage(cMessage *);
 
-				xCollisionPositionVector_->recordWithTimestamp(st, position_.x);
-				yCollisionPositionVector_->recordWithTimestamp(st, position_.y);
-				zCollisionPositionVector_->recordWithTimestamp(st, position_.z);
-			}
-		}
+  void adjustCollision(double time, Sphere *from);
 
-		// tk Environment related methods
-		void tkEnvDrawShape(void);
-		void tkEnvUpdatePosition(void);
-		void tkEnvUpdatePosition(double);
+  void logCollisionTime(double time);
 
-		// Gets and sets
-		Manager * getManager(void) { return manager_; }
-		TransferMessage * getTransferMessage(void);
-		CollisionMessage * getCollisionMessage(void);
+  //
+  // tk Environment related methods
+  //
+  void tkEnvDrawShape(void);
 
-		void setManager(std::string);
+  void tkEnvUpdatePosition(void);
+
+  void tkEnvUpdatePosition(double);
+
+  //
+  // Gets and sets
+  //
+  Manager * getManager(void) { return manager_; }
+  
+  TransferMessage * getTransferMessage(void) { return transferMsg_; }
+  
+  CollisionMessage * getCollisionMessage(void) { return collisionMsg_; }
 
 };
 

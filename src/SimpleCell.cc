@@ -32,88 +32,87 @@ SimpleCell::~SimpleCell() {
  */
 void SimpleCell::initialize(int stage) {
 
-	std::stringstream buffer;
+  std::stringstream buffer;
 
-	if (stage == 0) {
-		// Manager module initializes during this stage
-	} else if (stage == 1) {
+  if (stage == 0) {
+    // Manager module initializes during this stage
+  } else if (stage == 1) {
 
-		setParticleType(T_SIMPLECELL);
+    setParticleType(T_SIMPLECELL);
 
-		// Initial position
-		setX(par("xpos").doubleValue());
-		setY(par("ypos").doubleValue());
-		setZ(par("zpos").doubleValue());
+    // Initial position
+    position_.x = par("xpos").doubleValue();
+    position_.y = par("ypos").doubleValue();
+    position_.z = par("zpos").doubleValue();
+  
+    //setX(par("xpos").doubleValue());
+    //setY(par("ypos").doubleValue());
+    //setZ(par("zpos").doubleValue());
 
-		// Velocity
-		setVx(par("vx").doubleValue());
-		setVy(par("vy").doubleValue());
-		setVz(par("vz").doubleValue());
+    // Velocity
+    velocity_.x = par("vx").doubleValue();
+    velocity_.y = par("vy").doubleValue();
+    velocity_.z = par("vz").doubleValue();
 
-		// Cell radius
-		setRadius(par("radius").doubleValue());
-		setMass(par("radius").doubleValue());
+    //setVx(par("vx").doubleValue());
+    //setVy(par("vy").doubleValue());
+    //setVz(par("vz").doubleValue());
 
-		// Subscribe to manager
-		setManager("manager");
-		getManager()->subscribe(this);
+    // Cell radius
+    setRadius(par("radius").doubleValue());
+    setMass(par("radius").doubleValue());
 
-		// Brownian Motion parameters
-		setDiffusion(par("diffusion").doubleValue());
-		setInertia(par("inertia").doubleValue());
-		setViscosity(par("viscosity").doubleValue());
+    // Subscribe to manager
+    setManager("manager");
+    getManager()->subscribe(this);
 
-		// Compute Brownian Motion Standard Deviation
-		//        _____________
-		//  \    /             |
-		//   \  /  4*M_PI*D*dt
-		//    \/
-		setBMStdDev(sqrt(4*M_PI*par("diffusion").doubleValue()*(manager_->getDeltaTime())));
+    // Brownian Motion parameters
+    setDiffusion(par("diffusion").doubleValue());
 
-		// Near-Neighbor List radius
-		setListRadius(par("listRadius").doubleValue());
-		setRefreshListRadius(par("refreshListRadius").doubleValue());
+    // Compute Brownian Motion Standard Deviation
+    //        _____________
+    //  \    /             |
+    //   \  /  4*M_PI*D*dt
+    //    \/
+    double diffusion = par("diffusion").doubleValue();
+    double dt = manager_->getDeltaTime();
+    setBrownianMotionStdDev(sqrt(4*M_PI*diffusion*dt));
 
-		setBoundariesMode(par("boundariesMode"));
+    setBoundariesMode(par("boundariesMode"));
 
-		timeToLive_ = par("timeToLive");
+    timeToLive_ = par("timeToLive");
 
-		if (timeToLive_ > 0) {
+    if (timeToLive_ > 0) {
+      timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+      scheduleAt(simTime() + timeToLive_, timeToLiveMsg_);
+    }
 
-			timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+    statsRefreshRate_ = par("statsRefreshRate");
 
-			scheduleAt(simTime() + timeToLive_, timeToLiveMsg_);
+    if (statsRefreshRate_ > 0) {
+      scheduleAt(simTime() + statsRefreshRate_/1000,
+        new cMessage("refresh", EV_STATSUPDATE));
+    }
 
-		}
+    logCollisions_ = par("logCollisions");
 
-		statsRefreshRate_ = par("statsRefreshRate");
+    if (logCollisions_ > 0) {
+      collisionTimeVector_ = new cOutVector("collisionTime");
+    }
 
-		if (statsRefreshRate_ > 0) {
-			scheduleAt(simTime() + statsRefreshRate_/1000,
-				new cMessage("refresh", EV_STATSUPDATE));
-		}
+    // update Cell position in the tk environment
+    tkEnvUpdatePosition();
 
-		logCollisions_ = par("logCollisions");
-
-		if (logCollisions_ > 0) {
-			collisionTimeVector_ = new cOutVector("collisionTime");
-		}
-
-		// update Cell position in the tk environment
-		tkEnvUpdatePosition();
-
-		// draw module shape in the tk environment
-		tkEnvDrawShape();
-
-	}
-
+    // draw module shape in the tk environment
+    tkEnvDrawShape();
+  }
 }
 
 /*
  * Returns the number of initialization stages.
  */
 int SimpleCell::numInitStages() const {
-	return 2;
+  return 2;
 }
 
 /*
@@ -123,27 +122,27 @@ int SimpleCell::numInitStages() const {
  */
 void SimpleCell::handleMessage(cMessage *msg) {
 
-	int kind = msg->getKind();
+  int kind = msg->getKind();
 
-	if (isSignaling(msg)) {
+  if (isSignaling(msg)) {
 
-		handleSignaling(msg);
+    handleSignaling(msg);
 
-	} else if (ISMOBILITY(kind)) {
+  } else if (ISMOBILITY(kind)) {
 
-		handleMobilityMessage(msg);
+    handleMobilityMessage(msg);
 
-	} else if (kind == EV_STATSUPDATE) {
+  } else if (kind == EV_STATSUPDATE) {
 
-		if (statsRefreshRate_ > 0) {
-			scheduleAt(simTime() + statsRefreshRate_/1000, msg);
-		}
+    if (statsRefreshRate_ > 0) {
+      scheduleAt(simTime() + statsRefreshRate_/1000, msg);
+    }
 
-	} else if (kind == EV_TTLEXPIRE) {
+  } else if (kind == EV_TTLEXPIRE) {
 
-		expire();
+    expire();
 
-	}
+  }
 
 }
 
@@ -152,15 +151,15 @@ void SimpleCell::handleMessage(cMessage *msg) {
  */
 void SimpleCell::finish() {
 
-	// Unsubscribe from the manager
-	getManager()->unsubscribe(this);
+  // Unsubscribe from the manager
+  getManager()->unsubscribe(this);
 
-	// Delete mobility messages
-	deleteMobilityMessages();
+  // Delete mobility messages
+  deleteMobilityMessages();
 
-	if (timeToLive_ > 0) {
-		cancelAndDelete(timeToLiveMsg_);
-	}
+  if (timeToLive_ > 0) {
+    cancelAndDelete(timeToLiveMsg_);
+  }
 
 }
 
@@ -170,23 +169,22 @@ void SimpleCell::finish() {
  */
 void SimpleCell::expire() {
 
-	manager_->registerExpire();
+  manager_->registerExpire();
 
-	// Unsubscribe from the manager
-	manager_->unsubscribe(this);
+  // Unsubscribe from the manager
+  manager_->unsubscribe(this);
 
-	// Get out of the simulation space gracefully
-	this->finishMobility();
+  // Get out of the simulation space gracefully
+  finishMobility();
 
-	// Delete mobility messages
-	deleteMobilityMessages();
+  // Delete mobility messages
+  deleteMobilityMessages();
 
-	if (timeToLive_ > 0) {
-		cancelAndDelete(timeToLiveMsg_);
-	}
+  if (timeToLive_ > 0) {
+    cancelAndDelete(timeToLiveMsg_);
+  }
 
-	this->deleteModule();
-
+  deleteModule();
 }
 
 /*
@@ -195,19 +193,18 @@ void SimpleCell::expire() {
  * @param {double} time
  */
 void SimpleCell::scheduleExpire(double time) {
-	// Methods called from other modules must have this macro
-	Enter_Method_Silent();
+  // Methods called from other modules must have this macro
+  Enter_Method_Silent();
 
-	if (timeToLive_ > 0) {
-		if (timeToLiveMsg_->isScheduled()) {
-				cancelEvent(timeToLiveMsg_);
-		}
-	} else {
-		timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
-	}
+  if (timeToLive_ > 0) {
+    if (timeToLiveMsg_->isScheduled()) {
+        cancelEvent(timeToLiveMsg_);
+    }
+  } else {
+    timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+  }
 
-	scheduleAt(time, timeToLiveMsg_);
-
+  scheduleAt(time, timeToLiveMsg_);
 }
 
 /*
@@ -218,25 +215,25 @@ void SimpleCell::scheduleExpire(double time) {
  */
 bool SimpleCell::isSignaling(cMessage *msg) {
 
-	int kind = msg->getKind();
-	CollisionMessage *cmsg;
+  int kind = msg->getKind();
+  CollisionMessage *cmsg;
 
-	cmsg = NULL;
+  cmsg = NULL;
 
-	if (kind == EV_COLLISION) {
+  if (kind == EV_COLLISION) {
 
-		cmsg = (CollisionMessage *)msg;
+    cmsg = (CollisionMessage *)msg;
 
-		if (particleType_ == T_RECEIVER ||
-			particleType_ == T_EMITTER_RECEIVER) {
+    if (particleType_ == T_RECEIVER ||
+      particleType_ == T_EMITTER_RECEIVER) {
 
-			if (cmsg->getPartner()->getParticleType() == T_SIGNALING) {
-				return true;
-			}
-		}
-	}
+      if (cmsg->getPartner()->getParticleType() == T_SIGNALING) {
+        return true;
+      }
+    }
+  }
 
-	return false;
+  return false;
 }
 
 /*
@@ -246,22 +243,22 @@ bool SimpleCell::isSignaling(cMessage *msg) {
  */
 void SimpleCell::handleSignaling(cMessage *msg) {
 
-	MoleculeReceiver *receiver;
-	Particle *p;
+  MoleculeReceiver *receiver;
+  Particle *p;
 
-	CollisionMessage *cmsg;
+  CollisionMessage *cmsg;
 
-	cmsg = (CollisionMessage *)msg;
-	p = cmsg->getPartner();
+  cmsg = (CollisionMessage *)msg;
+  p = cmsg->getPartner();
 
-	receiver = ((MoleculeReceiver *)getParentModule()->getSubmodule("receiver"));
-	receiver->registerReception(p->getParticleType());
+  receiver = ((MoleculeReceiver *)getParentModule()->getSubmodule("receiver"));
+  receiver->registerReception(p->getParticleType());
 
-	// TODO change the following line, perhaps using gates
-	((Molecule *)p)->scheduleExpire(cmsg->getCollisionTime());
+  // TODO change the following line, perhaps using gates
+  ((Molecule *)p)->scheduleExpire(cmsg->getCollisionTime());
 
-	// Change the event type to CHECK so we can find the next event
-	// for the receiver
-	msg->setKind(EV_CHECK);
-	handleMobilityMessage(msg);
+  // Change the event type to CHECK so we can find the next event
+  // for the receiver
+  msg->setKind(EV_CHECK);
+  handleMobilityMessage(msg);
 }

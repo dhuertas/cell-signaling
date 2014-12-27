@@ -22,43 +22,63 @@ using namespace std;
 /*
  * Constructor.
  */
-Particle::Particle() {}
+Particle::Particle() :
+  manager_(NULL),
+  active_(false),
+  mass_(0.0),
+  radius_(0.0),
+  lastCollisionTime_(0.0),
+  particleId_(0),
+  particleType_(0),
+  boundariesMode_(0),
+  imageIdx_(0),
+  diffusion_(0),
+  brownianMotionStdDev_(0.0) {
+
+  memset(&position_, 0, sizeof(point3_t));
+  memset(&velocity_, 0, sizeof(vector3_t));
+  memset(&spaceCellIdx_, 0, sizeof(index3_t));
+}
 
 /*
- * Constructor overload.
+ *
  */
-Particle::Particle(
-  double x,
-  double y,
-  double vx,
-  double vy,
-  double m) {
+void Particle::initialize(int stage) {
 
-  position_.x = x;
-  position_.y = y;
-  position_.z = 0;
+}
 
-  velocity_.x = vx;
-  velocity_.y = vy;
-  velocity_.z = 0;
+/*
+ *
+ */
+int Particle::numInitStages() const {
+  return 0;
+}
 
-  spaceCell_ = -1;
+/*
+ *
+ */
+void Particle::handleMessage(cMessage *) {
 
-  spaceCellIdx_.flags = 0x00;
-  spaceCellIdx_.i = 0;
-  spaceCellIdx_.j = 0;
-  spaceCellIdx_.k = 0;
-  spaceCellIdx_.layer = 0;
+}
 
-  prevSpaceCellIdx_.flags = 0x00;
-  prevSpaceCellIdx_.i = 0;
-  prevSpaceCellIdx_.j = 0;
-  prevSpaceCellIdx_.k = 0;
-  spaceCellIdx_.layer = 0;
+/*
+ *
+ */
+void Particle::finish() {
 
-  mass_ = m;
-  lastCollisionTime_ = 0;
+}
 
-  listRadius_ = 1;
+/*
+ * Sets the manager attribute.
+ * 
+ * @param {string} param: the name of the manager module
+ */
+void Particle::setManager(std::string name) {
 
+  try {
+    manager_ = (Manager *)simulation.
+      getSystemModule()->getSubmodule(name.c_str());
+  } catch (cException *e) {
+    EV << "setManager error" << "\n";
+  }
 }

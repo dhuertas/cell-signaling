@@ -28,95 +28,97 @@ Molecule::~Molecule() {}
  */
 void Molecule::initialize(int stage) {
 
-	std::stringstream buffer;
+  std::stringstream buffer;
 
-	if (stage == 0) {
-		// Manager module initializes during this stage
-	} else if (stage == 1) {
+  if (stage == 0) {
+    // Manager module initializes during this stage
+  } else if (stage == 1) {
 
-		active_ = true;
+    active_ = true;
 
-		setParticleType(T_MOLECULE);
+    setParticleType(T_MOLECULE);
 
-		// Initial position
-		setX(par("xpos").doubleValue());
-		setY(par("ypos").doubleValue());
-		setZ(par("zpos").doubleValue());
+    // Initial position
+    position_.x = par("xpos").doubleValue();
+    position_.y = par("ypos").doubleValue();
+    position_.z = par("zpos").doubleValue();
 
-		// Velocity
-		setVx(par("vx").doubleValue());
-		setVy(par("vy").doubleValue());
-		setVz(par("vz").doubleValue());
+    //setX(par("xpos").doubleValue());
+    //setY(par("ypos").doubleValue());
+    //setZ(par("zpos").doubleValue());
 
-		// Cell radius
-		setRadius(par("radius").doubleValue());
-		setMass(par("mass").doubleValue());
+    // Velocity
+    velocity_.x = par("vx").doubleValue();
+    velocity_.y = par("vy").doubleValue();
+    velocity_.z = par("vz").doubleValue();
+
+    //setVx(par("vx").doubleValue());
+    //setVy(par("vy").doubleValue());
+    //setVz(par("vz").doubleValue());
+
+    // Cell radius
+    setRadius(par("radius").doubleValue());
+    setMass(par("mass").doubleValue());
 
 
-		// Subscribe to manager
-		setManager("manager");
-		getManager()->subscribe(this);
+    // Subscribe to manager
+    setManager("manager");
+    getManager()->subscribe(this);
 
-		// Brownian Motion parameters
-		setDiffusion(par("diffusion").doubleValue());
-		setInertia(par("inertia").doubleValue());
-		setViscosity(par("viscosity").doubleValue());
+    // Brownian Motion parameters
+    setDiffusion(par("diffusion").doubleValue());
 
-		// Compute Brownian Motion Standard Deviation
-		//        _____________
-		//  \    /             |
-		//   \  /  4*M_PI*D*dt
-		//    \/
-		setBMStdDev(sqrt(4*M_PI*par("diffusion").doubleValue()*(manager_->getDeltaTime())));
+    // Compute Brownian Motion Standard Deviation
+    //        _____________
+    //  \    /             |
+    //   \  /  4*M_PI*D*dt
+    //    \/
+    double diffusion = par("diffusion").doubleValue();
+    double dt = manager_->getDeltaTime();
+    setBrownianMotionStdDev(sqrt(4*M_PI*diffusion*dt));
 
-		// Near-Neighbor List radius
-		setListRadius(par("listRadius").doubleValue());
+    setBoundariesMode(par("boundariesMode"));
 
-		// Near Neighbor List refresh list radius
-		setRefreshListRadius(par("refreshListRadius").doubleValue());
+    timeToLive_ = par("timeToLive");
 
-		setBoundariesMode(par("boundariesMode"));
+    if (timeToLive_ > 0) {
+      timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+      scheduleAt(simTime() + timeToLive_, timeToLiveMsg_);
+    }
 
-		timeToLive_ = par("timeToLive");
+    logCollisions_ = par("logCollisions");
 
-		if (timeToLive_ > 0) {
-			timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
-			scheduleAt(simTime() + timeToLive_, timeToLiveMsg_);
-		}
+    if (logCollisions_ > 0) {
+      collisionTimeVector_ = new cOutVector("collisionTime");
+      xCollisionPositionVector_ = new cOutVector("xCollisionPosition");
+      yCollisionPositionVector_ = new cOutVector("yCollisionPosition");
+      zCollisionPositionVector_ = new cOutVector("zCollisionPosition");
+    }
 
-		logCollisions_ = par("logCollisions");
+    logPosition_ = par("logPosition");
 
-		if (logCollisions_ > 0) {
-			collisionTimeVector_ = new cOutVector("collisionTime");
-			xCollisionPositionVector_ = new cOutVector("xCollisionPosition");
-			yCollisionPositionVector_ = new cOutVector("yCollisionPosition");
-			zCollisionPositionVector_ = new cOutVector("zCollisionPosition");
-		}
+    if (logPosition_ > 0) {
+      xPositionVector_ = new cOutVector("xPosition");
+      yPositionVector_ = new cOutVector("yPosition");
+      zPositionVector_ = new cOutVector("zPosition");
+    }
 
-		logPosition_ = par("logPosition");
+    statsRefreshRate_ = par("statsRefreshRate");
 
-		if (logPosition_ > 0) {
-			xPositionVector_ = new cOutVector("xPosition");
-			yPositionVector_ = new cOutVector("yPosition");
-			zPositionVector_ = new cOutVector("zPosition");
-		}
+    if (statsRefreshRate_ > 0) {
+      scheduleAt(simTime() + statsRefreshRate_/1000,
+        new cMessage("refresh", EV_STATSUPDATE));
+    }
 
-		statsRefreshRate_ = par("statsRefreshRate");
+    // update Molecule position in the tk environment
+    tkEnvUpdatePosition();
 
-		if (statsRefreshRate_ > 0) {
-			scheduleAt(simTime() + statsRefreshRate_/1000,
-				new cMessage("refresh", EV_STATSUPDATE));
-		}
+    // draw module shape in the tk environment
+    tkEnvDrawShape();
 
-		// update Molecule position in the tk environment
-		tkEnvUpdatePosition();
+  } else {
 
-		// draw module shape in the tk environment
-		tkEnvDrawShape();
-
-	} else {
-
-	}
+  }
 
 }
 
@@ -125,7 +127,7 @@ void Molecule::initialize(int stage) {
  */
 int Molecule::numInitStages() const {
 
-	return 2;
+  return 2;
 
 }
 
@@ -136,33 +138,33 @@ int Molecule::numInitStages() const {
  */
 void Molecule::handleMessage(cMessage *msg) {
 
-	int kind = msg->getKind();
+  int kind = msg->getKind();
 
-	if (isSignaling(msg)) {
+  if (isSignaling(msg)) {
 
-		handleSignaling(msg);
+    handleSignaling(msg);
 
-	} else if (ISMOBILITY(kind)) {
+  } else if (ISMOBILITY(kind)) {
 
-		handleMobilityMessage(msg);
+    handleMobilityMessage(msg);
 
-	} else if (kind == EV_STATSUPDATE) {
+  } else if (kind == EV_STATSUPDATE) {
 
-		double st = simTime().dbl();
-		double dt = st - lastCollisionTime_;
+    double st = simTime().dbl();
+    double dt = st - lastCollisionTime_;
 
-		// Put the statistics logged so far to cout vectors
-		xPositionVector_->recordWithTimestamp(st, position_.x + velocity_.x * dt);
-		yPositionVector_->recordWithTimestamp(st, position_.y + velocity_.y * dt);
-		zPositionVector_->recordWithTimestamp(st, position_.z + velocity_.z * dt);
+    // Put the statistics logged so far to cout vectors
+    xPositionVector_->recordWithTimestamp(st, position_.x + velocity_.x * dt);
+    yPositionVector_->recordWithTimestamp(st, position_.y + velocity_.y * dt);
+    zPositionVector_->recordWithTimestamp(st, position_.z + velocity_.z * dt);
 
-		if (statsRefreshRate_ > 0) {
-			scheduleAt(st + statsRefreshRate_/1000, msg);
-		}
+    if (statsRefreshRate_ > 0) {
+      scheduleAt(st + statsRefreshRate_/1000, msg);
+    }
 
-	} else if (kind == EV_TTLEXPIRE) {
-		expire();
-	}
+  } else if (kind == EV_TTLEXPIRE) {
+    expire();
+  }
 
 }
 
@@ -171,15 +173,15 @@ void Molecule::handleMessage(cMessage *msg) {
  */
 void Molecule::finish() {
 
-	// Unsubscribe from the manager
-	getManager()->unsubscribe(this);
+  // Unsubscribe from the manager
+  getManager()->unsubscribe(this);
 
-	// Delete mobility messages
-	deleteMobilityMessages();
+  // Delete mobility messages
+  deleteMobilityMessages();
 
-	if (timeToLive_ > 0) {
-		cancelAndDelete(timeToLiveMsg_);
-	}
+  if (timeToLive_ > 0) {
+    cancelAndDelete(timeToLiveMsg_);
+  }
 
 }
 
@@ -188,27 +190,27 @@ void Molecule::finish() {
  * parameter is set and the event EV_TTLEXPIRE arrives.
  */
 void Molecule::expire() {
-	// Methods called from other modules must have this macro
-	Enter_Method_Silent();
+  // Methods called from other modules must have this macro
+  Enter_Method_Silent();
 
-	active_ = false;
+  active_ = false;
 
-	manager_->registerExpire();
+  manager_->registerExpire();
 
-	// Unsubscribe from the manager
-	manager_->unsubscribe(this);
+  // Unsubscribe from the manager
+  manager_->unsubscribe(this);
 
-	// Get out of the simulation space gracefully
-	this->finishMobility();
+  // Get out of the simulation space gracefully
+  this->finishMobility();
 
-	// Delete mobility messages
-	deleteMobilityMessages();
+  // Delete mobility messages
+  deleteMobilityMessages();
 
-	if (timeToLive_ > 0) {
-		cancelAndDelete(timeToLiveMsg_);
-	}
+  if (timeToLive_ > 0) {
+    cancelAndDelete(timeToLiveMsg_);
+  }
 
-	this->deleteModule();
+  this->deleteModule();
 
 }
 
@@ -217,18 +219,18 @@ void Molecule::expire() {
  * @param {double} time: simulation time to schedule the expire message
  */
 void Molecule::scheduleExpire(double time) {
-	// Methods called from other modules must have this macro
-	Enter_Method_Silent();
+  // Methods called from other modules must have this macro
+  Enter_Method_Silent();
 
-	if (timeToLive_ > 0) {
-		if (timeToLiveMsg_->isScheduled()) {
-			cancelEvent(timeToLiveMsg_);
-		}
-	} else {
-		timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
-	}
+  if (timeToLive_ > 0) {
+    if (timeToLiveMsg_->isScheduled()) {
+      cancelEvent(timeToLiveMsg_);
+    }
+  } else {
+    timeToLiveMsg_ = new TimeToLiveMessage("expire", EV_TTLEXPIRE);
+  }
 
-	scheduleAt(time, timeToLiveMsg_);
+  scheduleAt(time, timeToLiveMsg_);
 
 }
 
@@ -240,30 +242,30 @@ void Molecule::scheduleExpire(double time) {
  */
 bool Molecule::isSignaling(cMessage *msg) {
 
-	int partnerParticleType;
+  int partnerParticleType;
 
-	int kind = msg->getKind();
-	CollisionMessage *cmsg;
+  int kind = msg->getKind();
+  CollisionMessage *cmsg;
 
-	cmsg = NULL;
-	partnerParticleType = 0;
+  cmsg = NULL;
+  partnerParticleType = 0;
 
-	if (kind == EV_COLLISION) {
+  if (kind == EV_COLLISION) {
 
-		cmsg = (CollisionMessage *)msg;
+    cmsg = (CollisionMessage *)msg;
 
-		if (particleType_ == T_SIGNALING) {
+    if (particleType_ == T_SIGNALING) {
 
-			partnerParticleType = cmsg->getPartner()->getParticleType();
+      partnerParticleType = cmsg->getPartner()->getParticleType();
 
-			if (partnerParticleType == T_RECEIVER ||
-				partnerParticleType == T_EMITTER_RECEIVER) {
-				return true;
-			}
-		}
-	}
+      if (partnerParticleType == T_RECEIVER ||
+        partnerParticleType == T_EMITTER_RECEIVER) {
+        return true;
+      }
+    }
+  }
 
-	return false;
+  return false;
 }
 
 /*
@@ -273,18 +275,18 @@ bool Molecule::isSignaling(cMessage *msg) {
  */
 void Molecule::handleSignaling(cMessage *msg) {
 
-	MoleculeReceiver *receiver;
-	Particle *p;
+  MoleculeReceiver *receiver;
+  Particle *p;
 
-	CollisionMessage *cmsg;
+  CollisionMessage *cmsg;
 
-	cmsg = (CollisionMessage *)msg;
-	p = cmsg->getPartner();
+  cmsg = (CollisionMessage *)msg;
+  p = cmsg->getPartner();
 
-	receiver = (MoleculeReceiver *)((SimpleCell *)p)->getParentModule()
-		->getSubmodule("receiver");
+  receiver = (MoleculeReceiver *)((SimpleCell *)p)->getParentModule()
+    ->getSubmodule("receiver");
 
-	receiver->registerReception(getParticleType());
+  receiver->registerReception(getParticleType());
 
-	expire();
+  expire();
 }

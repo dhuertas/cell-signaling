@@ -34,7 +34,7 @@ void MoleculeEmitter::initialize(int stage) {
 
   if (stage == 0) {
     // First stage manager initialization
-    enabled = par("enabled");
+    enabled_ = par("enabled");
 
   } else if (stage == 1) {
     // Particles initialization
@@ -44,43 +44,39 @@ void MoleculeEmitter::initialize(int stage) {
     // Particle emitters and receivers initialization
 
     // Emission variables
-    emissionStart = par("emissionStart");
-    emissionDuration = par("emissionDuration");
-    emissionRate = par("emissionRate");
-    emissionParticleRadius = par("emissionParticleRadius");
-    emissionParticleMass = par("emissionParticleMass");
-    emissionTimeToLive = par("emissionTimeToLive");
-    emissionBoundariesMode = par("emissionBoundariesMode");
-    emissionVelocity = par("emissionVelocity");
-    emissionListRadius = par("emissionListRadius");
-    emissionRefreshListRadius = par("emissionRefreshListRadius");
-    emissionDiffusion = par("emissionDiffusion");
+    emissionStart_ = par("emissionStart");
+    emissionDuration_ = par("emissionDuration");
+    emissionRate_ = par("emissionRate");
+    emissionParticleRadius_ = par("emissionParticleRadius");
+    emissionParticleMass_ = par("emissionParticleMass");
+    emissionTimeToLive_ = par("emissionTimeToLive");
+    emissionBoundariesMode_ = par("emissionBoundariesMode");
+    emissionVelocity_ = par("emissionVelocity");
+    emissionDiffusion_ = par("emissionDiffusion");
 
-    preloadMolecules = par("preloadMolecules");
+    preloadMolecules_ = par("preloadMolecules");
 
-    mobility = (SimpleCell *)getParentModule()->getSubmodule("mobility");
+    mobility_ = (SimpleCell *)getParentModule()->getSubmodule("mobility");
 
-    if (enabled && getParentModule()->getSubmodule("receiver")->par("enabled")) {
-      mobility->setParticleType(T_EMITTER_RECEIVER);
-    } else if (enabled) {
-      mobility->setParticleType(T_EMITTER);
+    if (enabled_ && getParentModule()->getSubmodule("receiver")->par("enabled")) {
+      mobility_->setParticleType(T_EMITTER_RECEIVER);
+    } else if (enabled_) {
+      mobility_->setParticleType(T_EMITTER);
     }
 
-    if (preloadMolecules) {
+    if (preloadMolecules_) {
       // Do not create more modules during the initialization process,
       // since omnet will automatically initialize them...
       scheduleAt(simTime(), new cMessage("preload", EV_PRELOAD));
     }
 
-    if (emissionStart > 0) {
-      scheduleAt(simTime() + emissionStart, 
-      new cMessage("emit", EV_EMIT));
+    if (emissionStart_ > 0) {
+      scheduleAt(simTime() + emissionStart_, new cMessage("emit", EV_EMIT));
     }
 
     // Subscribe to manager
     setManager("manager");
   }
-
 }
 
 /*
@@ -96,39 +92,36 @@ int MoleculeEmitter::numInitStages() const {
 void MoleculeEmitter::handleMessage(cMessage *msg) {
 
   int kind = msg->getKind();
-  double st;
+  double st = NO_TIME;
 
   Molecule *molecule;
 
   if (kind == EV_EMIT) {
 
+    // TODO improve this
     st = simTime().dbl();
 
     molecule = createMolecule();
     molecule->callInitialize();
 
-    molecule->setParticleId(manager_->getNextParticleId());
+    molecule->setParticleId(manager_->getNextIncParticleId());
     molecule->setParticleType(T_SIGNALING);
     molecule->setLastCollisionTime(st);
 
-    molecule->initMobilityMessages();
+    molecule->initializeMobilityMessages();
 
-    manager_->attachParticleToSpaceCell(molecule, IDX_NULL);
-
-    if (manager_->getMode() == M_NNLIST) {
-      molecule->createNearNeighborList();
-    }
+    manager_->subscribe(molecule);
 
     molecule->initializeMobility();
 
-    if (st < emissionStart + emissionDuration) {
-      scheduleAt(st + 1/emissionRate, msg);
+    if (st < emissionStart_ + emissionDuration_) {
+      scheduleAt(st + 1/emissionRate_, msg);
     }
 
   } else if (kind == EV_PRELOAD) {
 
     // Compute the number of molecules to be released
-    uint32_t numberOfMolecules = ceil(emissionRate*emissionDuration);
+    uint32_t numberOfMolecules = ceil(emissionRate_*emissionDuration_);
 
     // Create molecules and save them for later use
     for (uint32_t i = 0; i < numberOfMolecules; i++) {
@@ -136,10 +129,9 @@ void MoleculeEmitter::handleMessage(cMessage *msg) {
       cModuleType *moduleType = cModuleType::get("cellsignaling.src.Molecule");
       Molecule *m = (Molecule *)moduleType->create("molecule", simulation.getSystemModule());
 
-      preloadedMolecules.push_back(m);
+      preloadedMolecules_.push_back(m);
     }
   }
-
 }
 
 /*
@@ -155,37 +147,37 @@ Molecule * MoleculeEmitter::createMolecule() {
   double epr;
   double vm;
 
-  point_t pos, c;
-  vect_t *ss;
-  vect_t v;
+  point3_t pos, c;
+  vector3_t *ss;
+  vector3_t v;
 
-  point_t *mpos = NULL;
-  vect_t *mvel = NULL;
+  point3_t *mpos = NULL;
+  vector3_t *mvel = NULL;
 
   // force enter the first while loop
   overlap = true;
 
-  epr = emissionParticleRadius;
+  epr = emissionParticleRadius_;
   e = 0.01*epr;
-  r = mobility->getRadius() + epr + e;
+  r = mobility_->getRadius() + epr + e;
 
   ss = manager_->getSpaceSize();
 
-  mpos = mobility->getPosition();
-  mvel = mobility->getVelocity();
+  mpos = mobility_->getPosition();
+  mvel = mobility_->getVelocity();
 
   // Create molecule or get a preloaded one
   Molecule *m = NULL;
 
-  if (preloadedMolecules.size() > 0) {
-    m = preloadedMolecules.front();
-    preloadedMolecules.pop_front(); // remove first molecule from the list
+  if (preloadedMolecules_.size() > 0) {
+    m = preloadedMolecules_.front();
+    preloadedMolecules_.pop_front(); // remove first molecule from the list
   } else {
     cModuleType *moduleType = cModuleType::get("cellsignaling.src.Molecule");
     m = (Molecule *)moduleType->create("molecule", simulation.getSystemModule()); 
   }
 
-  dt = simTime().dbl() - mobility->getLastCollisionTime();
+  dt = simTime().dbl() - mobility_->getLastCollisionTime();
 
   // set up parameters and gate sizes before we set up its submodules
   theta = dblrand()*M_PI;
@@ -215,7 +207,7 @@ Molecule * MoleculeEmitter::createMolecule() {
     // Check whether the emitted molecule overlaps with surrounding
     // particles
     // TODO rethink this part since it is too costly
-    overlap = checkOverlap(pos, emissionParticleRadius);
+    overlap = checkOverlap(pos, emissionParticleRadius_);
 
   }
 
@@ -229,28 +221,24 @@ Molecule * MoleculeEmitter::createMolecule() {
 
   vm = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
 
-  v.x = emissionVelocity*v.x/vm;
-  v.y = emissionVelocity*v.y/vm;
-  v.z = emissionVelocity*v.z/vm;
+  v.x = emissionVelocity_*v.x/vm;
+  v.y = emissionVelocity_*v.y/vm;
+  v.z = emissionVelocity_*v.z/vm;
 
   // Particle parameters
   m->par("vx") = v.x;
   m->par("vy") = v.y;
   m->par("vz") = v.z;
 
-  m->par("mass") = emissionParticleMass;
-  m->par("radius") = emissionParticleRadius;
+  m->par("mass") = emissionParticleMass_;
+  m->par("radius") = emissionParticleRadius_;
 
-  m->par("timeToLive") = emissionTimeToLive;
+  m->par("timeToLive") = emissionTimeToLive_;
 
-  // Verlet List parameters
-  m->par("listRadius") = emissionListRadius;
-  m->par("refreshListRadius") = emissionRefreshListRadius;
-
-  m->par("boundariesMode") = emissionBoundariesMode;
+  m->par("boundariesMode") = emissionBoundariesMode_;
   // m->par("statsRefreshRate");
 
-  m->par("diffusion") = emissionDiffusion;
+  m->par("diffusion") = emissionDiffusion_;
 
   m->finalizeParameters();
 
@@ -270,9 +258,9 @@ Molecule * MoleculeEmitter::createMolecule() {
  */
 void MoleculeEmitter::finish() {
 
-  while (preloadedMolecules.size() > 0) {
-    preloadedMolecules.front()->deleteModule();
-    preloadedMolecules.pop_front();
+  while (preloadedMolecules_.size() > 0) {
+    preloadedMolecules_.front()->deleteModule();
+    preloadedMolecules_.pop_front();
   }
 }
 
@@ -297,42 +285,45 @@ void MoleculeEmitter::setManager(std::string param) {
  *
  * @return {bool}
  */
-bool MoleculeEmitter::checkOverlap(point_t ca, double ra) {
-
-  int a, b, c;      // Nested "for" loops
-  int i, j, k;      // Indexes to access the current space cell
-  int *Nx, *Ny, *Nz;    // Number of space cells (or divisions) in each axis
+bool MoleculeEmitter::checkOverlap(point3_t pos, double radius) {
 
   double dx, dy, dz;
   double rb;
-  double spaceCellSize;
 
-  point_t *cb = NULL;
+  point3_t *cb = NULL;
 
-  index_t idx;
+  index3_t idx;
 
   std::vector<Particle *> particles;
   std::vector<Particle *>::iterator p;
 
-  idx = manager_->getSpaceCellIdx(ca, ra);
+  double maxSpaceSize = manager_->getMaxSpaceSize();
+  unsigned int maxDepth = manager_->getDepth();
 
-  manager_->getNeighborParticles(idx, &particles);
+  while (2*radius / (maxSpaceSize / (1 << idx.depth)) <= 1 && idx.depth < maxDepth) {
+    idx.depth++;
+  }
+
+  idx.i = floor(pos.x / (maxSpaceSize / (1 << idx.depth)));
+  idx.j = floor(pos.y / (maxSpaceSize / (1 << idx.depth)));
+  idx.k = floor(pos.z / (maxSpaceSize / (1 << idx.depth)));
+
+  manager_->getNeighborParticles(&idx, &particles);
 
   for (p = particles.begin(); p != particles.end(); ++p) {
 
     cb = (*p)->getPosition();
     rb = (*p)->getRadius();
 
-    dx = ca.x - cb->x;
-    dy = ca.y - cb->y;
-    dz = ca.z - cb->z;
+    dx = pos.x - cb->x;
+    dy = pos.y - cb->y;
+    dz = pos.z - cb->z;
 
-    if (sqrt(dx*dx + dy*dy + dz*dz) <= ra + rb) {
+    if (sqrt(dx*dx + dy*dy + dz*dz) <= radius + rb) {
       return true;
     }
-
   }
 
+  // TODO check for wall overlap
   return false;
-
 }

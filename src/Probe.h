@@ -28,7 +28,7 @@
 #include <list>
 
 #include "Manager.h"
-#include "base/Defines.h"
+#include "Common.h"
 
 class Probe : public cSimpleModule {
 
@@ -42,7 +42,7 @@ class Probe : public cSimpleModule {
 
 		int type_;
 
-		point_t position_;
+		point3_t position_;
 
 		double radius_;
 
@@ -75,7 +75,7 @@ class Probe : public cSimpleModule {
 		//
 		std::string getName(void) { return name_; };
 
-		point_t getPosition(void) { return position_; };
+		point3_t getPosition(void) { return position_; };
 
 		double getRadius(void) { return radius_; };
 
@@ -83,7 +83,7 @@ class Probe : public cSimpleModule {
 
 		void setName(std::string n) { name_ = n; };
 
-		void setPosition(point_t p) { position_ = p; };
+		void setPosition(point3_t p) { position_ = p; };
 
 		void setRadius(double r) { radius_ = r; };
 
