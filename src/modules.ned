@@ -124,7 +124,7 @@ simple Molecule {
     bool logCollisions = default(false);
 
     // Log position
-    int logPosition = default(0);
+    bool logPosition = default(false);
 
   gates:
     input in;

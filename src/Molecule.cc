@@ -86,7 +86,7 @@ void Molecule::initialize(int stage) {
       scheduleAt(simTime() + timeToLive_, timeToLiveMsg_);
     }
 
-    logCollisions_ = par("logCollisions");
+    logCollisions_ = par("logCollisions").boolValue();
 
     if (logCollisions_ > 0) {
       collisionTimeVector_ = new cOutVector("collisionTime");
@@ -95,7 +95,7 @@ void Molecule::initialize(int stage) {
       zCollisionPositionVector_ = new cOutVector("zCollisionPosition");
     }
 
-    logPosition_ = par("logPosition");
+    logPosition_ = par("logPosition").boolValue();
 
     if (logPosition_ > 0) {
       xPositionVector_ = new cOutVector("xPosition");

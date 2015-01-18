@@ -95,7 +95,7 @@ void SimpleCell::initialize(int stage) {
         new cMessage("refresh", EV_STATSUPDATE));
     }
 
-    logCollisions_ = par("logCollisions");
+    logCollisions_ = par("logCollisions").boolValue();
 
     if (logCollisions_ > 0) {
       collisionTimeVector_ = new cOutVector("collisionTime");
