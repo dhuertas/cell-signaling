@@ -131,6 +131,8 @@ class Manager : public cSimpleModule {
     return n;
   }
 
+  static index3_t getParentIdx(index3_t *idx);
+
   void setMaxSpaceSize(double spaceSize) { maxSpaceSize_ = spaceSize; }
 
   void setDeltaTime(double dt) { deltaTime_ = dt; }

@@ -29,7 +29,6 @@ using namespace std;
 Sphere::Sphere() :
   transferMsg_(NULL),
   collisionMsg_(NULL),
-  manager_(NULL),
   logCollisions_(false),
   logPosition_(false),
   collisionTimeVector_(NULL),

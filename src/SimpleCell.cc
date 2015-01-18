@@ -64,7 +64,8 @@ void SimpleCell::initialize(int stage) {
 
     // Subscribe to manager
     setManager("manager");
-    getManager()->subscribe(this);
+
+    manager_->subscribe(this);
 
     // Brownian Motion parameters
     setDiffusion(par("diffusion").doubleValue());

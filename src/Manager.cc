@@ -61,7 +61,7 @@ void Manager::subscribe(Particle *p) {
     point3_t *pos = p->getPosition();
     double radius = p->getRadius();
 
-    while (2*radius / (maxSpaceSize_ / (1 << idx->depth)) <= 1 && idx->depth < depth_) {
+    while (2*radius / (maxSpaceSize_ / (1 << (idx->depth+1))) <= 1 && idx->depth+1 <= depth_) {
       idx->depth++;
     }
 
@@ -209,6 +209,7 @@ void Manager::transferParticle(Particle *p, index3_t *from, index3_t *to) {
 void Manager::getNeighborParticles(index3_t *idx, std::vector<Particle *> *container) {
 
   index3_t neighborIdx;
+  index3_t currentIdx, tmpIdx;
   index3_t maxIdx;
 
   unsigned int imageIdx;
@@ -217,62 +218,96 @@ void Manager::getNeighborParticles(index3_t *idx, std::vector<Particle *> *conta
   maxIdx.j = floor(spaceSize_.y / (maxSpaceSize_ / (1 << idx->depth)));
   maxIdx.k = floor(spaceSize_.z / (maxSpaceSize_ / (1 << idx->depth)));
 
-  // Loop through the 27 neighbor space cells
-  for (int i = -1; i <= 1; i++)
-  for (int j = -1; j <= 1; j++)
-  for (int k = -1; k <= 1; k++) {
+  // Starting at current layer, go up in the octree to find neighbors 
+  // in upper layers. Only get particles from lower layers when looking 
+  // for neighbors in the starting layer. Once at upper layers only get
+  // neighbors at the same layer (or otherwise all particles would be 
+  // retrieved and duplicated!)
+  for (unsigned int layer = idx->depth; layer != UINT_MAX; layer--)  {
 
-    // TODO Look at same depth for now
-    neighborIdx.depth = idx->depth;
-
-    // If a space cell idx belongs to an image (out of the simulation domain),
-    // set the corresponding image idx to each particle
-
-    // Images are identified as 3 pairs of 2 bits
-    // --xx---- x axis
-    // ----xx-- y axis
-    // ------xx z axis
-    // 00 means real domain
-    // 10 means particles belong to the left image domain for that axis
-    // 01 means particles belong to the right image domain for that axis
-    imageIdx = 0;
-
-    neighborIdx.i = idx->i + i;
-    neighborIdx.j = idx->j + j;
-    neighborIdx.k = idx->k + k;
-
-    // 0U - 1U = UINT_MAX
-    if (maxIdx.k < neighborIdx.k && neighborIdx.k < UINT_MAX) {
-        imageIdx |= 0x01;
-        neighborIdx.k = 0;
-    }
-    if (neighborIdx.k == UINT_MAX) {
-        imageIdx |= 0x02;
-        neighborIdx.k = maxIdx.k;
-    }
-    if (maxIdx.j < neighborIdx.j && neighborIdx.j < UINT_MAX) {
-        imageIdx |= 0x04;
-        neighborIdx.j = 0;
-    }
-    if (neighborIdx.j == UINT_MAX) {
-        imageIdx |= 0x08;
-        neighborIdx.j = maxIdx.j;
-    }
-    if (maxIdx.i < neighborIdx.i && neighborIdx.i < UINT_MAX) {
-        imageIdx |= 0x10;
-        neighborIdx.i = 0;
-    }
-    if (neighborIdx.i == UINT_MAX) {
-        imageIdx |= 0x20;
-        neighborIdx.i = maxIdx.i;
+    if (layer < idx->depth) {
+      tmpIdx = currentIdx;
+      currentIdx = getParentIdx(&tmpIdx);
+    } else {
+      currentIdx = *idx;
     }
 
-    OctreeNode *node = space_->findOctreeNode(neighborIdx);
+    // Loop through the current 27 neighbor space cells
+    for (int8_t i = -1; i <= 1; i++)
+    for (int8_t j = -1; j <= 1; j++)
+    for (int8_t k = -1; k <= 1; k++) {
 
-    if (node != NULL) {
-      node->getElements(container, imageIdx);
+      neighborIdx.depth = currentIdx.depth;
+
+      // If a space cell idx belongs to an image (out of the simulation domain),
+      // set the corresponding image idx to each particle
+
+      // Images are identified as 3 pairs of 2 bits
+      // --xx---- x axis
+      // ----xx-- y axis
+      // ------xx z axis
+      // 00 means real domain
+      // 10 means particles belong to the left image domain for that axis
+      // 01 means particles belong to the right image domain for that axis
+      imageIdx = 0;
+
+      neighborIdx.i = currentIdx.i + i;
+      neighborIdx.j = currentIdx.j + j;
+      neighborIdx.k = currentIdx.k + k;
+
+      // 0U - 1U == UINT_MAX
+      if (maxIdx.k < neighborIdx.k && neighborIdx.k < UINT_MAX) {
+          imageIdx |= 0x01;
+          neighborIdx.k = 0;
+      } else if (neighborIdx.k == UINT_MAX) {
+          imageIdx |= 0x02;
+          neighborIdx.k = maxIdx.k;
+      }
+
+      if (maxIdx.j < neighborIdx.j && neighborIdx.j < UINT_MAX) {
+          imageIdx |= 0x04;
+          neighborIdx.j = 0;
+      } else if (neighborIdx.j == UINT_MAX) {
+          imageIdx |= 0x08;
+          neighborIdx.j = maxIdx.j;
+      }
+
+      if (maxIdx.i < neighborIdx.i && neighborIdx.i < UINT_MAX) {
+          imageIdx |= 0x10;
+          neighborIdx.i = 0;
+      } else if (neighborIdx.i == UINT_MAX) {
+          imageIdx |= 0x20;
+          neighborIdx.i = maxIdx.i;
+      }
+
+      OctreeNode *node = space_->findOctreeNode(neighborIdx);
+
+      if (node != NULL) {
+        if (layer == idx->depth) {
+          node->getAllElements(container, imageIdx);
+        } else {
+          node->getElements(container, imageIdx);
+        }
+      }
     }
   }
+}
+
+index3_t Manager::getParentIdx(index3_t *idx) {
+  
+  index3_t parentIdx;
+
+  if (idx->depth == 0) {
+    memcpy(&parentIdx, idx, sizeof(index3_t));
+    return parentIdx;
+  }
+
+  parentIdx.i = idx->i/2;
+  parentIdx.j = idx->j/2;
+  parentIdx.k = idx->k/2;
+  parentIdx.depth = idx->depth-1;
+
+  return parentIdx;
 }
 
 /*

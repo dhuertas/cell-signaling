@@ -88,7 +88,7 @@
   idx.i == 0 && \
   idx.j == 0 && \
   idx.k == 0 && \
-  idx.layer == 0
+  idx.depth == 0
 
 typedef struct Point3D {
   double x;

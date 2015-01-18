@@ -300,7 +300,7 @@ bool MoleculeEmitter::checkOverlap(point3_t pos, double radius) {
   double maxSpaceSize = manager_->getMaxSpaceSize();
   unsigned int maxDepth = manager_->getDepth();
 
-  while (2*radius / (maxSpaceSize / (1 << idx.depth)) <= 1 && idx.depth < maxDepth) {
+  while (2*radius / (maxSpaceSize / (1 << (idx.depth+1))) <= 1 && idx.depth+1 < maxDepth) {
     idx.depth++;
   }
 

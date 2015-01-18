@@ -38,8 +38,6 @@ class Sphere : public Particle {
 
  protected:
 
-  Manager *manager_;
-
   // Log collisions
   bool logCollisions_;
 
