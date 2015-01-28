@@ -292,7 +292,7 @@ bool MoleculeEmitter::checkOverlap(point3_t pos, double radius) {
 
   point3_t *cb = NULL;
 
-  index3_t idx;
+  index3_t idx = {0, 0, 0, 0, 0};
 
   std::vector<Particle *> particles;
   std::vector<Particle *>::iterator p;
@@ -300,7 +300,7 @@ bool MoleculeEmitter::checkOverlap(point3_t pos, double radius) {
   double maxSpaceSize = manager_->getMaxSpaceSize();
   unsigned int maxDepth = manager_->getDepth();
 
-  while (2*radius / (maxSpaceSize / (1 << (idx.depth+1))) <= 1 && idx.depth+1 < maxDepth) {
+  while (2*radius / (maxSpaceSize / (1 << (idx.depth+1))) <= 1 && idx.depth+1 <= maxDepth) {
     idx.depth++;
   }
 
