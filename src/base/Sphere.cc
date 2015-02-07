@@ -29,6 +29,7 @@ using namespace std;
 Sphere::Sphere() :
   transferMsg_(NULL),
   collisionMsg_(NULL),
+  brownianMotionMsg_(NULL),
   logCollisions_(false),
   logPosition_(false),
   collisionTimeVector_(NULL),
