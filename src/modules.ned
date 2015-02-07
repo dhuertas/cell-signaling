@@ -166,12 +166,6 @@ simple MoleculeEmitter {
     // Molecule initial velocity
     double emissionVelocity = default(1);
 
-    // Verlet list radius parameter for the emitted molecules
-    double emissionListRadius = default(0);
-
-    // Verlet refresh list radius for the emitted molecules
-    double emissionRefreshListRadius = default(0);
-
     // Diffusion coefficient of molecules when using brownian motion
     // Note: manager module must have a deltaTime value greater than 0
     // TODO check that manager.deltaTime is set during initialization process
