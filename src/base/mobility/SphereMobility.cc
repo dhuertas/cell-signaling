@@ -404,15 +404,6 @@ void SphereMobility::handleCollision(CollisionMessage *msg, Sphere *s) {
   e1.y = n.z*v1.x - n.x*v1.z;
   e1.z = n.x*v1.y - n.y*v1.x;
 
-  // Normalize the vector found, e1
-  itmp = 1/sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
-
-  if (itmp > 0) {
-    e1.x *= itmp;
-    e1.y *= itmp;
-    e1.z *= itmp;
-  }
-
   // Find the velocity vectors in the new basis and if ...
   v1n  = v1.x*n.x  + v1.y*n.y  + v1.z*n.z;
 
@@ -434,6 +425,15 @@ void SphereMobility::handleCollision(CollisionMessage *msg, Sphere *s) {
 
   } else {
 
+    // Normalize the vector found, e1
+    itmp = 1/sqrt(e1.x*e1.x + e1.y*e1.y + e1.z*e1.z);
+
+    if (itmp > 0) {
+      e1.x *= itmp;
+      e1.y *= itmp;
+      e1.z *= itmp;
+    }
+  
     e2.x = e1.y*n.z - e1.z*n.y;
     e2.y = e1.z*n.x - e1.x*n.z;
     e2.z = e1.x*n.y - e1.y*n.x;
