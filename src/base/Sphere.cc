@@ -219,9 +219,15 @@ void Sphere::finishMobility() {
 
     // Change the event type of the third party sphere to EV_CHECK
     if (collisionMsg_->getPartner() != NULL) {
-      ((Sphere *)collisionMsg_->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
-      ((Sphere *)collisionMsg_->getPartner())->getCollisionMessage()->setPartner(NULL);
+
+      CollisionMessage *partnerCollisionMsg = ((Sphere *)collisionMsg_->getPartner())->getCollisionMessage();
+
+      if (partnerCollisionMsg != NULL) {
+        partnerCollisionMsg->setKind(EV_CHECK);
+        partnerCollisionMsg->setPartner(NULL);
+      }
     }
+    SphereMobility::resetCollisionMessage(collisionMsg_);
   }
 }
 
@@ -251,9 +257,15 @@ void Sphere::finishMobility(Particle *from) {
 
     // Change the event type of the third party sphere to EV_CHECK
     if (collisionMsg_->getPartner() != NULL) {
-      ((Sphere *)collisionMsg_->getPartner())->getCollisionMessage()->setKind(EV_CHECK);
-      ((Sphere *)collisionMsg_->getPartner())->getCollisionMessage()->setPartner(NULL);
+
+      CollisionMessage *partnerCollisionMsg = ((Sphere *)collisionMsg_->getPartner())->getCollisionMessage();
+
+      if (partnerCollisionMsg != NULL) {
+        partnerCollisionMsg->setKind(EV_CHECK);
+        partnerCollisionMsg->setPartner(NULL);
+      }
     }
+    SphereMobility::resetCollisionMessage(collisionMsg_);
   }
 }
 

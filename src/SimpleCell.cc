@@ -21,6 +21,13 @@ using namespace std;
 
 Define_Module(SimpleCell);
 
+SimpleCell::SimpleCell() :
+  timeToLive_(0),
+  statsRefreshRate_(0),
+  timeToLiveMsg_(NULL) {
+
+}
+
 SimpleCell::~SimpleCell() {
 
 }
@@ -158,7 +165,7 @@ void SimpleCell::finish() {
   // Delete mobility messages
   deleteMobilityMessages();
 
-  if (timeToLive_ > 0) {
+  if (timeToLiveMsg_ != NULL) {
     cancelAndDelete(timeToLiveMsg_);
   }
 
@@ -257,6 +264,7 @@ void SimpleCell::handleSignaling(cMessage *msg) {
 
   // TODO change the following line, perhaps using gates
   ((Molecule *)p)->scheduleExpire(cmsg->getCollisionTime());
+  //((Molecule *)p)->expire();
 
   // Change the event type to CHECK so we can find the next event
   // for the receiver

@@ -94,7 +94,7 @@ void MoleculeEmitter::handleMessage(cMessage *msg) {
   int kind = msg->getKind();
   double st = NO_TIME;
 
-  Molecule *molecule;
+  Molecule *molecule = NULL;
 
   if (kind == EV_EMIT) {
 
@@ -108,7 +108,6 @@ void MoleculeEmitter::handleMessage(cMessage *msg) {
     molecule->setLastCollisionTime(st);
 
     molecule->initializeMobilityMessages();
-
     molecule->initializeMobility();
 
     if (st < emissionStart_ + emissionDuration_) {

@@ -43,6 +43,8 @@ class SimpleCell : public Sphere {
 
 	public:
 
+		SimpleCell();
+
 		~SimpleCell();
 
 		void expire();

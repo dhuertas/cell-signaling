@@ -183,6 +183,18 @@ void Molecule::finish() {
     cancelAndDelete(timeToLiveMsg_);
   }
 
+  if (xCollisionPositionVector_ != NULL) {
+    delete xCollisionPositionVector_;
+  }
+
+  if (yCollisionPositionVector_ != NULL) {
+    delete yCollisionPositionVector_;
+  }
+
+  if (zCollisionPositionVector_ != NULL) {
+    delete zCollisionPositionVector_;
+  }
+
 }
 
 /*
@@ -222,7 +234,7 @@ void Molecule::scheduleExpire(double time) {
   // Methods called from other modules must have this macro
   Enter_Method_Silent();
 
-  if (timeToLive_ > 0) {
+  if (timeToLiveMsg_ != NULL) {
     if (timeToLiveMsg_->isScheduled()) {
       cancelEvent(timeToLiveMsg_);
     }
