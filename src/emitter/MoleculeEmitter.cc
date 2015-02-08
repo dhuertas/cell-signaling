@@ -104,13 +104,10 @@ void MoleculeEmitter::handleMessage(cMessage *msg) {
     molecule = createMolecule();
     molecule->callInitialize();
 
-    molecule->setParticleId(manager_->getNextIncParticleId());
     molecule->setParticleType(T_SIGNALING);
     molecule->setLastCollisionTime(st);
 
     molecule->initializeMobilityMessages();
-
-    manager_->subscribe(molecule);
 
     molecule->initializeMobility();
 
