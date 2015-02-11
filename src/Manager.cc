@@ -160,13 +160,13 @@ void Manager::initialize(int stage) {
     }
 
     // Self message to refresh the tk environment
-    if (tkEnvRefreshRate_ > 0) {
-      scheduleAt(simTime() + tkEnvRefreshRate_/1000, 
+    if (ev.isGUI() && tkEnvRefreshRate_ > 0) {
+      scheduleAt(simTime() + tkEnvRefreshRate_, 
         new cMessage("refresh", EV_TKENVUPDATE));
     }
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(simTime() + statsRefreshRate_/1000,
+      scheduleAt(simTime() + statsRefreshRate_,
         new cMessage("refresh", EV_STATSUPDATE));
     }
 
@@ -327,7 +327,7 @@ void Manager::handleMessage(cMessage *msg) {
 
     // Self message to refresh the tk environment
     if (tkEnvRefreshRate_ > 0) {
-      scheduleAt(st + tkEnvRefreshRate_/1000, msg);
+      scheduleAt(st + tkEnvRefreshRate_, msg);
     }
 
   } else if (kind == EV_STATSUPDATE) {
@@ -343,7 +343,7 @@ void Manager::handleMessage(cMessage *msg) {
     clearStatistics();
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(st + statsRefreshRate_/1000, msg);
+      scheduleAt(st + statsRefreshRate_, msg);
     }
   }
 
@@ -367,7 +367,9 @@ void Manager::tkEnvUpdateNetwork() {
   it_->reset();
   while (it_->hasNext()) {
     Particle *p = (Particle *)it_->next();
-    p->tkEnvUpdatePosition(currentTime);
+    if (p != NULL && p->isActive()) {
+      p->tkEnvUpdatePosition(currentTime);
+    }
   }
 }
 
