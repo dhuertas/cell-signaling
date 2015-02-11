@@ -51,7 +51,7 @@ void Probe::initialize(int stage) {
     setManager("manager");
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(simTime() + statsRefreshRate_/1000,
+      scheduleAt(simTime() + statsRefreshRate_,
         new cMessage("refresh", EV_STATSUPDATE));
     }   
 
@@ -81,7 +81,7 @@ void Probe::handleMessage(cMessage *msg) {
     moleculeDensityVector.recordWithTimestamp(st, getMoleculeDensity());
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(st + statsRefreshRate_/1000, msg);
+      scheduleAt(st + statsRefreshRate_, msg);
     }
   }
 }
