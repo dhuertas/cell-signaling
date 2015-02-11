@@ -98,7 +98,7 @@ void SimpleCell::initialize(int stage) {
     statsRefreshRate_ = par("statsRefreshRate");
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(simTime() + statsRefreshRate_/1000,
+      scheduleAt(simTime() + statsRefreshRate_,
         new cMessage("refresh", EV_STATSUPDATE));
     }
 
@@ -143,7 +143,7 @@ void SimpleCell::handleMessage(cMessage *msg) {
   } else if (kind == EV_STATSUPDATE) {
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(simTime() + statsRefreshRate_/1000, msg);
+      scheduleAt(simTime() + statsRefreshRate_, msg);
     }
 
   } else if (kind == EV_TTLEXPIRE) {
