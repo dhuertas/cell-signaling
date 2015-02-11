@@ -556,7 +556,8 @@ void SphereMobility::handleBrownianMotion(BrownianMotionMessage *msg, Sphere *s)
 
   Manager *manager = msg->getManager();
 
-  double dt = manager->getDeltaTime();
+  double dt = msg->getBrownianMotionTime() - s->getLastCollisionTime();
+  //manager->getDeltaTime();
 
   point3_t *pos = s->getPosition();
   vector3_t *vel = s->getVelocity();
