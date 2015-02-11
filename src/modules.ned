@@ -239,7 +239,7 @@ simple SimpleCell {
     // Same as the Molecule boundariesMode parameter.
     int boundariesMode = default(1);
 
-    // Statistics refresh rate in, 1/1000 of a time unit
+    // Statistics refresh rate as a number of time units
     double statsRefreshRate = default(0);
 
     // Log collision times
@@ -281,7 +281,7 @@ simple Probe {
 
     double radius = default(1);
 
-    // Statistics refresh rate in, 1/1000 of a time unit
+    // Statistics refresh rate as a number of time units
     double statsRefreshRate = default(0);
 
   gates:
