@@ -31,8 +31,6 @@ message BrownianMotionMessage {
 
   double brownianMotionTime;
 
-  Point position;
-
   Vector velocity;
 
   ManagerPtr manager;
