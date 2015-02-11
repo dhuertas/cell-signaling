@@ -40,7 +40,7 @@ Sphere::Sphere() :
 }
 
 /*
- *
+ * Destructor
  */
 Sphere::~Sphere() {
 
@@ -255,7 +255,7 @@ void Sphere::finishMobility(Particle *from) {
 
     cancelEvent(collisionMsg_);
 
-    // Change the event type of the third party sphere to EV_CHECK
+    // Change the event type of the partner sphere to EV_CHECK
     if (collisionMsg_->getPartner() != NULL) {
 
       CollisionMessage *partnerCollisionMsg = ((Sphere *)collisionMsg_->getPartner())->getCollisionMessage();
@@ -355,7 +355,7 @@ void Sphere::handleMobilityMessage(cMessage *msg) {
   if (transferMsg_->isScheduled()) cancelEvent(transferMsg_);
 
   transferTime = SphereMobility::nextTransferTime(transferMsg_, this);
-
+  
   if (transferTime != NO_TIME) {
     scheduleAt(transferTime, transferMsg_);
   }
