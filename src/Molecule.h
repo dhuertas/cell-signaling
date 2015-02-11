@@ -33,46 +33,46 @@
 
 class Molecule : public Sphere {
 
-	private:
+ private:
 
-		// Amount of time that will pass before it expires
-		double timeToLive_;
+  // Amount of time that will pass before it expires
+  double timeToLive_;
 
-		// Update the cOutVectors periodically
-		double statsRefreshRate_;
+  // Update the cOutVectors periodically
+  double statsRefreshRate_;
 
-		// Self messages
-		TimeToLiveMessage *timeToLiveMsg_;
+  // Self messages
+  TimeToLiveMessage *timeToLiveMsg_;
 
-	protected:
+ protected:
 
-		// Vectors to track particle position over time
-		cOutVector *xPositionVector_;
-		cOutVector *yPositionVector_;
-		cOutVector *zPositionVector_;
+  // Vectors to track particle position over time
+  cOutVector *xPositionVector_;
+  cOutVector *yPositionVector_;
+  cOutVector *zPositionVector_;
 
-	public:
+ public:
 
-		~Molecule();
+  ~Molecule();
 
-		void expire();
+  void expire();
 
-		void scheduleExpire(double);
+  void scheduleExpire(double);
 
-		bool isSignaling(cMessage *msg);
+  bool isSignaling(cMessage *msg);
 
-		void handleSignaling(cMessage *msg);
+  void handleSignaling(cMessage *msg);
 
-		//
-		// cSimpleModule inheritance
-		//
-		virtual void initialize(int);
+  //
+  // cSimpleModule inheritance
+  //
+  virtual void initialize(int);
 
-		virtual int numInitStages(void) const;
+  virtual int numInitStages(void) const;
 
-		virtual void handleMessage(cMessage *);
+  virtual void handleMessage(cMessage *);
 
-		virtual void finish();
+  virtual void finish();
 
 };
 

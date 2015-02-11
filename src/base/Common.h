@@ -75,6 +75,11 @@
   kind == EV_OUTOFNEIGHBORHOOD || \
   kind == EV_BROWNIAN
 
+#define ISSIGNALING(kind,ta,tb) \
+  kind == EV_COLLISION && \
+  ta == T_SIGNALING && \
+  (tb == T_RECEIVER || tb == T_EMITTER_RECEIVER)
+
 #define CELLBELONGSTOSIMSPACE(a,b,c,Nx,Ny,Nz) \
   0 <= a && a < Nx && \
   0 <= b && b < Ny && \

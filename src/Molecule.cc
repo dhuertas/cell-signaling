@@ -21,7 +21,30 @@ using namespace std;
 
 Define_Module(Molecule);
 
-Molecule::~Molecule() {}
+Molecule::~Molecule() {
+
+  if (logCollisions_) {
+    delete collisionTimeVector_;
+    delete xCollisionPositionVector_;
+    delete yCollisionPositionVector_;
+    delete zCollisionPositionVector_;
+
+    collisionTimeVector_ = NULL;
+    xCollisionPositionVector_ = NULL;
+    yCollisionPositionVector_ = NULL;
+    zCollisionPositionVector_ = NULL;
+  }
+
+  if (logPosition_) {
+    delete xPositionVector_;
+    delete yPositionVector_;
+    delete zPositionVector_;
+
+    xPositionVector_ = NULL;
+    yPositionVector_ = NULL;
+    zPositionVector_ = NULL;
+  }
+}
 
 /*
  *
@@ -88,7 +111,7 @@ void Molecule::initialize(int stage) {
 
     logCollisions_ = par("logCollisions").boolValue();
 
-    if (logCollisions_ > 0) {
+    if (logCollisions_) {
       collisionTimeVector_ = new cOutVector("collisionTime");
       xCollisionPositionVector_ = new cOutVector("xCollisionPosition");
       yCollisionPositionVector_ = new cOutVector("yCollisionPosition");
@@ -97,7 +120,7 @@ void Molecule::initialize(int stage) {
 
     logPosition_ = par("logPosition").boolValue();
 
-    if (logPosition_ > 0) {
+    if (logPosition_) {
       xPositionVector_ = new cOutVector("xPosition");
       yPositionVector_ = new cOutVector("yPosition");
       zPositionVector_ = new cOutVector("zPosition");
@@ -106,7 +129,7 @@ void Molecule::initialize(int stage) {
     statsRefreshRate_ = par("statsRefreshRate");
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(simTime() + statsRefreshRate_/1000,
+      scheduleAt(simTime() + statsRefreshRate_,
         new cMessage("refresh", EV_STATSUPDATE));
     }
 
@@ -139,8 +162,13 @@ int Molecule::numInitStages() const {
 void Molecule::handleMessage(cMessage *msg) {
 
   int kind = msg->getKind();
+  int partnerParticleType = 0;
 
-  if (isSignaling(msg)) {
+  if (kind == EV_COLLISION) {
+    partnerParticleType = ((CollisionMessage *)msg)->getPartner()->getParticleType();
+  } 
+
+  if (ISSIGNALING(kind, particleType_, partnerParticleType)) {
 
     handleSignaling(msg);
 
@@ -159,7 +187,7 @@ void Molecule::handleMessage(cMessage *msg) {
     zPositionVector_->recordWithTimestamp(st, position_.z + velocity_.z * dt);
 
     if (statsRefreshRate_ > 0) {
-      scheduleAt(st + statsRefreshRate_/1000, msg);
+      scheduleAt(st + statsRefreshRate_, msg);
     }
 
   } else if (kind == EV_TTLEXPIRE) {
@@ -223,7 +251,6 @@ void Molecule::expire() {
   }
 
   this->deleteModule();
-
 }
 
 /*
